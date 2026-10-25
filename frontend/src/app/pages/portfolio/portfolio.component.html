@@ -1,1 +1,371 @@
-<p>portfolio works!</p>
+<app-page-breadcrumb pageTitle="Mon portefeuille" />
+
+@if (erreur(); as message) {
+  <div class="mb-6 rounded-xl border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
+    {{ message }}
+  </div>
+}
+
+@if (chargement()) {
+  <p class="text-sm text-gray-500 dark:text-gray-400">Chargement du portefeuille...</p>
+}
+
+@if (portefeuille(); as p) {
+  <!-- Cartes de synthèse -->
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 md:gap-6">
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+      <span class="text-sm text-gray-500 dark:text-gray-400">Solde disponible</span>
+      <h4 class="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
+        {{ p.soldeDisponible | number: '1.2-2' }} <span class="text-sm font-medium text-gray-500">USDT</span>
+      </h4>
+    </div>
+
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+      <span class="text-sm text-gray-500 dark:text-gray-400">Valeur des positions</span>
+      <h4 class="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
+        {{ p.valeurPositions | number: '1.2-2' }} <span class="text-sm font-medium text-gray-500">USDT</span>
+      </h4>
+    </div>
+
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+      <span class="text-sm text-gray-500 dark:text-gray-400">Valeur totale</span>
+      <h4 class="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
+        {{ p.valeurTotale | number: '1.2-2' }} <span class="text-sm font-medium text-gray-500">USDT</span>
+      </h4>
+    </div>
+
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+      <span class="text-sm text-gray-500 dark:text-gray-400">Gain / perte total</span>
+      <h4 class="mt-2 font-bold text-title-sm" [class]="couleur(p.pnlTotal)">
+        {{ signe(p.pnlTotal) }}{{ p.pnlTotal | number: '1.2-2' }}
+        <span class="text-sm font-medium">({{ signe(p.pnlTotalPourcent) }}{{ p.pnlTotalPourcent | number: '1.2-2' }} %)</span>
+      </h4>
+    </div>
+  </div>
+
+  <!-- Évolution de la valeur totale -->
+  <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+      <h3 class="text-base font-medium text-gray-800 dark:text-white/90">Évolution de la valeur du portefeuille</h3>
+      <span class="text-theme-xs text-gray-500 dark:text-gray-400">Un point toutes les 30 secondes</span>
+    </div>
+
+    @if (dessin(); as d) {
+      <svg
+        [attr.viewBox]="'0 0 ' + largeur + ' ' + hauteur"
+        preserveAspectRatio="none"
+        class="h-40 w-full"
+        role="img"
+        aria-label="Courbe de la valeur totale du portefeuille"
+      >
+        <polygon [attr.points]="d.aire" [attr.fill]="d.hausse ? '#12b76a' : '#f04438'" fill-opacity="0.12" />
+        <polyline
+          [attr.points]="d.ligne"
+          fill="none"
+          [attr.stroke]="d.hausse ? '#12b76a' : '#f04438'"
+          stroke-width="2"
+          stroke-linejoin="round"
+          vector-effect="non-scaling-stroke"
+        />
+      </svg>
+      <div class="mt-2 flex flex-wrap justify-between gap-2 text-theme-xs text-gray-500 dark:text-gray-400">
+        <span>{{ d.debut | date: 'HH:mm:ss' }}</span>
+        <span>Min {{ d.min | number: '1.2-2' }} · Max {{ d.max | number: '1.2-2' }} USDT</span>
+        <span>{{ d.fin | date: 'HH:mm:ss' }}</span>
+      </div>
+    } @else {
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        La courbe se construit : reviens dans une minute, un nouveau point est enregistré toutes les 30 secondes.
+      </p>
+    }
+  </div>
+
+  <!-- Indicateurs de performance et de risque -->
+  @if (risque(); as r) {
+    <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+      <div class="mb-1 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-base font-medium text-gray-800 dark:text-white/90">Performance et risque du portefeuille</h3>
+        @if (r.joursHistorique > 0) {
+          <span class="text-theme-xs text-gray-500 dark:text-gray-400">
+            Calculé sur {{ r.joursHistorique }} jours d'historique Binance avec la composition actuelle
+          </span>
+        }
+      </div>
+
+      <!-- Score de risque -->
+      <div class="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-white/[0.03]">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Score de risque</span>
+          <span class="text-sm font-semibold text-gray-800 dark:text-white/90">
+            @if (r.scoreRisque !== null) { {{ r.scoreRisque }} / 100 · } {{ libelleNiveau(r.niveauRisque) }}
+          </span>
+        </div>
+        <div class="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
+          <div class="h-full rounded-full transition-all" [class]="couleurNiveau(r.niveauRisque)" [style.width.%]="r.scoreRisque ?? 0"></div>
+        </div>
+        <ul class="mt-3 list-disc space-y-1 ps-5 text-theme-xs text-gray-600 dark:text-gray-400">
+          @for (e of r.explications; track e) {
+            <li>{{ e }}</li>
+          }
+        </ul>
+      </div>
+
+      <!-- Les indicateurs -->
+      <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+          <span class="text-sm text-gray-500 dark:text-gray-400">Rendement</span>
+          <p class="mt-1 text-lg font-bold" [class]="couleur(r.rendementPct)">{{ signe(r.rendementPct) }}{{ nombre(r.rendementPct, ' %') }}</p>
+          <p class="mt-1 text-theme-xs text-gray-500 dark:text-gray-400">Gain ou perte depuis le capital de départ.</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+          <span class="text-sm text-gray-500 dark:text-gray-400">Volatilité annuelle</span>
+          <p class="mt-1 text-lg font-bold text-gray-800 dark:text-white/90">{{ nombre(r.volatiliteAnnuellePct, ' %') }}</p>
+          <p class="mt-1 text-theme-xs text-gray-500 dark:text-gray-400">À quel point la valeur du portefeuille « bouge » (écart-type annualisé).</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+          <span class="text-sm text-gray-500 dark:text-gray-400">VaR 95 % (1 jour)</span>
+          <p class="mt-1 text-lg font-bold text-gray-800 dark:text-white/90">
+            {{ nombre(r.var95Usdt, ' USDT', 0) }}
+            @if (r.var95Pct !== null) { <span class="text-sm font-medium text-gray-500">({{ nombre(r.var95Pct, ' %') }})</span> }
+          </p>
+          <p class="mt-1 text-theme-xs text-gray-500 dark:text-gray-400">Perte maximale probable en une journée, 95 jours sur 100.</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+          <span class="text-sm text-gray-500 dark:text-gray-400">Ratio de Sharpe</span>
+          <p class="mt-1 text-lg font-bold text-gray-800 dark:text-white/90">{{ nombre(r.sharpe) }}</p>
+          <p class="mt-1 text-theme-xs text-gray-500 dark:text-gray-400">Rendement obtenu par unité de risque (plus il est haut, mieux c'est).</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+          <span class="text-sm text-gray-500 dark:text-gray-400">Drawdown maximal</span>
+          <p class="mt-1 text-lg font-bold text-gray-800 dark:text-white/90">{{ nombre(r.drawdownMaxPct, ' %') }}</p>
+          <p class="mt-1 text-theme-xs text-gray-500 dark:text-gray-400">Plus forte baisse entre un sommet et le creux suivant.</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+          <span class="text-sm text-gray-500 dark:text-gray-400">Diversification (HHI)</span>
+          <p class="mt-1 text-lg font-bold text-gray-800 dark:text-white/90">
+            {{ nombre(r.hhi, '', 0) }} <span class="text-sm font-medium text-gray-500">· {{ libelleDiversification(r.diversification) }}</span>
+          </p>
+          <p class="mt-1 text-theme-xs text-gray-500 dark:text-gray-400">Indice de Herfindahl-Hirschman : 10 000 = tout sur un seul actif, plus bas = mieux réparti.</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+          <span class="text-sm text-gray-500 dark:text-gray-400">Exposition maximale</span>
+          <p class="mt-1 text-lg font-bold text-gray-800 dark:text-white/90">
+            {{ nombre(r.expositionMaxPct, ' %', 1) }}
+            @if (r.actifPlusExpose) { <span class="text-sm font-medium text-gray-500">({{ r.actifPlusExpose }})</span> }
+          </p>
+          <p class="mt-1 text-theme-xs text-gray-500 dark:text-gray-400">Part du portefeuille dans la crypto la plus importante (plafond : 40 %).</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+          <span class="text-sm text-gray-500 dark:text-gray-400">Part investie</span>
+          <p class="mt-1 text-lg font-bold text-gray-800 dark:text-white/90">{{ nombre(r.investiPct, ' %', 1) }}</p>
+          <p class="mt-1 text-theme-xs text-gray-500 dark:text-gray-400">Le reste est en USDT (cash), sans risque de marché.</p>
+        </div>
+      </div>
+
+      <!-- Répartition du portefeuille (camembert) -->
+      @if (camembert(); as c) {
+        <h4 class="mb-3 mt-6 text-sm font-medium text-gray-700 dark:text-gray-300">Répartition du portefeuille</h4>
+        <div class="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
+          <svg viewBox="0 0 200 200" class="h-52 w-52 shrink-0" role="img" aria-label="Répartition du portefeuille entre cash et cryptos">
+            <g transform="rotate(-90 100 100)">
+              @for (t of c.tranches; track t.nom) {
+                <circle
+                  cx="100"
+                  cy="100"
+                  [attr.r]="t.rayon"
+                  fill="none"
+                  [attr.stroke]="t.couleur"
+                  stroke-width="26"
+                  [attr.stroke-dasharray]="t.dasharray"
+                  [attr.stroke-dashoffset]="t.dashoffset"
+                >
+                  <title>{{ t.nom }} : {{ t.pct.toFixed(2) }} %</title>
+                </circle>
+              }
+            </g>
+            <text x="100" y="94" text-anchor="middle" font-size="11" fill="currentColor" class="text-gray-500 dark:text-gray-400">Valeur totale</text>
+            <text x="100" y="114" text-anchor="middle" font-size="16" font-weight="700" fill="currentColor" class="text-gray-800 dark:text-white/90">{{ c.total | number: '1.0-0' }}</text>
+            <text x="100" y="130" text-anchor="middle" font-size="10" fill="currentColor" class="text-gray-500 dark:text-gray-400">USDT</text>
+          </svg>
+
+          <ul class="w-full space-y-2">
+            @for (t of c.tranches; track t.nom) {
+              <li class="flex items-center justify-between gap-3 text-sm">
+                <span class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                  <span class="inline-block h-3 w-3 rounded-sm" [style.background-color]="t.couleur"></span>
+                  {{ t.nom }}
+                </span>
+                <span class="text-gray-500 dark:text-gray-400">
+                  {{ t.valeur | number: '1.0-0' }} USDT · <span class="font-medium text-gray-800 dark:text-white/90">{{ t.pct | number: '1.0-2' }} %</span>
+                </span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (r.suggestion) {
+        <div class="mt-4 rounded-xl border border-warning-200 bg-warning-50 p-4 text-sm text-warning-700 dark:border-warning-500/30 dark:bg-warning-500/15 dark:text-orange-400">
+          <span class="font-semibold">Conseil de rééquilibrage :</span> {{ r.suggestion }}
+        </div>
+      }
+    </div>
+
+    <!-- Simulation de crash -->
+    <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+      <h3 class="text-base font-medium text-gray-800 dark:text-white/90">Simulateur de crash</h3>
+      <p class="mt-1 text-theme-xs text-gray-500 dark:text-gray-400">
+        Et si tout le marché crypto chutait d'un coup ? (Le crash de mai 2021 : le Bitcoin avait perdu environ 40 %.)
+      </p>
+      <div class="mt-4 flex items-center gap-4">
+        <input
+          type="range"
+          min="5"
+          max="80"
+          step="5"
+          name="choc"
+          [(ngModel)]="choc"
+          (change)="simuler()"
+          class="w-full accent-brand-500"
+          aria-label="Baisse du marché en pourcentage"
+        />
+        <span class="w-16 shrink-0 text-end text-lg font-bold text-error-600 dark:text-error-500">−{{ choc }} %</span>
+      </div>
+      @if (scenario(); as s) {
+        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div class="rounded-xl bg-gray-50 p-4 dark:bg-white/[0.03]">
+            <span class="text-sm text-gray-500 dark:text-gray-400">Valeur actuelle</span>
+            <p class="mt-1 text-lg font-bold text-gray-800 dark:text-white/90">{{ s.valeurAvant | number: '1.0-0' }} USDT</p>
+          </div>
+          <div class="rounded-xl bg-gray-50 p-4 dark:bg-white/[0.03]">
+            <span class="text-sm text-gray-500 dark:text-gray-400">Perte estimée</span>
+            <p class="mt-1 text-lg font-bold text-error-600 dark:text-error-500">
+              −{{ s.perteUsdt | number: '1.0-0' }} USDT <span class="text-sm font-medium">({{ s.perteDuPortefeuillePct | number: '1.0-1' }} %)</span>
+            </p>
+          </div>
+          <div class="rounded-xl bg-gray-50 p-4 dark:bg-white/[0.03]">
+            <span class="text-sm text-gray-500 dark:text-gray-400">Valeur après le crash</span>
+            <p class="mt-1 text-lg font-bold text-gray-800 dark:text-white/90">{{ s.valeurApres | number: '1.0-0' }} USDT</p>
+          </div>
+        </div>
+        @if (s.details.length > 0) {
+          <p class="mt-3 text-theme-xs text-gray-500 dark:text-gray-400">
+            Détail :
+            @for (d of s.details; track d.symbole; let dernier = $last) {
+              {{ d.symbole }} −{{ d.perteUsdt | number: '1.0-0' }} USDT{{ dernier ? '' : ' · ' }}
+            }
+          </p>
+        }
+      }
+    </div>
+  }
+
+  <!-- Projection du futur (Monte-Carlo) -->
+  <app-projection-chart />
+
+  @if (prixObsoletes(p)) {
+    <div class="mt-6 rounded-xl border border-warning-200 bg-warning-50 p-4 text-sm text-warning-700 dark:border-warning-500/30 dark:bg-warning-500/15 dark:text-orange-400">
+      Certains prix n'ont pas pu être récupérés : les valeurs correspondantes utilisent le prix d'achat.
+    </div>
+  }
+
+  <!-- Positions ouvertes -->
+  <div class="mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+    <div class="flex items-center justify-between px-5 py-4 sm:px-6">
+      <h3 class="text-base font-medium text-gray-800 dark:text-white/90">Positions ouvertes</h3>
+      <button
+        type="button"
+        (click)="charger()"
+        class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.03]"
+      >
+        Actualiser
+      </button>
+    </div>
+
+    @if (p.positionsOuvertes.length === 0) {
+      <p class="px-5 pb-6 text-sm text-gray-500 dark:text-gray-400 sm:px-6">
+        Aucune position ouverte.
+        <a routerLink="/trading" class="font-medium text-brand-500 hover:underline">Passer un ordre</a>
+      </p>
+    } @else {
+      <div class="max-w-full overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="border-y border-gray-100 dark:border-white/[0.05]">
+            <tr>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Crypto</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Quantité</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Prix moyen d'achat</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Prix actuel</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Valeur</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Gain / perte latent</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Gain / perte réalisé</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            @for (pos of p.positionsOuvertes; track pos.id) {
+              <tr>
+                <td class="px-5 py-4 text-sm font-medium text-gray-800 dark:text-white/90">{{ pos.symbole }}</td>
+                <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ pos.quantite | number: '1.0-8' }}</td>
+                <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ pos.prixMoyenAchat | number: '1.2-8' }}</td>
+                <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                  {{ pos.prixActuel | number: '1.2-8' }}
+                  @if (!pos.prixDisponible) { <span title="Prix indisponible">*</span> }
+                </td>
+                <td class="px-5 py-4 text-sm text-gray-800 dark:text-white/90">{{ pos.valeurActuelle | number: '1.2-2' }}</td>
+                <td class="px-5 py-4 text-sm font-medium" [class]="couleur(pos.pnlLatent)">
+                  {{ signe(pos.pnlLatent) }}{{ pos.pnlLatent | number: '1.2-2' }}
+                  ({{ signe(pos.pnlLatentPourcent) }}{{ pos.pnlLatentPourcent | number: '1.2-2' }} %)
+                </td>
+                <td class="px-5 py-4 text-sm" [class]="couleur(pos.pnlRealise)">
+                  {{ signe(pos.pnlRealise) }}{{ pos.pnlRealise | number: '1.2-2' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- Positions fermées -->
+  <div class="mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+    <div class="px-5 py-4 sm:px-6">
+      <h3 class="text-base font-medium text-gray-800 dark:text-white/90">Positions fermées</h3>
+    </div>
+
+    @if (p.positionsFermees.length === 0) {
+      <p class="px-5 pb-6 text-sm text-gray-500 dark:text-gray-400 sm:px-6">
+        Aucune position fermée pour l'instant. Une position se ferme quand tu vends tout ce que tu détiens sur une crypto.
+      </p>
+    } @else {
+      <div class="max-w-full overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="border-y border-gray-100 dark:border-white/[0.05]">
+            <tr>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Crypto</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Quantité achetée</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Prix moyen d'achat</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Gain / perte réalisé</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Ouverte le</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Fermée le</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            @for (pos of p.positionsFermees; track pos.id) {
+              <tr>
+                <td class="px-5 py-4 text-sm font-medium text-gray-800 dark:text-white/90">{{ pos.symbole }}</td>
+                <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ pos.quantiteTotaleAchetee | number: '1.0-8' }}</td>
+                <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ pos.prixMoyenAchat | number: '1.2-8' }}</td>
+                <td class="px-5 py-4 text-sm font-medium" [class]="couleur(pos.pnlRealise)">
+                  {{ signe(pos.pnlRealise) }}{{ pos.pnlRealise | number: '1.2-2' }}
+                </td>
+                <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ pos.dateOuverture | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ pos.dateFermeture | date: 'dd/MM/yyyy HH:mm' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+}

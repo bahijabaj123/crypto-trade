@@ -1,0 +1,79 @@
+<div class="overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h3 class="text-base font-medium text-gray-800 dark:text-white/90">Graphique {{ symbole() }}</h3>
+      @if (dessin(); as d) {
+        <p class="text-theme-xs text-gray-500 dark:text-gray-400">
+          Dernier prix {{ d.dernierPrix }} USDT ·
+          <span [class]="d.hausse ? 'text-success-600 dark:text-success-500' : 'text-error-600 dark:text-error-500'">
+            {{ d.hausse ? '▲ +' : '▼ ' }}{{ d.variation.toFixed(2) }} % sur la période affichée
+          </span>
+        </p>
+      }
+    </div>
+    <div class="flex flex-wrap gap-1.5">
+      @for (i of intervalles; track i.code) {
+        <button
+          type="button"
+          (click)="choisirIntervalle(i.code)"
+          class="rounded-lg border px-2.5 py-1 text-theme-xs font-medium transition"
+          [class]="intervalle() === i.code ? 'border-brand-500 text-brand-500' : 'border-gray-300 text-gray-600 dark:border-gray-700 dark:text-gray-400'"
+        >
+          {{ i.nom }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (erreur(); as m) {
+    <p class="mt-3 text-sm text-error-600 dark:text-error-400">{{ m }}</p>
+  }
+
+  @if (dessin(); as d) {
+    <svg
+      [attr.viewBox]="'0 0 ' + largeur + ' ' + hauteur"
+      class="mt-4 h-72 w-full"
+      role="img"
+      [attr.aria-label]="'Graphique en chandeliers de ' + symbole()"
+    >
+      <!-- lignes de repère + prix -->
+      @for (g of d.grille; track $index) {
+        <line [attr.x1]="0" [attr.x2]="d.zoneL" [attr.y1]="g.y" [attr.y2]="g.y" stroke="currentColor" class="text-gray-200 dark:text-gray-800" stroke-width="1" />
+        <text [attr.x]="d.zoneL + 6" [attr.y]="g.y + 4" font-size="11" fill="currentColor" class="text-gray-500 dark:text-gray-400">{{ g.libelle }}</text>
+      }
+
+      <!-- les bougies : mèche (trait fin) + corps (rectangle). Vert = le prix a monté, rouge = il a baissé -->
+      @for (f of d.formes; track $index) {
+        <g>
+          <title>{{ f.info }}</title>
+          <line [attr.x1]="f.x" [attr.x2]="f.x" [attr.y1]="f.yHaut" [attr.y2]="f.yBas" [attr.stroke]="f.haussier ? '#12b76a' : '#f04438'" stroke-width="1.2" />
+          <rect [attr.x]="f.xCorps" [attr.y]="f.yCorps" [attr.width]="f.largeurCorps" [attr.height]="f.hauteurCorps" [attr.fill]="f.haussier ? '#12b76a' : '#f04438'" />
+        </g>
+      }
+
+      <!-- moyenne mobile 20 -->
+      @if (d.moyenne) {
+        <polyline [attr.points]="d.moyenne" fill="none" stroke="#f79009" stroke-width="1.6" stroke-linejoin="round" />
+      }
+
+      <!-- ligne du dernier prix -->
+      <line [attr.x1]="0" [attr.x2]="d.zoneL" [attr.y1]="d.yDernier" [attr.y2]="d.yDernier" [attr.stroke]="d.hausse ? '#12b76a' : '#f04438'" stroke-width="1" stroke-dasharray="4 4" />
+      <rect [attr.x]="d.zoneL + 2" [attr.y]="d.yDernier - 9" width="70" height="18" rx="3" [attr.fill]="d.hausse ? '#12b76a' : '#f04438'" />
+      <text [attr.x]="d.zoneL + 37" [attr.y]="d.yDernier + 4" font-size="11" fill="#fff" text-anchor="middle" font-weight="600">{{ d.dernierPrix }}</text>
+
+      <!-- dates -->
+      @for (t of d.xDates; track $index) {
+        <text [attr.x]="t.x" [attr.y]="hauteur - 6" font-size="11" [attr.text-anchor]="t.ancre" fill="currentColor" class="text-gray-500 dark:text-gray-400">{{ t.texte }}</text>
+      }
+    </svg>
+
+    <div class="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-theme-xs text-gray-500 dark:text-gray-400">
+      <span><span class="inline-block h-2 w-2 rounded-sm bg-success-500"></span> Le prix a monté</span>
+      <span><span class="inline-block h-2 w-2 rounded-sm bg-error-500"></span> Le prix a baissé</span>
+      <span><span class="inline-block h-0.5 w-4 bg-warning-500 align-middle"></span> Moyenne mobile (20 bougies)</span>
+      <span>Plus haut {{ d.plusHaut }} · Plus bas {{ d.plusBas }}</span>
+    </div>
+  } @else if (!erreur()) {
+    <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">Chargement du graphique...</p>
+  }
+</div>

@@ -1,1 +1,289 @@
-<p>trading works!</p>
+<app-page-breadcrumb pageTitle="Trading" />
+
+@if (erreurMarche(); as message) {
+  <div class="mb-6 rounded-xl border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
+    {{ message }}
+  </div>
+}
+
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+  <!-- ===== Formulaire d'ordre ===== -->
+  <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+    <h3 class="mb-5 text-base font-medium text-gray-800 dark:text-white/90">Passer un ordre</h3>
+
+    <form (ngSubmit)="passerOrdre()" class="space-y-5">
+      <!-- Choix de la crypto -->
+      <div>
+        <label for="symbole" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Crypto</label>
+        <select
+          id="symbole"
+          name="symbole"
+          [(ngModel)]="symbole"
+          (ngModelChange)="majApercu()"
+          class="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
+        >
+          @for (c of cryptos; track c.code) {
+            <option [value]="c.code" class="text-gray-700 dark:bg-gray-900 dark:text-gray-400">{{ c.nom }} ({{ c.code }})</option>
+          }
+        </select>
+      </div>
+
+      <!-- Prix actuel -->
+      <div class="rounded-xl bg-gray-50 p-4 dark:bg-white/[0.03]">
+        <span class="text-sm text-gray-500 dark:text-gray-400">Prix actuel</span>
+        <p class="mt-1 text-2xl font-bold text-gray-800 dark:text-white/90">
+          @if (prixSelectionne(); as p) {
+            {{ p | number: '1.2-8' }} <span class="text-sm font-medium text-gray-500">USDT</span>
+          } @else {
+            <span class="text-base font-medium text-gray-400">Chargement...</span>
+          }
+        </p>
+      </div>
+
+      <!-- Achat / vente -->
+      <div class="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          (click)="changerSens('ACHAT')"
+          class="rounded-lg px-4 py-2.5 text-sm font-medium transition"
+          [class]="sens === 'ACHAT' ? 'bg-success-500 text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'"
+        >
+          Acheter
+        </button>
+        <button
+          type="button"
+          (click)="changerSens('VENTE')"
+          class="rounded-lg px-4 py-2.5 text-sm font-medium transition"
+          [class]="sens === 'VENTE' ? 'bg-error-500 text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'"
+        >
+          Vendre
+        </button>
+      </div>
+
+      <!-- Type d'ordre -->
+      <div class="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          (click)="changerType('MARKET')"
+          class="rounded-lg border px-4 py-2 text-sm font-medium transition"
+          [class]="type === 'MARKET' ? 'border-brand-500 text-brand-500' : 'border-gray-300 text-gray-500 dark:border-gray-700 dark:text-gray-400'"
+        >
+          Au prix du marché
+        </button>
+        <button
+          type="button"
+          (click)="changerType('LIMIT')"
+          class="rounded-lg border px-4 py-2 text-sm font-medium transition"
+          [class]="type === 'LIMIT' ? 'border-brand-500 text-brand-500' : 'border-gray-300 text-gray-500 dark:border-gray-700 dark:text-gray-400'"
+        >
+          Ordre limite
+        </button>
+      </div>
+
+      @if (type === 'LIMIT') {
+        <div>
+          <label for="prixLimite" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+            Prix limite (USDT)
+          </label>
+          <input
+            id="prixLimite"
+            name="prixLimite"
+            type="number"
+            min="0"
+            step="any"
+            [placeholder]="sens === 'ACHAT' ? 'Acheter quand le prix descend à...' : 'Vendre quand le prix monte à...'"
+            [(ngModel)]="prixLimite"
+            (ngModelChange)="majApercu()"
+            class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+          />
+          <p class="mt-1.5 text-theme-xs text-gray-500 dark:text-gray-400">
+            L'ordre reste « en attente » et s'exécute tout seul dès que le prix du marché atteint ce seuil.
+            Pour limiter une perte ou sécuriser un gain, utilise la page Stop-loss / Take-profit.
+          </p>
+        </div>
+      }
+
+      <!-- Quantité -->
+      <div>
+        <label for="quantite" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Quantité</label>
+        <input
+          id="quantite"
+          name="quantite"
+          type="number"
+          min="0"
+          step="any"
+          placeholder="Ex. 0.1"
+          [(ngModel)]="quantite"
+          (ngModelChange)="majApercu()"
+          class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+        />
+      </div>
+
+      <!-- Récapitulatif -->
+      <dl class="space-y-2 text-sm">
+        <div class="flex justify-between">
+          <dt class="text-gray-500 dark:text-gray-400">{{ type === 'LIMIT' ? 'Montant maximum estimé' : 'Montant estimé' }}</dt>
+          <dd class="font-medium text-gray-800 dark:text-white/90">
+            @if (montantEstime(); as m) { {{ m | number: '1.2-2' }} USDT } @else { - }
+          </dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-gray-500 dark:text-gray-400">Solde disponible</dt>
+          <dd class="font-medium text-gray-800 dark:text-white/90">
+            @if (portefeuille(); as p) { {{ p.soldeDisponible | number: '1.2-2' }} USDT } @else { - }
+          </dd>
+        </div>
+        @if (sens === 'VENTE') {
+          <div class="flex justify-between">
+            <dt class="text-gray-500 dark:text-gray-400">Vous possédez</dt>
+            <dd class="font-medium text-gray-800 dark:text-white/90">{{ quantitePossedee() | number: '1.0-8' }}</dd>
+          </div>
+        }
+      </dl>
+
+      <!-- Évaluation du risque AVANT l'ordre -->
+      @if (apercu(); as a) {
+        <div class="rounded-xl border p-4 text-sm" [class]="couleurApercu(a.niveau)">
+          <p class="mb-2 font-semibold">
+            Évaluation du risque :
+            @switch (a.niveau) {
+              @case ('OK') { OK }
+              @case ('ATTENTION') { à surveiller }
+              @default { ordre refusé }
+            }
+          </p>
+          <ul class="list-disc space-y-1 ps-5">
+            @for (m of a.messages; track m) {
+              <li>{{ m }}</li>
+            }
+          </ul>
+          <dl class="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-theme-xs">
+            <dt class="opacity-80">Poids dans le portefeuille</dt>
+            <dd class="text-end font-medium">{{ a.expositionAvantPct | number: '1.0-1' }} % → {{ a.expositionApresPct | number: '1.0-1' }} %</dd>
+            <dt class="opacity-80">Concentration (HHI)</dt>
+            <dd class="text-end font-medium">{{ a.hhiAvant | number: '1.0-0' }} → {{ a.hhiApres | number: '1.0-0' }}</dd>
+            @if (a.var95UsdtAvant !== null && a.var95UsdtApres !== null) {
+              <dt class="opacity-80">VaR 95 % (1 jour)</dt>
+              <dd class="text-end font-medium">{{ a.var95UsdtAvant | number: '1.0-0' }} → {{ a.var95UsdtApres | number: '1.0-0' }} USDT</dd>
+            }
+          </dl>
+          @if (a.niveau === 'REFUSE' && a.quantiteMax !== null && a.quantiteMax > 0) {
+            <button
+              type="button"
+              (click)="utiliserQuantiteMax()"
+              class="mt-3 rounded-lg border border-current px-3 py-1.5 text-theme-xs font-medium hover:bg-white/40"
+            >
+              Utiliser la quantité maximale ({{ a.quantiteMax | number: '1.0-6' }})
+            </button>
+          }
+        </div>
+      }
+
+      <button
+        type="submit"
+        [disabled]="!formulaireValide() || envoiEnCours() || apercu()?.autorise === false"
+        class="w-full rounded-lg px-4 py-3 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-50"
+        [class]="sens === 'ACHAT' ? 'bg-success-500 hover:bg-success-600' : 'bg-error-500 hover:bg-error-600'"
+      >
+        @if (envoiEnCours()) { Envoi en cours... } @else if (type === 'LIMIT') { Placer l'ordre limite } @else { {{ sens === 'ACHAT' ? 'Acheter' : 'Vendre' }} au prix du marché }
+      </button>
+
+      @if (retour(); as r) {
+        <div
+          class="rounded-xl border p-4 text-sm"
+          [class]="r.type === 'succes'
+            ? 'border-success-200 bg-success-50 text-success-700 dark:border-success-500/30 dark:bg-success-500/15 dark:text-success-500'
+            : 'border-error-200 bg-error-50 text-error-700 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400'"
+        >
+          {{ r.texte }}
+        </div>
+      }
+    </form>
+  </div>
+
+  <!-- ===== Marché + derniers ordres ===== -->
+  <div class="space-y-6 lg:col-span-2">
+    <!-- Graphique en chandeliers de la crypto choisie -->
+    <app-candle-chart [symbole]="symbole" />
+
+    <!-- Prix du marché -->
+    <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+      <div class="px-5 py-4 sm:px-6">
+        <h3 class="text-base font-medium text-gray-800 dark:text-white/90">Prix du marché (Binance)</h3>
+        <p class="text-theme-xs text-gray-500 dark:text-gray-400">Actualisé toutes les 5 secondes. Clique sur une ligne pour la sélectionner.</p>
+      </div>
+      <div class="max-w-full overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="border-y border-gray-100 dark:border-white/[0.05]">
+            <tr>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Crypto</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Prix (USDT)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            @for (p of prix(); track p.symbole) {
+              <tr
+                (click)="choisir(p.symbole)"
+                class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.03]"
+                [class]="p.symbole === symbole ? 'bg-brand-50 dark:bg-brand-500/10' : ''"
+              >
+                <td class="px-5 py-3 text-sm font-medium text-gray-800 dark:text-white/90">{{ p.symbole }}</td>
+                <td class="px-5 py-3 text-sm text-gray-500 dark:text-gray-400">{{ p.prix | number: '1.2-8' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="2" class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">Chargement des prix...</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Derniers ordres -->
+    <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+      <div class="px-5 py-4 sm:px-6">
+        <h3 class="text-base font-medium text-gray-800 dark:text-white/90">Mes derniers ordres</h3>
+        <a routerLink="/trading/orderbook" class="text-theme-xs font-medium text-brand-500 hover:underline">Voir tout le carnet d'ordres</a>
+      </div>
+      @if (ordres().length === 0) {
+        <p class="px-5 pb-6 text-sm text-gray-500 dark:text-gray-400 sm:px-6">Aucun ordre pour l'instant.</p>
+      } @else {
+        <div class="max-w-full overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="border-y border-gray-100 dark:border-white/[0.05]">
+              <tr>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Date</th>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Crypto</th>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Sens</th>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Type</th>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Quantité</th>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Prix</th>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Statut</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              @for (o of ordres(); track o.id) {
+                <tr>
+                  <td class="px-5 py-3 text-sm text-gray-500 dark:text-gray-400">{{ o.date | date: 'dd/MM HH:mm:ss' }}</td>
+                  <td class="px-5 py-3 text-sm font-medium text-gray-800 dark:text-white/90">{{ o.symbole }}</td>
+                  <td class="px-5 py-3 text-sm">
+                    <app-badge size="sm" [color]="o.sens === 'ACHAT' ? 'success' : 'error'">{{ o.sens }}</app-badge>
+                  </td>
+                  <td class="px-5 py-3 text-sm text-gray-500 dark:text-gray-400">{{ libelleType[o.type] }}</td>
+                  <td class="px-5 py-3 text-sm text-gray-500 dark:text-gray-400">{{ o.quantite | number: '1.0-8' }}</td>
+                  <td class="px-5 py-3 text-sm text-gray-500 dark:text-gray-400">
+                    @if (o.prixExecution !== null) { {{ o.prixExecution | number: '1.2-8' }} } @else { {{ conditionOrdre(o) }} }
+                  </td>
+                  <td class="px-5 py-3 text-sm">
+                    <app-badge size="sm" [color]="couleurStatut(o.statut)">{{ libelleStatut[o.statut] }}</app-badge>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>

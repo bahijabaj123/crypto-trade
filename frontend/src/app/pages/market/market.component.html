@@ -1,1 +1,150 @@
-<p>market works!</p>
+<div class="p-6 bg-crypto-bg min-h-screen">
+
+  <!-- Header -->
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-crypto-text capitalize">
+        Marché {{ activeMarket === 'stocks' ? 'Actions' : activeMarket === 'commodities' ? 'Matières premières' : activeMarket }}
+      </h1>
+      <p class="text-crypto-text-muted text-sm mt-1">
+        Données en temps réel des actifs disponibles
+      </p>
+    </div>
+    
+    <!-- Indicateur de temps réel (Uniquement pour la Crypto) -->
+    <span *ngIf="activeMarket === 'crypto'" class="px-3 py-1 rounded-full text-xs font-medium bg-crypto-card border border-crypto-border text-crypto-text-muted flex items-center gap-2">
+      <span class="crypto-live-dot"></span> Actualisé
+    </span>
+  </div>
+
+  <!-- FILTRES -->
+  <div class="crypto-card mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Recherche -->
+      <div>
+        <label class="block text-crypto-text-muted text-xs mb-2 uppercase">Recherche (Nom ou Symbole)</label>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Ex: BTC, Apple, EUR..."
+          class="w-full bg-crypto-bg border border-crypto-border rounded-lg px-4 py-2.5 text-crypto-text placeholder-crypto-text-muted focus:outline-none focus:border-crypto-green transition"
+        />
+      </div>
+
+      <!-- Info -->
+      <div class="flex items-end justify-end">
+        <div class="text-crypto-text-muted text-xs">
+          <span class="text-crypto-green font-semibold">{{ filteredTickers.length }}</span> actifs trouvés
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLEAU -->
+  <div class="crypto-card p-0 overflow-hidden">
+    <!-- Loading -->
+    <div *ngIf="loading" class="p-12 text-center">
+      <div class="text-4xl mb-2 animate-spin">⏳</div>
+      <p class="text-crypto-text-muted">Chargement du marché...</p>
+    </div>
+
+    <!-- Erreur -->
+    <div *ngIf="error" class="p-12 text-center">
+      <div class="text-4xl mb-2">⚠️</div>
+      <p class="text-crypto-red">{{ error }}</p>
+    </div>
+
+    <!-- Tableau -->
+    <div *ngIf="!loading && !error" class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="border-b border-crypto-border">
+          <tr class="text-crypto-text-muted text-xs uppercase">
+            <th (click)="onSortChange('symbol')" class="text-left px-4 py-3 cursor-pointer hover:text-crypto-text transition">
+              Actif <span *ngIf="sortBy === 'symbol'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th (click)="onSortChange('price')" class="text-right px-4 py-3 cursor-pointer hover:text-crypto-text transition">
+              Prix <span *ngIf="sortBy === 'price'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th (click)="onSortChange('change')" class="text-right px-4 py-3 cursor-pointer hover:text-crypto-text transition">
+              Variation 24h <span *ngIf="sortBy === 'change'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            
+            <!-- Cacher le volume pour le Forex ET les Actions -->
+            <th *ngIf="activeMarket !== 'forex' && activeMarket !== 'stocks'" (click)="onSortChange('volume')" class="text-right px-4 py-3 cursor-pointer hover:text-crypto-text transition">
+              Volume <span *ngIf="sortBy === 'volume'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            
+            <th class="text-right px-4 py-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let ticker of displayedTickers" class="border-b border-crypto-border/50 hover:bg-crypto-card-hover transition">
+            <!-- Actif -->
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-crypto-green/10 flex items-center justify-center">
+                  <span class="text-crypto-green text-xs font-bold">
+                    {{ ticker.symbol.substring(0, 3) }}
+                  </span>
+                </div>
+                <div>
+                  <div class="text-crypto-text font-medium text-sm" [title]="ticker.symbol">
+                    {{ ticker.name || getBaseFromSymbol(ticker.symbol) }}
+                  </div>
+                  <div class="text-crypto-text-muted text-xs">
+                    {{ ticker.symbol }}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Prix -->
+            <td class="px-4 py-3 text-right">
+              <span class="crypto-price text-crypto-text text-sm">
+                ${{ formatPrice(ticker.price) }}
+              </span>
+            </td>
+
+            <!-- Variation -->
+            <td class="px-4 py-3 text-right">
+              <span [ngClass]="ticker.changePercent >= 0 ? 'crypto-badge-up' : 'crypto-badge-down'" class="text-xs font-medium">
+                {{ ticker.changePercent >= 0 ? '▲' : '▼' }}
+                {{ ticker.changePercent >= 0 ? '+' : '' }}{{ ticker.changePercent.toFixed(2) }}%
+              </span>
+            </td>
+
+            <!-- Volume (Caché pour Forex et Actions) -->
+            <td *ngIf="activeMarket !== 'forex' && activeMarket !== 'stocks'" class="px-4 py-3 text-right">
+              <span class="crypto-price text-crypto-text-muted text-sm">
+                {{ ticker.volume ? formatVolume(ticker.volume) : '-' }}
+              </span>
+            </td>
+
+            <!-- Actions -->
+            <td class="px-4 py-3 text-right">
+              <button class="px-3 py-1.5 text-xs rounded-md bg-crypto-green/10 text-crypto-green hover:bg-crypto-green/20 transition font-medium">
+                Trader
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="!loading && !error && totalPages > 1" class="flex items-center justify-between px-4 py-3 border-t border-crypto-border">
+      <div class="text-crypto-text-muted text-xs">
+        Page {{ currentPage }} sur {{ totalPages }}
+      </div>
+      <div class="flex gap-2">
+        <button (click)="previousPage()" [disabled]="currentPage === 1" class="px-3 py-1.5 text-xs rounded-md bg-crypto-card-hover text-crypto-text-muted hover:text-crypto-text disabled:opacity-30 disabled:cursor-not-allowed transition">
+          ← Précédent
+        </button>
+        <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="px-3 py-1.5 text-xs rounded-md bg-crypto-card-hover text-crypto-text-muted hover:text-crypto-text disabled:opacity-30 disabled:cursor-not-allowed transition">
+          Suivant →
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

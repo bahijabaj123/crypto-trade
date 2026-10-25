@@ -1,0 +1,16 @@
+:host {
+  display: block;
+}
+
+#chartContainer {
+  min-height: 400px;
+}
+
+/* Lightweight Charts attribue un canvas — on s'assure que le fond reste sombre */
+::ng-deep .tv-lightweight-charts {
+  border-radius: 0 0 12px 12px;
+}
+
+::ng-deep .tv-lightweight-charts table {
+  background-color: transparent !important;
+}

@@ -1,12 +1,295 @@
-<div class="crypto-card">
-  <div class="flex items-center gap-2 mb-4">
-    <span class="crypto-live-dot"></span>
-    <span class="text-crypto-text-muted text-sm">BTC/USDT</span>
+<div class="p-6 bg-crypto-bg min-h-screen">
+
+  <!-- Header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-crypto-text">Dashboard Marchés</h1>
+    <p class="text-crypto-text-muted text-sm mt-1">Données en temps réel multi-marchés</p>
   </div>
-  <div class="crypto-price text-3xl text-crypto-text">
-    $67,432.50
+
+  <!-- SÉLECTEUR DE MARCHÉ -->
+  <div class="mb-6 flex flex-wrap gap-2">
+    <button
+      (click)="changeMarket('crypto')"
+      [ngClass]="activeMarket === 'crypto' ? 'bg-crypto-green/10 text-crypto-green border-crypto-green' : 'bg-crypto-card text-crypto-text-muted border-crypto-border hover:text-crypto-text'"
+      class="px-4 py-2 rounded-lg border transition font-medium text-sm">
+      🪙 Crypto
+    </button>
+    <button
+      (click)="changeMarket('stocks')"
+      [ngClass]="activeMarket === 'stocks' ? 'bg-crypto-green/10 text-crypto-green border-crypto-green' : 'bg-crypto-card text-crypto-text-muted border-crypto-border hover:text-crypto-text'"
+      class="px-4 py-2 rounded-lg border transition font-medium text-sm">
+      📈 Actions
+    </button>
+    <button
+      (click)="changeMarket('forex')"
+      [ngClass]="activeMarket === 'forex' ? 'bg-crypto-green/10 text-crypto-green border-crypto-green' : 'bg-crypto-card text-crypto-text-muted border-crypto-border hover:text-crypto-text'"
+      class="px-4 py-2 rounded-lg border transition font-medium text-sm">
+      💱 Forex
+    </button>
+    <button
+      (click)="changeMarket('commodities')"
+      [ngClass]="activeMarket === 'commodities' ? 'bg-crypto-green/10 text-crypto-green border-crypto-green' : 'bg-crypto-card text-crypto-text-muted border-crypto-border hover:text-crypto-text'"
+      class="px-4 py-2 rounded-lg border transition font-medium text-sm">
+      🛢️ Matières premières
+    </button>
   </div>
-  <div class="crypto-badge-up mt-2">
-    ▲ +2.34%
+
+  <!-- NOTIFICATIONS -->
+  <div class="fixed top-20 right-6 z-50 space-y-2 max-w-sm">
+    <div
+      *ngFor="let alert of alerts"
+      [ngClass]="{
+        'bg-crypto-green/10 border-crypto-green text-crypto-green': alert.type === 'success',
+        'bg-crypto-red/10 border-crypto-red text-crypto-red': alert.type === 'danger',
+        'bg-crypto-yellow/10 border-crypto-yellow text-crypto-yellow': alert.type === 'warning',
+        'bg-crypto-blue/10 border-crypto-blue text-crypto-blue': alert.type === 'info'
+      }"
+      class="px-4 py-3 rounded-lg border backdrop-blur-sm animate-fadeIn">
+      <div class="text-sm font-medium">{{ alert.message }}</div>
+    </div>
+  </div>
+
+  <!-- 1. CARTES DE TICKERS -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+    <div
+      *ngFor="let ticker of tickers"
+      class="crypto-card cursor-pointer transition-all"
+      [class.ring-2]="ticker.symbol === selectedSymbol"
+      [class.ring-crypto-green]="ticker.symbol === selectedSymbol"
+      (click)="selectSymbol(ticker.symbol)">
+      
+      <div class="flex items-center justify-between mb-3">
+        <!-- Nom lisible (ex: Or (Gold)) avec le code en infobulle -->
+        <span class="text-crypto-text font-medium" [title]="ticker.symbol">
+          {{ ticker.name || ticker.symbol }}
+        </span>
+        <span class="crypto-live-dot"></span>
+      </div>
+
+      <div class="crypto-price text-2xl text-crypto-text mb-2">
+        ${{ formatPrice(ticker.price) }}
+      </div>
+
+      <!-- Sparkline -->
+      <svg
+        *ngIf="watchlistSparklines[ticker.symbol]"
+        viewBox="0 0 100 30"
+        class="w-full h-8 mb-2"
+        preserveAspectRatio="none">
+        <path
+          [attr.d]="getSparklinePath(ticker.symbol)"
+          [attr.stroke]="getSparklineColor(ticker.symbol)"
+          fill="none"
+          stroke-width="1.5"
+          vector-effect="non-scaling-stroke" />
+      </svg>
+
+      <div
+        class="text-sm font-medium"
+        [ngClass]="ticker.changePercent >= 0 ? 'text-crypto-green' : 'text-crypto-red'">
+        {{ ticker.changePercent >= 0 ? '▲' : '▼' }}
+        {{ ticker.changePercent >= 0 ? '+' : '' }}{{ ticker.changePercent.toFixed(2) }}%
+      </div>
+    </div>
+  </div>
+
+ <!-- 2. POULS DU MARCHÉ (Analyse) -->
+<div class="crypto-card mb-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div>
+      <h2 class="text-lg font-semibold text-crypto-text mb-4">Pouls du marché</h2>
+      <div class="flex items-center gap-6">
+        <!-- Jauge -->
+        <div class="relative w-32 h-32">
+          <svg viewBox="0 0 100 100" class="transform -rotate-90">
+            <circle cx="50" cy="50" r="40" stroke="#2B3139" stroke-width="8" fill="none"/>
+            <circle
+              cx="50" cy="50" r="40"
+              [attr.stroke]="marketPulse >= 50 ? '#0ECB81' : '#F6465D'"
+              stroke-width="8"
+              fill="none"
+              stroke-linecap="round"
+              [attr.stroke-dasharray]="`${(marketPulse / 100) * 251} 251`" />
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="text-3xl font-bold" [ngClass]="getPulseColor()">{{ marketPulse }}</span>
+            <span class="text-xs text-crypto-text-muted">{{ getPulseLabel() }}</span>
+          </div>
+        </div>
+
+        <!-- Décomposition XAI avec infobulles -->
+        <div class="flex-1 space-y-3 text-sm">
+          <div class="flex justify-between cursor-help group" title="Mesure l'ampleur des mouvements de prix. Une volatilité élevée indique un marché nerveux.">
+            <span class="text-crypto-text-muted border-b border-dotted border-crypto-text-muted group-hover:text-crypto-text transition">Volatilité</span>
+            <span class="text-crypto-text">{{ marketPulseBreakdown.volatility }}%</span>
+          </div>
+          <div class="flex justify-between cursor-help group" title="Pourcentage d'actifs en hausse. Si 8 actifs sur 10 montent, la largeur est de 80%.">
+            <span class="text-crypto-text-muted border-b border-dotted border-crypto-text-muted group-hover:text-crypto-text transition">Largeur (Breadth)</span>
+            <span class="text-crypto-text">{{ marketPulseBreakdown.breadth }}%</span>
+          </div>
+          <div class="flex justify-between cursor-help group" title="Force de la tendance de l'actif principal (BTC ou Action). Basé sur la variation et la moyenne mobile.">
+            <span class="text-crypto-text-muted border-b border-dotted border-crypto-text-muted group-hover:text-crypto-text transition">Momentum</span>
+            <span class="text-crypto-text">{{ marketPulseBreakdown.momentum }}%</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Formule mathématique -->
+      <div class="mt-4 pt-3 border-t border-crypto-border">
+        <p class="text-[10px] text-crypto-text-muted italic">
+          * Formule de calcul : (Volatilité × 30%) + (Largeur × 30%) + (Momentum × 30%) + (Volume × 10%)
+        </p>
+      </div>
+    </div>
+
+    <div class="flex flex-col justify-center">
+      <p class="text-crypto-text-muted text-sm mb-2">Interprétation algorithmique :</p>
+      <p class="text-crypto-text leading-relaxed">
+        Le marché est actuellement en phase de <span class="font-semibold" [ngClass]="getPulseColor()">{{ getPulseLabel().toLowerCase() }}</span>.
+        <span *ngIf="marketPulse >= 70">Les acheteurs dominent (surachat), attention au risque de correction brutale.</span>
+        <span *ngIf="marketPulse <= 30">Les vendeurs dominent (survente), un rebond technique est possible.</span>
+        <span *ngIf="marketPulse > 30 && marketPulse < 70">Le marché est équilibré, il est conseillé d'attendre un signal de cassure clair.</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+  <!-- 3. HEATMAP DU MARCHÉ -->
+  <div class="crypto-card mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h2 class="text-lg font-semibold text-crypto-text">Heatmap du marché</h2>
+        <p class="text-crypto-text-muted text-xs mt-1">Taille = volume · Couleur = variation 24h</p>
+      </div>
+      <div class="flex items-center gap-3 text-xs">
+        <div class="flex items-center gap-1">
+          <span class="w-3 h-3 rounded" style="background-color: #0ECB81;"></span>
+          <span class="text-crypto-text-muted">Hausse</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="w-3 h-3 rounded" style="background-color: #F6465D;"></span>
+          <span class="text-crypto-text-muted">Baisse</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <div
+        *ngFor="let ticker of tickers"
+        [style.background-color]="getHeatmapColor(ticker.changePercent)"
+        [style.opacity]="getHeatmapOpacity(ticker.volume)"
+        [style.grid-column]="'span ' + getHeatmapSpan(ticker)"
+        (click)="selectSymbol(ticker.symbol)"
+        class="rounded-lg p-4 cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:opacity-100"
+        [class.ring-2]="ticker.symbol === selectedSymbol"
+        [class.ring-white]="ticker.symbol === selectedSymbol">
+        <div class="flex flex-col h-full justify-between min-h-[80px]">
+          <div>
+            <!-- Nom lisible dans la Heatmap -->
+            <div class="text-white font-bold text-sm">
+              {{ ticker.name || ticker.symbol.replace('USDT', '') }}
+            </div>
+            <div class="text-white/90 text-xs mt-0.5">
+              ${{ formatPrice(ticker.price) }}
+            </div>
+          </div>
+          <div class="text-white font-semibold text-sm mt-2">
+            {{ ticker.changePercent >= 0 ? '+' : '' }}{{ ticker.changePercent.toFixed(2) }}%
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+ <!-- 4. GRAPHIQUE + TRANSACTIONS -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+  <div class="xl:col-span-2 crypto-card">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <!-- Titre du graphique avec nom lisible -->
+        <h2 class="text-lg font-semibold text-crypto-text">
+          {{ getCurrentAssetName() }}
+        </h2>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="crypto-price text-2xl text-crypto-text">
+            ${{ candles.length > 0 ? formatPrice(candles[candles.length - 1].close) : '---' }}
+          </span>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button (click)="changeInterval('1h')" [ngClass]="selectedInterval === '1h' ? 'bg-crypto-green/10 text-crypto-green' : 'bg-crypto-card-hover text-crypto-text-muted hover:text-crypto-text'" class="px-3 py-1.5 text-xs rounded-md transition">1H</button>
+        <button (click)="changeInterval('4h')" [ngClass]="selectedInterval === '4h' ? 'bg-crypto-green/10 text-crypto-green' : 'bg-crypto-card-hover text-crypto-text-muted hover:text-crypto-text'" class="px-3 py-1.5 text-xs rounded-md transition">4H</button>
+        <button (click)="changeInterval('1d')" [ngClass]="selectedInterval === '1d' ? 'bg-crypto-green/10 text-crypto-green' : 'bg-crypto-card-hover text-crypto-text-muted hover:text-crypto-text'" class="px-3 py-1.5 text-xs rounded-md transition">1D</button>
+        <button (click)="changeInterval('1w')" [ngClass]="selectedInterval === '1w' ? 'bg-crypto-green/10 text-crypto-green' : 'bg-crypto-card-hover text-crypto-text-muted hover:text-crypto-text'" class="px-3 py-1.5 text-xs rounded-md transition">1S</button>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ENCART XAI : POURQUOI ÇA BOUGE ? -->
+    <!-- ============================================================ -->
+    <div class="mb-4 p-3 rounded-lg bg-crypto-bg border border-crypto-border flex items-start gap-3 text-sm">
+      <div class="text-2xl mt-0.5">🧠</div>
+      <div class="flex-1">
+        <div class="font-semibold text-crypto-text mb-1 flex items-center gap-2">
+          Pourquoi ça bouge ? 
+          <span class="text-[10px] bg-crypto-purple/20 text-crypto-purple px-1.5 py-0.5 rounded uppercase">IA Explicable</span>
+        </div>
+        <p class="text-crypto-text-muted leading-relaxed">
+          {{ getXaiExplanation().text }}
+        </p>
+        
+        <!-- Barres de décomposition XAI -->
+        <div class="mt-3 space-y-2">
+          <div class="flex items-center gap-2 text-xs">
+            <span class="w-24 text-crypto-text-muted">Tendance Marché</span>
+            <div class="flex-1 h-2 bg-crypto-card rounded-full overflow-hidden">
+              <div class="h-full bg-crypto-blue rounded-full" [style.width.%]="getXaiExplanation().marketImpact"></div>
+            </div>
+            <span class="w-8 text-right font-medium text-crypto-blue">{{ getXaiExplanation().marketImpact }}%</span>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <span class="w-24 text-crypto-text-muted">Spécifique Actif</span>
+            <div class="flex-1 h-2 bg-crypto-card rounded-full overflow-hidden">
+              <div class="h-full rounded-full" 
+                   [ngClass]="getXaiExplanation().isPositive ? 'bg-crypto-green' : 'bg-crypto-red'"
+                   [style.width.%]="getXaiExplanation().specificImpact"></div>
+            </div>
+            <span class="w-8 text-right font-medium" 
+                  [ngClass]="getXaiExplanation().isPositive ? 'text-crypto-green' : 'text-crypto-red'">
+              {{ getXaiExplanation().specificImpact }}%
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Le graphique -->
+    <app-candle-chart
+      [candles]="candles"
+      [symbol]="selectedSymbol"
+      [interval]="selectedInterval">
+    </app-candle-chart>
+  </div>
+
+  <!-- TRANSACTIONS -->
+  <div class="crypto-card">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-crypto-text">Transactions</h2>
+      <span class="crypto-live-dot"></span>
+    </div>
+
+    <div class="space-y-1 max-h-80 overflow-y-auto custom-scrollbar">
+      <div *ngIf="recentTrades.length === 0" class="text-crypto-text-muted text-xs text-center py-4">
+        Transactions disponibles uniquement pour la Crypto.
+      </div>
+      <div *ngFor="let trade of recentTrades" class="flex items-center justify-between p-2 rounded bg-crypto-bg text-xs">
+        <span class="crypto-price text-crypto-text">${{ formatPrice(trade.price) }}</span>
+        <span class="crypto-price text-crypto-text-muted">{{ trade.quantity.toFixed(4) }}</span>
+        <span class="font-medium" [ngClass]="trade.isBuyer ? 'text-crypto-green' : 'text-crypto-red'">
+          {{ trade.isBuyer ? 'BUY' : 'SELL' }}
+        </span>
+        <span class="text-crypto-text-muted">{{ trade.time | date:'HH:mm:ss' }}</span>
+      </div>
+    </div>
   </div>
 </div>

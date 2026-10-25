@@ -25,18 +25,21 @@ export const routes: Routes = [
     component: AppLayoutComponent,
     children: [
       // ============================================================
-      // PAGES ORIGINALES DE TAILADMIN (base de code conservée)
+      // REDIRECTION PAR DÉFAUT
       // ============================================================
       {
         path: '',
-        component: EcommerceComponent,
+        redirectTo: 'dashboard',
         pathMatch: 'full',
-        title: 'Dashboard Ecommerce | TailAdmin',
       },
+
+      // ============================================================
+      // PAGES ORIGINALES DE TAILADMIN (base de code conservée)
+      // ============================================================
       {
         path: 'calendar',
         component: CalenderComponent,
-        title: 'Calendrier | TailAdmin',
+        title: 'Calendrier | Crypto Simulator',
       },
       {
         path: 'profile',
@@ -46,83 +49,91 @@ export const routes: Routes = [
       {
         path: 'form-elements',
         component: FormElementsComponent,
-        title: 'Form Elements | TailAdmin',
+        title: 'Form Elements | Crypto Simulator',
       },
       {
         path: 'basic-tables',
         component: BasicTablesComponent,
-        title: 'Tables | TailAdmin',
+        title: 'Tables | Crypto Simulator',
       },
       {
         path: 'blank',
         component: BlankComponent,
-        title: 'Blank | TailAdmin',
+        title: 'Blank | Crypto Simulator',
       },
       {
         path: 'invoice',
         component: InvoicesComponent,
-        title: 'Factures | TailAdmin',
+        title: 'Factures | Crypto Simulator',
       },
       {
         path: 'line-chart',
         component: LineChartComponent,
-        title: 'Line Chart | TailAdmin',
+        title: 'Line Chart | Crypto Simulator',
       },
       {
         path: 'bar-chart',
         component: BarChartComponent,
-        title: 'Bar Chart | TailAdmin',
+        title: 'Bar Chart | Crypto Simulator',
       },
       {
         path: 'alerts',
         component: AlertsComponent,
-        title: 'Alerts | TailAdmin',
+        title: 'Alerts | Crypto Simulator',
       },
       {
         path: 'avatars',
         component: AvatarElementComponent,
-        title: 'Avatars | TailAdmin',
+        title: 'Avatars | Crypto Simulator',
       },
       {
         path: 'badge',
         component: BadgesComponent,
-        title: 'Badges | TailAdmin',
+        title: 'Badges | Crypto Simulator',
       },
       {
         path: 'buttons',
         component: ButtonsComponent,
-        title: 'Buttons | TailAdmin',
+        title: 'Buttons | Crypto Simulator',
       },
       {
         path: 'images',
         component: ImagesComponent,
-        title: 'Images | TailAdmin',
+        title: 'Images | Crypto Simulator',
       },
       {
         path: 'videos',
         component: VideosComponent,
-        title: 'Videos | TailAdmin',
+        title: 'Videos | Crypto Simulator',
       },
 
       // ============================================================
-      // VOS PAGES CRYPTO (à développer progressivement)
+      // VOS PAGES MULTI-MARCHÉS
       // ============================================================
 
-      // ---------- DASHBOARD CRYPTO ----------
+      // ---------- DASHBOARD ----------
       {
         path: 'dashboard',
         loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
-        title: 'Dashboard Crypto | Crypto Simulator',
+        title: 'Dashboard Marchés | Crypto Simulator',
       },
 
-      // ---------- MARCHÉ ----------
+      // ---------- MARCHÉ (Routes dynamiques) ----------
+      // Si l'utilisateur tape juste /market, on le redirige vers /market/crypto
       {
         path: 'market',
-        loadComponent: () => import('./pages/market/market.component').then(m => m.MarketComponent),
-        title: 'Marché Crypto | Crypto Simulator',
+        redirectTo: 'market/crypto',
+        pathMatch: 'full',
       },
+      // Route dynamique qui accepte : /market/crypto, /market/stocks, /market/forex, /market/commodities
       {
-        path: 'market/detail',
+        path: 'market/:type',
+        loadComponent: () => import('./pages/market/market.component').then(m => m.MarketComponent),
+        title: 'Marché | Crypto Simulator',
+      },
+      // Détail d'un actif (ex: /market/detail/BTCUSDT)
+      {
+        path: 'market/detail/:symbol',
         loadComponent: () => import('./pages/market-detail/market-detail.component').then(m => m.MarketDetailComponent),
         title: 'Détail Actif | Crypto Simulator',
       },
@@ -266,7 +277,7 @@ export const routes: Routes = [
   },
 
   // ============================================================
-  // PAGES D'AUTHENTIFICATION
+  // PAGES D'AUTHENTIFICATION (hors layout)
   // ============================================================
   {
     path: 'signin',
@@ -280,7 +291,7 @@ export const routes: Routes = [
   },
 
   // ============================================================
-  // PAGE 404
+  // PAGE 404 (Wildcard - DOIT ÊTRE EN DERNIER)
   // ============================================================
   {
     path: '**',

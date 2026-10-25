@@ -12,10 +12,13 @@ Le projet intègre une couche d'**Intelligence Artificielle** avancée pour l'an
 
 | Membre | Rôle |
 |--------|------|
-| **[Nom 1]** | Chef de projet / Frontend |
-| **[Nom 2]** | Backend |
-| **[Nom 3]** | IA \& Data |
-| **[Nom 4]** | Stress Testing \& Actuariat |
+| **[Bahija Ben abdeljalil]** |  |
+| **[Laabidi sarra]** | |
+| **[Ben atig rami]** |  |
+| **[Sfar Aziz]** |  |
+| **[Ismail linda]** |  |
+| **[Jeridi Hassen]** |  |
+
 
 *Projet réalisé dans le cadre du **PIF (Projet Informatique et Finance)** — Année universitaire **2025-2026**.*
 

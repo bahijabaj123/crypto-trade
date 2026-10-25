@@ -6,6 +6,7 @@ import { BackdropComponent } from '../backdrop/backdrop.component';
 import { RouterModule } from '@angular/router';
 import { AppHeaderComponent } from '../app-header/app-header.component';
 import { CryptoTickerComponent } from '../../components/crypto-ticker/crypto-ticker.component';
+import { OrderToastsComponent } from '../../components/order-toasts/order-toasts.component';
 
 
 @Component({
@@ -16,6 +17,7 @@ import { CryptoTickerComponent } from '../../components/crypto-ticker/crypto-tic
     AppHeaderComponent,
     AppSidebarComponent,
      CryptoTickerComponent ,
+    OrderToastsComponent,
     BackdropComponent
   ],
   templateUrl: './app-layout.component.html',

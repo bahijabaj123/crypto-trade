@@ -1,1 +1,287 @@
-<p>orderbook works!</p>
+<app-page-breadcrumb pageTitle="Carnet d'ordres" />
+
+@if (erreur(); as message) {
+  <div class="mb-6 rounded-xl border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
+    {{ message }}
+  </div>
+}
+
+<!-- ================= 1. Carnet du marché ================= -->
+<div class="mb-6 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h3 class="text-base font-medium text-gray-800 dark:text-white/90">Carnet du marché (Binance)</h3>
+      <p class="text-theme-xs text-gray-500 dark:text-gray-400">
+        Les <strong>acheteurs</strong> disent à quel prix ils veulent acheter, les <strong>vendeurs</strong> à quel prix ils veulent vendre.
+        Actualisé toutes les 2 secondes.
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      @for (c of cryptos; track c) {
+        <button
+          type="button"
+          (click)="choisirSymbole(c)"
+          class="rounded-lg border px-3 py-1.5 text-sm font-medium transition"
+          [class]="symboleCarnet() === c ? 'border-brand-500 text-brand-500' : 'border-gray-300 text-gray-600 dark:border-gray-700 dark:text-gray-400'"
+        >
+          {{ c.replace('USDT', '') }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (erreurCarnet(); as m) {
+    <div class="mt-4 rounded-xl border border-error-200 bg-error-50 p-3 text-sm text-error-700 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">{{ m }}</div>
+  }
+
+  @if (carnet(); as c) {
+    <!-- Chiffres clés -->
+    <div class="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div class="rounded-xl bg-gray-50 p-3 dark:bg-white/[0.03]">
+        <span class="text-theme-xs text-gray-500 dark:text-gray-400">Meilleur prix d'achat</span>
+        <p class="mt-1 text-base font-bold text-success-600 dark:text-success-500">{{ c.meilleurAchat | number: '1.2-8' }}</p>
+      </div>
+      <div class="rounded-xl bg-gray-50 p-3 dark:bg-white/[0.03]">
+        <span class="text-theme-xs text-gray-500 dark:text-gray-400">Meilleur prix de vente</span>
+        <p class="mt-1 text-base font-bold text-error-600 dark:text-error-500">{{ c.meilleurVente | number: '1.2-8' }}</p>
+      </div>
+      <div class="rounded-xl bg-gray-50 p-3 dark:bg-white/[0.03]">
+        <span class="text-theme-xs text-gray-500 dark:text-gray-400">Écart (spread)</span>
+        <p class="mt-1 text-base font-bold text-gray-800 dark:text-white/90">
+          {{ c.ecart | number: '1.2-8' }} <span class="text-theme-xs font-medium text-gray-500">({{ c.ecartPct | number: '1.3-3' }} %)</span>
+        </p>
+      </div>
+      <div class="rounded-xl bg-gray-50 p-3 dark:bg-white/[0.03]">
+        <span class="text-theme-xs text-gray-500 dark:text-gray-400">Prix milieu</span>
+        <p class="mt-1 text-base font-bold text-gray-800 dark:text-white/90">{{ c.prixMilieu | number: '1.2-8' }}</p>
+      </div>
+    </div>
+
+    <!-- Pression acheteurs / vendeurs -->
+    <div class="mt-4">
+      <div class="flex justify-between text-theme-xs font-medium">
+        <span class="text-success-600 dark:text-success-500">Acheteurs {{ c.pressionAchatPct | number: '1.0-0' }} %</span>
+        <span class="text-error-600 dark:text-error-500">Vendeurs {{ 100 - c.pressionAchatPct | number: '1.0-0' }} %</span>
+      </div>
+      <div class="mt-1 flex h-2.5 w-full overflow-hidden rounded-full bg-error-500">
+        <div class="h-full bg-success-500 transition-all" [style.width.%]="c.pressionAchatPct"></div>
+      </div>
+      <p class="mt-1 text-theme-xs text-gray-500 dark:text-gray-400">
+        @if (c.pressionAchatPct > 55) {
+          Plus d'acheteurs que de vendeurs dans les 10 meilleurs niveaux : le prix a plutôt tendance à monter.
+        } @else if (c.pressionAchatPct < 45) {
+          Plus de vendeurs que d'acheteurs dans les 10 meilleurs niveaux : le prix a plutôt tendance à baisser.
+        } @else {
+          Acheteurs et vendeurs sont équilibrés.
+        }
+      </p>
+    </div>
+
+    <!-- Les deux listes -->
+    <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <!-- Acheteurs -->
+      <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
+        <div class="bg-success-50 px-4 py-2 text-sm font-semibold text-success-700 dark:bg-success-500/15 dark:text-success-500">Acheteurs</div>
+        <table class="min-w-full">
+          <thead>
+            <tr class="text-theme-xs text-gray-500 dark:text-gray-400">
+              <th class="px-4 py-2 text-start font-medium">Prix (USDT)</th>
+              <th class="px-4 py-2 text-end font-medium">Quantité</th>
+              <th class="px-4 py-2 text-end font-medium">Cumul</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (n of c.achats; track n.prix) {
+              <tr class="relative">
+                <td class="relative px-4 py-1.5 text-sm font-medium text-success-600 dark:text-success-500">
+                  <div class="absolute inset-y-0 start-0 bg-success-500/15" [style.width.%]="largeurBarre(n.cumul)"></div>
+                  <span class="relative">{{ n.prix | number: '1.2-8' }}</span>
+                </td>
+                <td class="px-4 py-1.5 text-end text-sm text-gray-700 dark:text-gray-300">{{ n.quantite | number: '1.0-5' }}</td>
+                <td class="px-4 py-1.5 text-end text-sm text-gray-500 dark:text-gray-400">{{ n.cumul | number: '1.0-5' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Vendeurs -->
+      <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
+        <div class="bg-error-50 px-4 py-2 text-sm font-semibold text-error-700 dark:bg-error-500/15 dark:text-error-400">Vendeurs</div>
+        <table class="min-w-full">
+          <thead>
+            <tr class="text-theme-xs text-gray-500 dark:text-gray-400">
+              <th class="px-4 py-2 text-start font-medium">Prix (USDT)</th>
+              <th class="px-4 py-2 text-end font-medium">Quantité</th>
+              <th class="px-4 py-2 text-end font-medium">Cumul</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (n of ventesAffichees(); track n.prix) {
+              <tr class="relative">
+                <td class="relative px-4 py-1.5 text-sm font-medium text-error-600 dark:text-error-500">
+                  <div class="absolute inset-y-0 start-0 bg-error-500/15" [style.width.%]="largeurBarre(n.cumul)"></div>
+                  <span class="relative">{{ n.prix | number: '1.2-8' }}</span>
+                </td>
+                <td class="px-4 py-1.5 text-end text-sm text-gray-700 dark:text-gray-300">{{ n.quantite | number: '1.0-5' }}</td>
+                <td class="px-4 py-1.5 text-end text-sm text-gray-500 dark:text-gray-400">{{ n.cumul | number: '1.0-5' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Mes ordres en attente sur cette crypto -->
+    @if (mesOrdresSurCarnet().length > 0) {
+      <div class="mt-4 rounded-xl border border-brand-200 bg-brand-50 p-4 text-sm text-gray-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-gray-300">
+        <p class="mb-2 font-semibold">Mes ordres en attente sur {{ c.symbole }}</p>
+        <ul class="space-y-1">
+          @for (m of mesOrdresSurCarnet(); track m.ordre.id) {
+            <li>
+              #{{ m.ordre.id }} · {{ libelleType[m.ordre.type] }} {{ m.ordre.sens === 'ACHAT' ? 'achat' : 'vente' }}
+              {{ m.ordre.quantite | number: '1.0-8' }} à {{ m.ordre.prixDeclenchement | number: '1.2-8' }}
+              @if (m.distancePct !== null) {
+                <span class="text-gray-500 dark:text-gray-400">
+                  (à {{ m.distancePct | number: '1.2-2' }} % du prix actuel)
+                </span>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  } @else if (!erreurCarnet()) {
+    <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">Chargement du carnet...</p>
+  }
+</div>
+
+<!-- ================= 2. Mes ordres ================= -->
+<div class="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
+  <div class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+    <span class="text-theme-xs text-gray-500 dark:text-gray-400">Ordres au total</span>
+    <p class="mt-1 text-lg font-bold text-gray-800 dark:text-white/90">{{ stats().total }}</p>
+  </div>
+  <div class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+    <span class="text-theme-xs text-gray-500 dark:text-gray-400">En attente</span>
+    <p class="mt-1 text-lg font-bold text-warning-600 dark:text-orange-400">{{ stats().enAttente }}</p>
+  </div>
+  <div class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+    <span class="text-theme-xs text-gray-500 dark:text-gray-400">Exécutés</span>
+    <p class="mt-1 text-lg font-bold text-success-600 dark:text-success-500">{{ stats().executes }}</p>
+  </div>
+  <div class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+    <span class="text-theme-xs text-gray-500 dark:text-gray-400">Annulés / rejetés</span>
+    <p class="mt-1 text-lg font-bold text-gray-800 dark:text-white/90">{{ stats().annulesRejetes }}</p>
+  </div>
+  <div class="col-span-2 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03] lg:col-span-1">
+    <span class="text-theme-xs text-gray-500 dark:text-gray-400">Volume exécuté</span>
+    <p class="mt-1 text-lg font-bold text-gray-800 dark:text-white/90">{{ stats().volumeExecute | number: '1.0-0' }} <span class="text-theme-xs font-medium text-gray-500">USDT</span></p>
+  </div>
+</div>
+
+<div class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+  <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
+    <div>
+      <h3 class="text-base font-medium text-gray-800 dark:text-white/90">Mes ordres ({{ ordresFiltres().length }})</h3>
+      <p class="text-theme-xs text-gray-500 dark:text-gray-400">
+        {{ nbEnAttente() }} ordre(s) en attente. Le serveur surveille les prix toutes les 5 secondes et exécute
+        l'ordre dès que son seuil est atteint.
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <select
+        aria-label="Filtrer par crypto"
+        (change)="filtreCrypto.set($any($event.target).value)"
+        class="h-10 rounded-lg border border-gray-300 bg-transparent px-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400"
+      >
+        <option value="TOUTES">Toutes les cryptos</option>
+        @for (c of cryptosDesOrdres(); track c) {
+          <option [value]="c">{{ c }}</option>
+        }
+      </select>
+      <button
+        type="button"
+        (click)="exporterCsv()"
+        [disabled]="ordresFiltres().length === 0"
+        class="h-10 rounded-lg border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.03]"
+      >
+        Exporter (CSV)
+      </button>
+      @for (f of filtres; track f.code) {
+        <button
+          type="button"
+          (click)="filtre.set(f.code)"
+          class="rounded-lg border px-3 py-2 text-sm font-medium transition"
+          [class]="filtre() === f.code ? 'border-brand-500 text-brand-500' : 'border-gray-300 text-gray-600 dark:border-gray-700 dark:text-gray-400'"
+        >
+          {{ f.nom }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (chargement()) {
+    <p class="px-5 pb-6 text-sm text-gray-500 dark:text-gray-400 sm:px-6">Chargement...</p>
+  } @else if (ordresFiltres().length === 0) {
+    <p class="px-5 pb-6 text-sm text-gray-500 dark:text-gray-400 sm:px-6">
+      Aucun ordre dans cette catégorie.
+      <a routerLink="/trading" class="font-medium text-brand-500 hover:underline">Passer un ordre</a>
+    </p>
+  } @else {
+    <div class="max-w-full overflow-x-auto">
+      <table class="min-w-full">
+        <thead class="border-y border-gray-100 dark:border-white/[0.05]">
+          <tr>
+            <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">N°</th>
+            <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Date</th>
+            <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Crypto</th>
+            <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Sens</th>
+            <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Type</th>
+            <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Quantité</th>
+            <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Condition</th>
+            <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Prix d'exécution</th>
+            <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Statut</th>
+            <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-white/[0.05]">
+          @for (o of ordresFiltres(); track o.id) {
+            <tr>
+              <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">#{{ o.id }}</td>
+              <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ o.date | date: 'dd/MM HH:mm:ss' }}</td>
+              <td class="px-5 py-4 text-sm font-medium text-gray-800 dark:text-white/90">{{ o.symbole }}</td>
+              <td class="px-5 py-4 text-sm">
+                <app-badge size="sm" [color]="o.sens === 'ACHAT' ? 'success' : 'error'">{{ o.sens }}</app-badge>
+              </td>
+              <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ libelleType[o.type] }}</td>
+              <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ o.quantite | number: '1.0-8' }}</td>
+              <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ conditionOrdre(o) }}</td>
+              <td class="px-5 py-4 text-sm text-gray-800 dark:text-white/90">
+                @if (o.prixExecution !== null) { {{ o.prixExecution | number: '1.2-8' }} } @else { - }
+              </td>
+              <td class="px-5 py-4 text-sm">
+                <app-badge size="sm" [color]="couleurStatut(o.statut)">{{ libelleStatut[o.statut] }}</app-badge>
+                @if (o.motif) {
+                  <p class="mt-1 max-w-xs text-theme-xs text-error-600 dark:text-error-400">{{ o.motif }}</p>
+                }
+              </td>
+              <td class="px-5 py-4 text-sm">
+                @if (o.statut === 'EN_ATTENTE') {
+                  <button
+                    type="button"
+                    (click)="annuler(o)"
+                    [disabled]="annulationEnCours() === o.id"
+                    class="rounded-lg border border-error-300 px-3 py-1.5 text-sm font-medium text-error-600 hover:bg-error-50 disabled:opacity-50 dark:border-error-500/40 dark:text-error-400 dark:hover:bg-error-500/10"
+                  >
+                    Annuler
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

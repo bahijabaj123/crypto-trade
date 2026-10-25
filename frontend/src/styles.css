@@ -1,11 +1,11 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap") layer(base);
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap") layer(base);
 @import "tailwindcss";
 @import "swiper/css/bundle";
 @import "flatpickr/dist/flatpickr.css";
 @import "fullcalendar/skeleton.css";
 @import "fullcalendar/themes/classic/theme.css";
 @import "fullcalendar/themes/classic/palette.css";
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap") layer(base);
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap") layer(base);
 
 @custom-variant dark (&:is(.dark *));
 

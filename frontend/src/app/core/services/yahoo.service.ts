@@ -54,7 +54,7 @@ export class YahooService {
 
   /**
    * Récupère l'historique (pour le graphique)
-   */
+  
   getHistory(symbol: string, interval: string = '1h'): Observable<CandleData[]> {
     let yInterval = '1h';
     if (interval === '1d') yInterval = '1d';
@@ -84,6 +84,79 @@ export class YahooService {
         return of([]);
       })
     );
+  }*/
+
+      /**
+   * Récupère l'historique (pour le graphique) — compatible Actions + Commodities
+   */
+  getHistory(symbol: string, interval: string = '1h'): Observable<CandleData[]> {
+    // Yahoo Finance accepte : 1m, 5m, 15m, 30m, 1h, 1d, 1wk
+    // Mais impose un range max selon l'intervalle :
+    //   1m  → range max 7d
+    //   5m/15m → range max 60d
+    //   1h  → range max 730d
+    //   1d  → range illimité
+    const config: { [key: string]: { yInterval: string; range: string } } = {
+      '5m':  { yInterval: '5m',  range: '5d'  },
+      '15m': { yInterval: '15m', range: '1mo' },
+      '1h':  { yInterval: '1h',  range: '1mo' },
+      '4h':  { yInterval: '1h',  range: '3mo' }, // Yahoo n'a pas 4h → on agrège 1h
+      '1d':  { yInterval: '1d',  range: '6mo' },
+      '1w':  { yInterval: '1wk', range: '2y'  },
+    };
+
+    const cfg = config[interval] || config['1h'];
+    const url = `${this.API_BASE}/v8/finance/chart/${symbol}?interval=${cfg.yInterval}&range=${cfg.range}`;
+
+    return this.http.get<any>(url).pipe(
+      map(response => {
+        const result = response.chart?.result?.[0];
+        if (!result || !result.timestamp) return [];
+
+        const timestamps = result.timestamp;
+        const quote = result.indicators.quote[0];
+
+        let candles = timestamps
+          .map((t: number, i: number) => ({
+            time: t * 1000,
+            open: quote.open[i] || 0,
+            high: quote.high[i] || 0,
+            low: quote.low[i] || 0,
+            close: quote.close[i] || 0,
+            volume: quote.volume[i] || 0,
+          }))
+          .filter((c: any) => c.open !== 0);
+
+        // Si on est en '4h', on agrège les bougies 1h en bougies 4h
+        if (interval === '4h') {
+          candles = this.aggregate4h(candles);
+        }
+
+        return candles;
+      }),
+      catchError(err => {
+        console.error(`Erreur Yahoo history ${symbol}:`, err);
+        return of([]);
+      })
+    );
+  }
+
+  /** Agrège des bougies 1h en bougies 4h */
+  private aggregate4h(candles: CandleData[]): CandleData[] {
+    const result: CandleData[] = [];
+    for (let i = 0; i < candles.length; i += 4) {
+      const slice = candles.slice(i, i + 4);
+      if (slice.length === 0) continue;
+      result.push({
+        time: slice[0].time,
+        open: slice[0].open,
+        high: Math.max(...slice.map(c => c.high)),
+        low: Math.min(...slice.map(c => c.low)),
+        close: slice[slice.length - 1].close,
+        volume: slice.reduce((s, c) => s + c.volume, 0),
+      });
+    }
+    return result;
   }
 
     // 1. Pour le Dashboard (seulement 7 actifs pour ne pas surcharger)

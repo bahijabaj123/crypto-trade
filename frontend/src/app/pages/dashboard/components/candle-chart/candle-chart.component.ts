@@ -11,7 +11,7 @@ import {
 import { CandleData } from '../../../../core/models/kline.model';
 
 @Component({
-  selector: 'app-candle-chart',
+  selector: 'app-dashboard-candle-chart', 
   standalone: true,
   imports: [CommonModule],
   templateUrl: './candle-chart.component.html',

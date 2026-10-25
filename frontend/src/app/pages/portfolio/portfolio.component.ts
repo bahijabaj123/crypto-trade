@@ -10,6 +10,12 @@ import { PageBreadcrumbComponent } from '../../shared/components/common/page-bre
 import { AnalyseRisque, PointValeur, PortefeuilleVue, ScenarioChoc } from '../../shared/models/crypto.models';
 import { CryptoApiService, messageErreur } from '../../shared/services/crypto-api.service';
 
+import { SimulatedOrdersService } from '../../core/services/simulated-orders.service';
+import { SimulatedPortfolioService, SimulatedPosition } from '../../core/services/simulated-portfolio.service';
+import { MarketService } from '../../core/services/market.service';
+import { TickerData } from '../../core/models/ticker.model';
+
+
 @Component({
   selector: 'app-portfolio',
   imports: [DecimalPipe, DatePipe, FormsModule, RouterLink, ProjectionChartComponent, PageBreadcrumbComponent],
@@ -17,6 +23,15 @@ import { CryptoApiService, messageErreur } from '../../shared/services/crypto-ap
   styleUrl: './portfolio.component.css',
 })
 export class PortfolioComponent {
+
+    public readonly simPortfolio = inject(SimulatedPortfolioService);
+  public readonly marketService = inject(MarketService);
+  public readonly activeMarket = signal(this.marketService.activeMarket);
+  
+  // Signal pour stocker les prix actuels des actifs simulés
+  public readonly currentPrices = signal<{[symbol: string]: number}>({});
+
+
   private readonly api = inject(CryptoApiService);
 
   readonly portefeuille = signal<PortefeuilleVue | null>(null);
@@ -120,6 +135,16 @@ export class PortfolioComponent {
         this.chargement.set(false);
       },
     });
+
+     this.marketService.activeMarket$.subscribe(m => {
+      this.activeMarket.set(m);
+      this.marketService.getTickers().subscribe(tickers => {
+        const prices: {[sym: string]: number} = {};
+        tickers.forEach(t => prices[t.symbol] = t.price);
+        this.currentPrices.set(prices);
+      });
+    });
+  
   }
 
   /** Lance la simulation de crash avec la valeur du curseur. */

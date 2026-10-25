@@ -12,7 +12,7 @@ import { CandleChartComponent } from './components/candle-chart/candle-chart.com
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, CandleChartComponent],
+  imports: [CommonModule,  CandleChartComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })

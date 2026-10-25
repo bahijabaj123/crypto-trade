@@ -21,7 +21,7 @@ export class MarketService {
     return this.activeMarketSubject.value;
   }
 
- private stockSymbols = [
+  private stockSymbols = [
     'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'NFLX', 
     'AMD', 'INTC', 'JPM', 'V', 'WMT', 'DIS', 'BA', 'CSCO', 'PEP', 'ADBE',
     'CRM', 'ORCL', 'IBM', 'QCOM', 'TXN', 'PYPL', 'NKE', 'MCD', 'KO', 'PFE', 'XOM', 'CVX'
@@ -38,23 +38,19 @@ export class MarketService {
     this.activeMarketSubject.next(market);
   }
 
-    // Ajoute le paramètre "isMarketPage" (par défaut false)
-    getTickers(isMarketPage: boolean = false): Observable<TickerData[]> {
+  getTickers(isMarketPage: boolean = false): Observable<TickerData[]> {
     switch (this.activeMarket) {
       case 'crypto':
-        // Si on est sur la page Marché, on prend plus de cryptos
         const cryptoSymbols = isMarketPage 
           ? this.binanceService.getMarketSymbols() 
           : this.binanceService.getPopularSymbols();
         return this.binanceService.getMultipleTickers(cryptoSymbols);
 
       case 'stocks':
-        // On utilise une méthode légèrement différente pour éviter que Finnhub ne bloque
         return new Observable<TickerData[]>(observer => {
           const results: TickerData[] = [];
           let count = 0;
           
-          // On fait les appels un par un avec un mini-délai (50ms) pour ne pas se faire bloquer
           const fetchStock = (index: number) => {
             if (index >= this.stockSymbols.length) {
               observer.next(results);
@@ -66,13 +62,9 @@ export class MarketService {
             this.finnhubService.getQuote(sym).subscribe(ticker => {
               if (ticker) results.push(ticker);
               count++;
-              
-              // On attend 50ms avant de passer au suivant
               setTimeout(() => fetchStock(index + 1), 50);
             });
           };
-
-          // On lance le premier appel
           fetchStock(0);
         });
 
@@ -93,13 +85,21 @@ export class MarketService {
     }
   }
 
+  /**
+   * Klines (bougies) pour le graphique selon le marché actif.
+   * - Crypto : Binance
+   * - Actions : Finnhub (Twelve Data free ne donne pas les actions US)
+   * - Forex : Twelve Data
+   * - Commodities : Yahoo Finance
+   */
   getKlines(symbol: string, interval: string = '1h'): Observable<CandleData[]> {
     switch (this.activeMarket) {
       case 'crypto':
         return this.binanceService.getKlines(symbol, interval, 200);
 
       case 'stocks':
-        return this.twelveDataService.getTimeSeries(symbol, interval); // Twelve Data est plus fiable pour les actions
+        // Finnhub fournit les candles pour les actions US
+return this.yahooService.getHistory(symbol, interval);
 
       case 'forex':
         return this.twelveDataService.getTimeSeries(symbol, interval);

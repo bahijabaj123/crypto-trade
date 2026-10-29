@@ -1,53 +1,84 @@
-﻿# 🪙 CryptoTrade — Simulateur de Salle de Marché Crypto
+# 🎮 Crypto Trade Simulator - Salle de Marché & Trading Multi-Marchés
 
-## 📖 Description
+## 📖 Description du Projet
 
-**CryptoTrade** est un simulateur de salle de marché dédié aux cryptomonnaies, conçu pour permettre aux débutants et aux traders professionnels de s'exercer à la négociation d'actifs numériques dans un environnement virtuel sécurisé.
+Ce projet est un **simulateur de trading professionnel** qui permet à l'utilisateur de trader sur 4 classes d'actifs (Crypto, Actions, Forex, Matières premières) avec de vraies données de marché.
 
-Le projet intègre une couche d'**Intelligence Artificielle** avancée pour l'analyse, la prédiction et l'aide à la décision, ainsi que des modules d'**Explainable AI (XAI)** et de **Stress Testing bancaire**.
+Il intègre deux modes distincts :
+1. **Le Mode Réel** : Un portefeuille virtuel pour trader avec les données live du marché (via le backend Java).
+2. **Le Mode Simulation Historique (Jeu)** : Un jeu immersif où l'utilisateur revit les plus grands krachs de l'histoire (Covid-19, Subprimes 2008, etc.), avec un chrono en temps réel et un système de recommandation de cours personnalisés ("Coach IA").
 
----
-
-## 👥 Équipe
-
-| Membre | Rôle |
-|--------|------|
-| **[Bahija Ben abdeljalil]** |  |
-| **[Laabidi sarra]** | |
-| **[Ben atig rami]** |  |
-| **[Sfar Aziz]** |  |
-| **[Ismail linda]** |  |
-| **[Jeridi Hassen]** |  |
-
-
-*Projet réalisé dans le cadre du **PIF (Projet Informatique et Finance)** — Année universitaire **2025-2026**.*
+L'application supporte également un **mode Multijoueur** permettant de défier ses amis en temps réel.
 
 ---
 
-## 🏗️ Architecture
+## ✨ Fonctionnalités Principales
 
-\\\
-crypto-trade/
-├── frontend/          # Angular 21 + Tailwind CSS v4
-└── backend/           # Spring Boot (Java) + Python (FastAPI pour l'IA)
-\\\
+### 📊 Dashboard & Marchés
+- **Dashboard multi-marchés** avec Heatmap, Pouls du Marché et IA Explicable (XAI).
+- **Screener avancé** : Recherche par nom/symbole, tri par colonnes (Prix, Variation, Volume).
+- **Page Marché dédiée** pour les 4 classes d'actifs avec colonnes adaptées.
+
+### 💼 Trading & Portefeuille
+- **Trading Hybride** :
+  - Backend Java (Spring Boot) pour la Crypto (vrais ordres, vrais carnet).
+  - Simulation locale (localStorage) pour les Actions, le Forex et les Matières premières.
+- **Portefeuille Unifié** : Affiche en temps réel les positions Crypto ET Multi-Marchés avec calcul du P&L.
+- **Gestion du Risque** : Module dédié Stop-Loss / Take-Profit.
+
+### 📈 Analyse & Risque
+- **Projection Monte-Carlo** : Simulation de 1 000 futurs possibles pour le portefeuille.
+- **Métriques professionnelles** : Sharpe Ratio, VaR (Value at Risk), Drawdown maximal, HHI (diversification).
+- **Simulateur de crash** : Test de résistance du portefeuille.
+
+### 🎮 Jeu de Salle de Marché
+- **Scénarios Historiques** : Covid-19 (Crypto), Subprimes 2008 (Actions), Flash Crash 2010 (Forex), Krach du Pétrole 2020.
+- **Time Player** : Chrono en temps réel avec vitesse ajustable (5, 15, 30, 60 minutes).
+- **Graphiques Multi-Actifs** : Comparaison des actifs avec échelles indépendantes.
+- **Coach IA** : Analyse la performance en fin de partie et recommande un cours personnalisé.
+- **Multijoueur** : Création de salle, code d'invitation, flux d'actions en temps réel, gestion de la déconnexion et podium final.
 
 ---
 
-## 🚀 Installation
+## 🛠️ Stack Technologique
 
 ### Frontend
+- **Angular 18** (Standalone Components, Signals, RxJS)
+- **Tailwind CSS** (Design système, thème sombre "Cyberpunk")
+- **Lightweight-Charts** (Graphiques en chandeliers et courbes professionnels)
+- **TypeScript**
 
-\\\ash
-cd frontend
-npm install
-npm start
-\\\
+### Backend
+- **Spring Boot 3.3.5** (Java 17)
+- **Spring Data JPA** (Base de données H2)
+- **Maven** (Gestionnaire de dépendances)
 
-Application accessible sur \http://localhost:4200\.
+### APIs Externes (Gratuites)
+- **Binance API** (Crypto : prix, klines, carnet d'ordres)
+- **Yahoo Finance** (Actions & Matières premières : prix historiques)
+- **Twelve Data** (Forex & Actions : données historiques)
+- **Finnhub** (Actions : prix temps réel)
 
 ---
+## 👥 Équipe
 
-## 📄 Licence
+| Membre |
+|--------|
+| **[Bahija Ben abdeljalil]** |  
+| **[Laabidi sarra]** | 
+| **[Ben atig rami]** |  
+| **[Sfar Aziz]** |  
+| **[Ismail linda]** |  
+| **[Jeridi Hassen]** |  
 
-Projet académique — Tous droits réservés © 2025-2026
+## 🚀 Installation & Lancement
+
+### Prérequis
+- Node.js (v18+) & npm
+- Java 17+ & Maven
+- Un navigateur moderne (Chrome, Firefox)
+
+### 1. Lancer le Backend
+```bash
+cd backend
+mvn spring-boot:run

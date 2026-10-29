@@ -1,11 +1,12 @@
 {
   "/binance-api": {
-    "target": "https://data-api.binance.vision",
+    "target": "https://api.binance.com",
     "secure": true,
     "changeOrigin": true,
     "pathRewrite": {
       "^/binance-api": ""
-    }
+    },
+    "logLevel": "debug"
   },
   "/yahoo-api": {
     "target": "https://query1.finance.yahoo.com",

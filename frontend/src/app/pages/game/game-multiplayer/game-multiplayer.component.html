@@ -1,0 +1,92 @@
+<div class="min-h-screen bg-[#05080f] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[150px] pointer-events-none"></div>
+
+  <div class="max-w-3xl w-full bg-[#0d121c] border border-gray-800 rounded-3xl p-8 relative z-10 shadow-2xl">
+    
+    <!-- MENU PRINCIPAL (Choix pseudo + créer/rejoindre) -->
+    @if (!salleActive) {
+      <div class="text-center mb-8">
+        <div class="text-5xl mb-4">⚔️</div>
+        <h1 class="text-3xl font-black text-white mb-2">Défis Multijoueurs</h1>
+        <p class="text-gray-400">Créez une salle ou rejoignez vos amis.</p>
+      </div>
+
+      <!-- Champ pseudo (Ajouté ici) -->
+      <div class="mb-6">
+        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Votre Pseudo</label>
+        <input type="text" [(ngModel)]="pseudo" placeholder="Ex: TraderPro" 
+               class="w-full bg-[#05080f] p-3 rounded-lg border border-gray-700 text-white text-sm focus:border-blue-500 outline-none">
+      </div>
+
+      @if (messageErreur) { 
+        <div class="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-lg mb-4 text-sm">
+          {{ messageErreur }}
+        </div> 
+      }
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Créer -->
+        <div class="bg-[#05080f] border border-gray-800 rounded-2xl p-5 hover:border-blue-500 transition-colors">
+          <h2 class="font-bold text-lg mb-4 text-blue-400">Créer une salle</h2>
+          <select [(ngModel)]="scenarioChoisi" class="w-full bg-[#0d121c] p-3 rounded-lg border border-gray-700 text-white mb-3 text-sm">
+            <option value="covid-crypto">Krach Covid (Crypto)</option>
+            <option value="subprimes-actions">Subprimes (Actions)</option>
+          </select>
+          <button (click)="creerSalle()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-bold transition shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+            Générer un code
+          </button>
+        </div>
+
+        <!-- Rejoindre -->
+        <div class="bg-[#05080f] border border-gray-800 rounded-2xl p-5 hover:border-purple-500 transition-colors">
+          <h2 class="font-bold text-lg mb-4 text-purple-400">Rejoindre</h2>
+          <input type="text" [(ngModel)]="codeSaisi" placeholder="Code (ex: CHALLENGE-8A3F)" 
+                 class="w-full bg-[#0d121c] p-3 rounded-lg border border-gray-700 text-white mb-3 text-sm font-mono uppercase">
+          <button (click)="rejoindreSalle()" class="w-full bg-purple-600 hover:bg-purple-500 py-3 rounded-lg font-bold transition shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+            Rejoindre le défi
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- SALLE D'ATTENTE -->
+    @if (salleActive) {
+      <div class="text-center mb-6">
+        <p class="text-sm text-gray-400 mb-1">Code de la salle :</p>
+        <p class="text-5xl font-mono font-black text-blue-400 tracking-widest mb-4 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">{{ salleActive.code }}</p>
+        <p class="text-xs text-gray-500">Partagez ce code avec vos amis.</p>
+      </div>
+
+      <div class="bg-[#05080f] border border-gray-800 rounded-xl p-4 mb-6">
+        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 flex justify-between">
+          Joueurs connectés
+          <span class="text-blue-400">{{ salleActive.joueurs.length }}</span>
+        </h3>
+        <div class="space-y-2">
+          @for (j of salleActive.joueurs; track j.pseudo) {
+            <div class="flex justify-between items-center bg-[#0d121c] p-3 rounded-lg border border-gray-800">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span class="font-bold">{{ j.pseudo }}</span>
+              </div>
+              <span class="text-xs text-gray-500">Prêt</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <button (click)="lancerPartie()" 
+        class="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 py-4 rounded-xl font-black text-lg shadow-[0_0_20px_rgba(34,197,94,0.4)] transition-all active:scale-95">
+        LANCER LA MISSION
+      </button>
+
+      <button (click)="quitterSalle()" class="w-full mt-3 text-sm text-gray-500 hover:text-white transition">
+        Annuler et quitter la salle
+      </button>
+    }
+
+    <div class="mt-6 text-center border-t border-gray-800 pt-4">
+      <a routerLink="/game" class="text-sm text-gray-400 hover:text-white">← Retour au Lobby Solo</a>
+    </div>
+  </div>
+</div>

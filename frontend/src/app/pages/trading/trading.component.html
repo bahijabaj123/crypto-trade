@@ -62,80 +62,48 @@
 
       <!-- Achat / vente -->
       <div class="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          (click)="changerSens('ACHAT')"
+        <button type="button" (click)="changerSens('ACHAT')"
           class="rounded-lg px-4 py-2.5 text-sm font-medium transition"
-          [class]="sens === 'ACHAT' ? 'bg-success-500 text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'"
-        >
+          [class]="sens === 'ACHAT' ? 'bg-success-500 text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'">
           Acheter
         </button>
-        <button
-          type="button"
-          (click)="changerSens('VENTE')"
+        <button type="button" (click)="changerSens('VENTE')"
           class="rounded-lg px-4 py-2.5 text-sm font-medium transition"
-          [class]="sens === 'VENTE' ? 'bg-error-500 text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'"
-        >
+          [class]="sens === 'VENTE' ? 'bg-error-500 text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'">
           Vendre
         </button>
       </div>
 
       <!-- Type d'ordre -->
       <div class="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          (click)="changerType('MARKET')"
+        <button type="button" (click)="changerType('MARKET')"
           class="rounded-lg border px-4 py-2 text-sm font-medium transition"
-          [class]="type === 'MARKET' ? 'border-brand-500 text-brand-500' : 'border-gray-300 text-gray-500 dark:border-gray-700 dark:text-gray-400'"
-        >
+          [class]="type === 'MARKET' ? 'border-brand-500 text-brand-500' : 'border-gray-300 text-gray-500 dark:border-gray-700 dark:text-gray-400'">
           Au prix du marché
         </button>
-        <button
-          type="button"
-          (click)="changerType('LIMIT')"
+        <button type="button" (click)="changerType('LIMIT')"
           class="rounded-lg border px-4 py-2 text-sm font-medium transition"
-          [class]="type === 'LIMIT' ? 'border-brand-500 text-brand-500' : 'border-gray-300 text-gray-500 dark:border-gray-700 dark:text-gray-400'"
-        >
+          [class]="type === 'LIMIT' ? 'border-brand-500 text-brand-500' : 'border-gray-300 text-gray-500 dark:border-gray-700 dark:text-gray-400'">
           Ordre limite
         </button>
       </div>
 
       @if (type === 'LIMIT') {
         <div>
-          <label for="prixLimite" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-            Prix limite
-          </label>
-          <input
-            id="prixLimite"
-            name="prixLimite"
-            type="number"
-            min="0"
-            step="any"
+          <label for="prixLimite" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Prix limite</label>
+          <input id="prixLimite" name="prixLimite" type="number" min="0" step="any"
             [placeholder]="sens === 'ACHAT' ? 'Acheter quand le prix descend à...' : 'Vendre quand le prix monte à...'"
-            [(ngModel)]="prixLimite"
-            (ngModelChange)="majApercu()"
-            class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-          />
-          <p class="mt-1.5 text-theme-xs text-gray-500 dark:text-gray-400">
-            L'ordre reste « en attente » et s'exécute tout seul dès que le prix du marché atteint ce seuil.
-          </p>
+            [(ngModel)]="prixLimite" (ngModelChange)="majApercu()"
+            class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800" />
         </div>
       }
 
       <!-- Quantité -->
       <div>
         <label for="quantite" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Quantité</label>
-        <input
-          id="quantite"
-          name="quantite"
-          type="number"
-          min="0"
-          step="any"
-          placeholder="Ex. 0.1"
-          [(ngModel)]="quantite"
-          (ngModelChange)="majApercu()"
-          class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-        />
+        <input id="quantite" name="quantite" type="number" min="0" step="any" placeholder="Ex. 0.1"
+          [(ngModel)]="quantite" (ngModelChange)="majApercu()"
+          class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800" />
       </div>
 
       <!-- Récapitulatif -->
@@ -154,50 +122,51 @@
         </div>
       </dl>
 
-      <!-- Évaluation du risque (UNIQUEMENT POUR LA CRYPTO) -->
-      @if (marketService.activeMarket === 'crypto' && apercu(); as a) {
-        <div class="rounded-xl border p-4 text-sm" [class]="couleurApercu(a.niveau)">
-          <p class="mb-2 font-semibold">
-            Évaluation du risque :
-            @switch (a.niveau) {
-              @case ('OK') { OK }
-              @case ('ATTENTION') { à surveiller }
-              @default { ordre refusé }
-            }
-          </p>
-          <ul class="list-disc space-y-1 ps-5">
-            @for (m of a.messages; track m) {
-              <li>{{ m }}</li>
-            }
-          </ul>
-          @if (a.niveau === 'REFUSE' && a.quantiteMax !== null && a.quantiteMax > 0) {
-            <button
-              type="button"
-              (click)="utiliserQuantiteMax()"
-              class="mt-3 rounded-lg border border-current px-3 py-1.5 text-theme-xs font-medium hover:bg-white/40"
-            >
-              Utiliser la quantité maximale ({{ a.quantiteMax | number: '1.0-6' }})
-            </button>
-          }
+      <!-- 👇 NOUVEAU BLOC DE RISQUE (Optionnel) -->
+      @if (marketService.activeMarket === 'crypto') {
+        <div class="mt-2">
+          <button type="button" (click)="basculerRisque()" 
+            class="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1 transition-colors">
+            <span class="text-lg">{{ afficherRisque() ? '▼' : '▶' }}</span>
+            {{ afficherRisque() ? 'Masquer l\'analyse du risque' : 'Voir l\'analyse du risque (Optionnel)' }}
+          </button>
         </div>
+
+        @if (afficherRisque() && apercu(); as a) {
+          <div class="rounded-xl border p-4 text-sm mt-2" [class]="couleurApercu(a.niveau)">
+            <p class="mb-2 font-semibold">
+              Évaluation du risque :
+              @switch (a.niveau) {
+                @case ('OK') { OK }
+                @case ('ATTENTION') { à surveiller }
+                @default { ordre refusé }
+              }
+            </p>
+            <ul class="list-disc space-y-1 ps-5">
+              @for (m of a.messages; track m) {
+                <li>{{ m }}</li>
+              }
+            </ul>
+            @if (a.niveau === 'REFUSE' && a.quantiteMax !== null && a.quantiteMax > 0) {
+              <button type="button" (click)="utiliserQuantiteMax()"
+                class="mt-3 rounded-lg border border-current px-3 py-1.5 text-theme-xs font-medium hover:bg-white/40">
+                Utiliser la quantité maximale ({{ a.quantiteMax | number: '1.0-6' }})
+              </button>
+            }
+          </div>
+        }
       }
 
-      <button
-        type="submit"
+      <button type="submit"
         [disabled]="!formulaireValide() || envoiEnCours() || (marketService.activeMarket === 'crypto' && apercu()?.autorise === false)"
         class="w-full rounded-lg px-4 py-3 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-50"
-        [class]="sens === 'ACHAT' ? 'bg-success-500 hover:bg-success-600' : 'bg-error-500 hover:bg-error-600'"
-      >
+        [class]="sens === 'ACHAT' ? 'bg-success-500 hover:bg-success-600' : 'bg-error-500 hover:bg-error-600'">
         @if (envoiEnCours()) { Envoi en cours... } @else if (type === 'LIMIT') { Placer l'ordre limite } @else { {{ sens === 'ACHAT' ? 'Acheter' : 'Vendre' }} au prix du marché }
       </button>
 
       @if (retour(); as r) {
-        <div
-          class="rounded-xl border p-4 text-sm"
-          [class]="r.type === 'succes'
-            ? 'border-success-200 bg-success-50 text-success-700 dark:border-success-500/30 dark:bg-success-500/15 dark:text-success-500'
-            : 'border-error-200 bg-error-50 text-error-700 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400'"
-        >
+        <div class="rounded-xl border p-4 text-sm"
+          [class]="r.type === 'succes' ? 'border-success-200 bg-success-50 text-success-700 dark:border-success-500/30 dark:bg-success-500/15 dark:text-success-500' : 'border-error-200 bg-error-50 text-error-700 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400'">
           {{ r.texte }}
         </div>
       }
@@ -207,14 +176,10 @@
   <!-- ===== Marché + derniers ordres ===== -->
   <div class="space-y-6 lg:col-span-2">
     
-        <!-- ============================================================ -->
-    <!-- GRAPHIQUE MULTI-MARCHÉS                                       -->
-    <!-- ============================================================ -->
+    <!-- GRAPHIQUE MULTI-MARCHÉS -->
     @if (marketService.activeMarket === 'crypto') {
-      <!-- Crypto : composant de Sarra (SVG, backend Binance) -->
       <app-candle-chart [symbole]="symbole"></app-candle-chart>
     } @else {
-      <!-- Autres marchés : ton composant lightweight-charts -->
       <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
           <div>
@@ -227,9 +192,7 @@
           </div>
           <div class="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
             @for (iv of intervalles; track iv.code) {
-              <button
-                type="button"
-                (click)="changerIntervalle(iv.code)"
+              <button type="button" (click)="changerIntervalle(iv.code)"
                 [class]="tradingInterval() === iv.code ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-500' : 'text-gray-500'"
                 class="px-3 py-1 text-xs font-medium rounded-md transition">
                 {{ iv.nom }}
@@ -270,9 +233,8 @@
         }
       </div>
     }
-    
 
-    <!-- Prix du marché (Liste) - Uniquement pour la Crypto -->
+    <!-- Prix du marché (Crypto) -->
     @if (marketService.activeMarket === 'crypto') {
       <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div class="px-5 py-4 sm:px-6">
@@ -289,11 +251,8 @@
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-white/[0.05]">
               @for (p of prix(); track p.symbole) {
-                <tr
-                  (click)="choisir(p.symbole)"
-                  class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.03]"
-                  [class]="p.symbole === symbole ? 'bg-brand-50 dark:bg-brand-500/10' : ''"
-                >
+                <tr (click)="choisir(p.symbole)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.03]"
+                  [class]="p.symbole === symbole ? 'bg-brand-50 dark:bg-brand-500/10' : ''">
                   <td class="px-5 py-3 text-sm font-medium text-gray-800 dark:text-white/90">{{ p.symbole }}</td>
                   <td class="px-5 py-3 text-sm text-gray-500 dark:text-gray-400">{{ p.prix | number: '1.2-8' }}</td>
                 </tr>

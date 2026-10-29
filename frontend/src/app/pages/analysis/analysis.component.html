@@ -1,1 +1,91 @@
-<p>analysis works!</p>
+<app-page-breadcrumb pageTitle="Analyse de Portefeuille" />
+
+<!-- 1. Métriques de Risque -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+    <span class="text-sm text-gray-500 dark:text-gray-400">Sharpe Ratio</span>
+    <p class="mt-1 text-2xl font-bold text-gray-800 dark:text-white/90">
+      @if (analyse()?.sharpe !== null) { {{ analyse()?.sharpe | number: '1.2-2' }} } @else { - }
+    </p>
+  </div>
+  <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+    <span class="text-sm text-gray-500 dark:text-gray-400">VaR 95% (1 jour)</span>
+    <p class="mt-1 text-2xl font-bold text-error-500">
+      @if (analyse()?.var95Usdt !== null) { {{ analyse()?.var95Usdt | number: '1.2-2' }} USDT } @else { - }
+    </p>
+  </div>
+  <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+    <span class="text-sm text-gray-500 dark:text-gray-400">Max Drawdown</span>
+    <p class="mt-1 text-2xl font-bold text-warning-500">
+      @if (analyse()?.drawdownMaxPct !== null) { {{ analyse()?.drawdownMaxPct | number: '1.2-2' }} % } @else { - }
+    </p>
+  </div>
+</div>
+
+<!-- 2. Projection Monte-Carlo (On utilise directement le composant de Sarra qui gère tout : les boutons, le graphique et les stats) -->
+<div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] mb-6">
+  <app-projection-chart></app-projection-chart>
+</div>
+
+<!-- 3. Positions ouvertes (Ton ancien code) -->
+@if (portefeuille(); as p) {
+  @if (prixObsoletes(p)) {
+    <div class="mt-6 rounded-xl border border-warning-200 bg-warning-50 p-4 text-sm text-warning-700 dark:border-warning-500/30 dark:bg-warning-500/15 dark:text-orange-400">
+      Certains prix n'ont pas pu être récupérés : les valeurs correspondantes utilisent le prix d'achat.
+    </div>
+  }
+
+  <div class="mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+    <div class="flex items-center justify-between px-5 py-4 sm:px-6">
+      <h3 class="text-base font-medium text-gray-800 dark:text-white/90">Positions ouvertes</h3>
+      <button type="button" (click)="chargerPortefeuille()"
+        class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.03]">
+        Actualiser
+      </button>
+    </div>
+
+    @if (p.positionsOuvertes.length === 0) {
+      <p class="px-5 pb-6 text-sm text-gray-500 dark:text-gray-400 sm:px-6">
+        Aucune position ouverte.
+        <a routerLink="/trading" class="font-medium text-brand-500 hover:underline">Passer un ordre</a>
+      </p>
+    } @else {
+      <div class="max-w-full overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="border-y border-gray-100 dark:border-white/[0.05]">
+            <tr>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Crypto</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Quantité</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Prix moyen</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Prix actuel</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Valeur</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Gain latent</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Gain réalisé</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            @for (pos of p.positionsOuvertes; track pos.id) {
+              <tr>
+                <td class="px-5 py-4 text-sm font-medium text-gray-800 dark:text-white/90">{{ pos.symbole }}</td>
+                <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ pos.quantite | number: '1.0-8' }}</td>
+                <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ pos.prixMoyenAchat | number: '1.2-8' }}</td>
+                <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                  {{ pos.prixActuel | number: '1.2-8' }}
+                  @if (!pos.prixDisponible) { <span title="Prix indisponible">*</span> }
+                </td>
+                <td class="px-5 py-4 text-sm text-gray-800 dark:text-white/90">{{ pos.valeurActuelle | number: '1.2-2' }}</td>
+                <td class="px-5 py-4 text-sm font-medium" [class]="couleur(pos.pnlLatent)">
+                  {{ signe(pos.pnlLatent) }}{{ pos.pnlLatent | number: '1.2-2' }}
+                  ({{ signe(pos.pnlLatentPourcent) }}{{ pos.pnlLatentPourcent | number: '1.2-2' }} %)
+                </td>
+                <td class="px-5 py-4 text-sm" [class]="couleur(pos.pnlRealise)">
+                  {{ signe(pos.pnlRealise) }}{{ pos.pnlRealise | number: '1.2-2' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+}

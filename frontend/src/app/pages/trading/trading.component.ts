@@ -371,4 +371,11 @@ export class TradingComponent {
       this.envoiEnCours.set(false);
     }
   }
+
+    readonly afficherRisque = signal(false);
+
+  basculerRisque(): void {
+    this.afficherRisque.set(!this.afficherRisque());
+  }
+  
 }

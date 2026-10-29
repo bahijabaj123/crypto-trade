@@ -36,79 +36,23 @@ export const routes: Routes = [
       // ============================================================
       // PAGES ORIGINALES DE TAILADMIN (base de code conservée)
       // ============================================================
-      {
-        path: 'calendar',
-        component: CalenderComponent,
-        title: 'Calendrier | Crypto Simulator',
-      },
-      {
-        path: 'profile',
-        component: ProfileComponent,
-        title: 'Mon Profil | Crypto Simulator',
-      },
-      {
-        path: 'form-elements',
-        component: FormElementsComponent,
-        title: 'Form Elements | Crypto Simulator',
-      },
-      {
-        path: 'basic-tables',
-        component: BasicTablesComponent,
-        title: 'Tables | Crypto Simulator',
-      },
-      {
-        path: 'blank',
-        component: BlankComponent,
-        title: 'Blank | Crypto Simulator',
-      },
-      {
-        path: 'invoice',
-        component: InvoicesComponent,
-        title: 'Factures | Crypto Simulator',
-      },
-      {
-        path: 'line-chart',
-        component: LineChartComponent,
-        title: 'Line Chart | Crypto Simulator',
-      },
-      {
-        path: 'bar-chart',
-        component: BarChartComponent,
-        title: 'Bar Chart | Crypto Simulator',
-      },
-      {
-        path: 'alerts',
-        component: AlertsComponent,
-        title: 'Alerts | Crypto Simulator',
-      },
-      {
-        path: 'avatars',
-        component: AvatarElementComponent,
-        title: 'Avatars | Crypto Simulator',
-      },
-      {
-        path: 'badge',
-        component: BadgesComponent,
-        title: 'Badges | Crypto Simulator',
-      },
-      {
-        path: 'buttons',
-        component: ButtonsComponent,
-        title: 'Buttons | Crypto Simulator',
-      },
-      {
-        path: 'images',
-        component: ImagesComponent,
-        title: 'Images | Crypto Simulator',
-      },
-      {
-        path: 'videos',
-        component: VideosComponent,
-        title: 'Videos | Crypto Simulator',
-      },
+      { path: 'calendar', component: CalenderComponent, title: 'Calendrier | Crypto Simulator' },
+      { path: 'profile', component: ProfileComponent, title: 'Mon Profil | Crypto Simulator' },
+      { path: 'form-elements', component: FormElementsComponent, title: 'Form Elements | Crypto Simulator' },
+      { path: 'basic-tables', component: BasicTablesComponent, title: 'Tables | Crypto Simulator' },
+      { path: 'blank', component: BlankComponent, title: 'Blank | Crypto Simulator' },
+      { path: 'invoice', component: InvoicesComponent, title: 'Factures | Crypto Simulator' },
+      { path: 'line-chart', component: LineChartComponent, title: 'Line Chart | Crypto Simulator' },
+      { path: 'bar-chart', component: BarChartComponent, title: 'Bar Chart | Crypto Simulator' },
+      { path: 'alerts', component: AlertsComponent, title: 'Alerts | Crypto Simulator' },
+      { path: 'avatars', component: AvatarElementComponent, title: 'Avatars | Crypto Simulator' },
+      { path: 'badge', component: BadgesComponent, title: 'Badges | Crypto Simulator' },
+      { path: 'buttons', component: ButtonsComponent, title: 'Buttons | Crypto Simulator' },
+      { path: 'images', component: ImagesComponent, title: 'Images | Crypto Simulator' },
+      { path: 'videos', component: VideosComponent, title: 'Videos | Crypto Simulator' },
 
       // ============================================================
-      // VOS PAGES MULTI-MARCHÉS
+      // VOS PAGES MULTI-MARCHÉS (Existant)
       // ============================================================
 
       // ---------- DASHBOARD ----------
@@ -119,19 +63,16 @@ export const routes: Routes = [
       },
 
       // ---------- MARCHÉ (Routes dynamiques) ----------
-      // Si l'utilisateur tape juste /market, on le redirige vers /market/crypto
       {
         path: 'market',
         redirectTo: 'market/crypto',
         pathMatch: 'full',
       },
-      // Route dynamique qui accepte : /market/crypto, /market/stocks, /market/forex, /market/commodities
       {
         path: 'market/:type',
         loadComponent: () => import('./pages/market/market.component').then(m => m.MarketComponent),
         title: 'Marché | Crypto Simulator',
       },
-      // Détail d'un actif (ex: /market/detail/BTCUSDT)
       {
         path: 'market/detail/:symbol',
         loadComponent: () => import('./pages/market-detail/market-detail.component').then(m => m.MarketDetailComponent),
@@ -184,6 +125,30 @@ export const routes: Routes = [
         title: 'Backtesting | Crypto Simulator',
       },
 
+      // ============================================================
+      // 🎮 NOUVEAU MODULE : JEU DE SALLE DE MARCHÉ (Simulation Historique)
+      // ============================================================
+      {
+        path: 'game',
+        loadComponent: () => import('./pages/game/game-lobby/game-lobby.component').then(m => m.GameLobbyComponent),
+        title: 'Salle de Marché - Choix du Scénario | Crypto Simulator',
+      },
+      {
+        path: 'game/play/:scenarioId',
+        loadComponent: () => import('./pages/game/game-dashboard/game-dashboard.component').then(m => m.GameDashboardComponent),
+        title: 'Jeu de Trading Historique | Crypto Simulator',
+      },
+      {
+        path: 'game/results',
+        loadComponent: () => import('./pages/game/game-results/game-results.component').then(m => m.GameResultsComponent),
+        title: 'Résultats de la Simulation | Crypto Simulator',
+      },
+      {
+        path: 'game/multiplayer',
+        loadComponent: () => import('./pages/game/game-multiplayer/game-multiplayer.component').then(m => m.GameMultiplayerComponent),
+        title: 'Défis Multijoueurs | Crypto Simulator',
+      },
+
       // ---------- INTELLIGENCE ARTIFICIELLE ----------
       {
         path: 'ai',
@@ -223,7 +188,7 @@ export const routes: Routes = [
         title: 'Comparaison Banques | Crypto Simulator',
       },
 
-      // ---------- FORMATION ----------
+      // ---------- FORMATION (Adapté pour le Jeu) ----------
       {
         path: 'learning',
         loadComponent: () => import('./pages/learning/learning.component').then(m => m.LearningComponent),

@@ -5,7 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { interval } from 'rxjs';
 
-import { ProjectionChartComponent } from '../../shared/components/projection-chart/projection-chart.component';
 import { PageBreadcrumbComponent } from '../../shared/components/common/page-breadcrumb/page-breadcrumb.component';
 import { AnalyseRisque, PointValeur, PortefeuilleVue, ScenarioChoc } from '../../shared/models/crypto.models';
 import { CryptoApiService, messageErreur } from '../../shared/services/crypto-api.service';
@@ -18,7 +17,7 @@ import { TickerData } from '../../core/models/ticker.model';
 
 @Component({
   selector: 'app-portfolio',
-  imports: [DecimalPipe, DatePipe, FormsModule, RouterLink, ProjectionChartComponent, PageBreadcrumbComponent],
+  imports: [DecimalPipe, DatePipe, FormsModule, RouterLink, PageBreadcrumbComponent],
   templateUrl: './portfolio.component.html',
   styleUrl: './portfolio.component.css',
 })

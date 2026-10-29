@@ -1,0 +1,278 @@
+<div class="p-3 md:p-4 h-screen flex flex-col bg-[#0a0e17] text-white font-sans overflow-hidden">
+  
+  @if (scenario) {
+    <!-- HEADER -->
+    <div class="flex justify-between items-center mb-2 bg-[#131b26] p-3 rounded-xl border border-gray-800 shadow-lg shrink-0">
+      <div class="flex items-center gap-3">
+        <button (click)="quitterJeu()" class="flex items-center gap-1 text-gray-400 hover:text-red-400 transition font-bold text-sm">
+          ✖ Quitter
+        </button>
+        <div class="h-5 w-px bg-gray-700"></div>
+        <h1 class="text-lg font-black text-blue-400">{{ scenario.nom }}</h1>
+        
+        <!-- Badge Multijoueur -->
+        @if (roomCode) {
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+            MULTI : {{ roomCode }}
+          </span>
+        }
+      </div>
+
+      <!-- Chrono réel -->
+      <div class="flex items-center gap-3 bg-[#0a0e17] px-4 py-1.5 rounded-lg border border-gray-800">
+        <p class="text-[10px] text-gray-500 uppercase tracking-widest">Temps</p>
+        <p class="font-mono text-xl font-bold" [class]="state().tempsRestantSecondes < 60 ? 'text-red-500 animate-pulse' : 'text-blue-400'">
+          {{ formatTemps(state().tempsRestantSecondes) }}
+        </p>
+      </div>
+    </div>
+
+    <!-- CORPS PRINCIPAL -->
+    <div class="flex-1 grid grid-cols-1 xl:grid-cols-4 gap-3 min-h-0 pb-2">
+      
+      <!-- GAUCHE : GRAPHIQUES ET MUR DES ACTIONS -->
+      <div class="xl:col-span-3 flex flex-col gap-2 min-h-0">
+        
+        <div class="flex flex-wrap gap-2 shrink-0">
+          @for (actif of scenario.actifs; track actif) {
+            <button (click)="toggleActif(actif)" 
+                    class="px-3 py-1 rounded-lg font-bold text-xs border transition-colors"
+                    [class]="actifsAffiches.includes(actif) ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#131b26] border-gray-700 text-gray-400'">
+              {{ actif }}
+            </button>
+          }
+        </div>
+
+        <!-- La grille de graphiques -->
+        <div class="flex-1 grid gap-2 auto-rows-fr overflow-hidden" 
+             [class]="actifsAffiches.length === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'">
+          
+          @for (actif of actifsAffiches; track actif) {
+            <div class="bg-[#131b26] rounded-xl border border-gray-800 p-2 flex flex-col relative h-full min-h-0">
+              <div class="flex justify-between items-center mb-1 z-10">
+                <span class="font-bold text-xs text-gray-200">{{ actif }}</span>
+                <span class="font-mono text-xs text-blue-400">
+                  {{ (engine.getPrixActuel(actif) || 0) | number: '1.2-2' }} $
+                </span>
+              </div>
+              <div class="flex-1 relative w-full min-h-0">
+                <app-game-line-chart 
+                  [candles]="getBougiesActives(actif)" 
+                  [color]="getCouleur(actif)">
+                </app-game-line-chart>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- MUR DES ACTIONS (Multijoueur en temps réel) -->
+        @if (roomCode) {
+          <div class="h-28 bg-[#0a0e17] rounded-xl border border-gray-800 p-2 flex flex-col shrink-0">
+            <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 flex justify-between">
+              <span>Flux du marché (Temps réel)</span>
+              <span class="text-blue-500 animate-pulse">● LIVE</span>
+            </h3>
+            <div class="flex-1 overflow-y-auto font-mono text-xs space-y-1 pr-2 custom-scrollbar">
+              @for (ev of evenementsAutres; track ev) {
+                <div class="text-gray-400">
+                  <span class="text-purple-500 mr-1">></span> {{ ev }}
+                </div>
+              } @empty {
+                <div class="text-gray-600 italic">En attente d'actions des autres joueurs...</div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- DROITE : FORMULAIRE + SOLDE -->
+      <div class="xl:col-span-1 flex flex-col gap-2 overflow-y-auto">
+        
+        <div class="bg-[#131b26] p-3 rounded-xl border border-gray-800">
+          <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Passer un ordre</h3>
+          
+          <select [(ngModel)]="actifSelectionne" class="w-full bg-[#0a0e17] p-1.5 rounded border border-gray-700 text-white mb-1.5 text-sm">
+            @for (a of scenario.actifs; track a) { <option [value]="a">{{ a }}</option> }
+          </select>
+
+          <input type="number" [(ngModel)]="quantite" placeholder="Quantité" class="w-full bg-[#0a0e17] p-1.5 rounded border border-gray-700 text-white mb-1.5 font-mono text-sm">
+          
+          <div class="grid grid-cols-2 gap-1.5 mb-2">
+            <div>
+              <label class="text-[9px] text-gray-500">Stop-Loss ($)</label>
+              <input type="number" [(ngModel)]="stopLoss" class="w-full bg-[#0a0e17] p-1 rounded border border-gray-700 text-red-400 text-xs">
+            </div>
+            <div>
+              <label class="text-[9px] text-gray-500">Take-Profit ($)</label>
+              <input type="number" [(ngModel)]="takeProfit" class="w-full bg-[#0a0e17] p-1 rounded border border-gray-700 text-green-400 text-xs">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-1.5">
+            <button (click)="acheter()" class="bg-green-600 py-1.5 rounded text-xs font-bold">ACHETER</button>
+            <button (click)="vendre()" class="bg-red-600 py-1.5 rounded text-xs font-bold">VENDRE</button>
+          </div>
+        </div>
+
+        <!-- Portefeuille -->
+        <div class="bg-[#131b26] p-3 rounded-xl border border-gray-800">
+          <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Compte</h3>
+          <div class="flex justify-between mb-1 text-xs"><span class="text-gray-400">Cash</span><span class="font-mono text-white">{{ state().solde | number: '1.2-2' }} $</span></div>
+          <div class="flex justify-between mb-1 text-xs"><span class="text-gray-400">Total</span><span class="font-mono text-white">{{ engine.getValeurTotale() | number: '1.2-2' }} $</span></div>
+          <div class="flex justify-between border-t border-gray-800 pt-1.5 mt-1.5">
+            <span class="text-xs text-white font-bold">P&L</span>
+            <span class="font-mono font-bold text-sm" [class]="engine.getPnl() >= 0 ? 'text-green-400' : 'text-red-400'">{{ engine.getPnl() >= 0 ? '+' : '' }}{{ engine.getPnl() | number: '1.2-2' }} $</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BAS : TABLEAU DES POSITIONS -->
+    <div class="h-32 bg-[#131b26] rounded-xl border border-gray-800 flex flex-col shrink-0">
+      <div class="px-3 py-1.5 border-b border-gray-800 font-bold text-gray-400 text-xs">Mes Positions Ouvertes</div>
+      <div class="flex-1 overflow-y-auto p-1.5">
+        <table class="w-full text-left text-xs">
+          <thead class="text-gray-500 uppercase text-[9px]">
+            <tr>
+              <th class="px-2 py-1">Actif</th>
+              <th class="px-2 py-1">Quantité</th>
+              <th class="px-2 py-1">PRU</th>
+              <th class="px-2 py-1">Stop-Loss</th>
+              <th class="px-2 py-1">Take-Profit</th>
+              <th class="px-2 py-1">Valeur Actuelle</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-800">
+            @for (pos of state().positions; track pos.symbole) {
+              <tr>
+                <td class="px-2 py-1 font-bold">{{ pos.symbole }}</td>
+                <td class="px-2 py-1">{{ pos.quantite }}</td>
+                <td class="px-2 py-1 text-gray-400">{{ pos.prixMoyenAchat | number: '1.2-2' }} $</td>
+                <td class="px-2 py-1 text-red-400">{{ pos.stopLoss ? (pos.stopLoss | number: '1.2-2') + ' $' : '-' }}</td>
+                <td class="px-2 py-1 text-green-400">{{ pos.takeProfit ? (pos.takeProfit | number: '1.2-2') + ' $' : '-' }}</td>
+                <td class="px-2 py-1 font-mono">{{ (engine.getPrixActuel(pos.symbole) || 0) * pos.quantite | number: '1.2-2' }} $</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="text-center py-2 text-gray-500 italic">Aucune position.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  } @else {
+    <!-- Chargement / Erreur -->
+    <div class="flex-1 flex flex-col items-center justify-center">
+      @if (erreurChargement) {
+        <div class="text-red-500 text-4xl mb-3">⚠️</div>
+        <p class="text-red-400 mb-4 text-sm">{{ erreurChargement }}</p>
+        <button (click)="quitterJeu()" class="bg-gray-800 px-4 py-2 rounded-lg text-sm">Retour</button>
+      } @else {
+        <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+        <p class="text-blue-400 font-mono animate-pulse text-sm">Chargement de la salle de marché...</p>
+      }
+    </div>
+  }
+
+  <!-- ============================================================ -->
+  <!-- MODALES -->
+  <!-- ============================================================ -->
+
+  <!-- Modale de fin de jeu -->
+  @if (state().jeuTermine) {
+    <div class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100]">
+      <div class="bg-[#131b26] border border-gray-700 rounded-2xl p-6 max-w-lg w-full text-center">
+        
+        @if (!profilFinal) { 
+          <div class="hidden">{{ analyserFinDeJeu() }}</div> 
+        }
+
+        <!-- Message de fin (Déconnexion ou Fin normale) -->
+        @if (currentRoom()?.evenements && currentRoom()!.evenements.length > 0 && currentRoom()!.evenements[currentRoom()!.evenements.length - 1].includes('a quitté')) {
+          <h2 class="text-3xl font-black text-red-500 mb-1">Partie Terminée</h2>
+          <p class="text-red-400 mb-6 text-sm">Un joueur a quitté la partie. La session est annulée.</p>
+        } @else {
+          <h2 class="text-3xl font-black text-white mb-1">Séance Terminée !</h2>
+        }
+        
+        <!-- MODE MULTI : PODIUM -->
+        @if (roomCode) {
+          <p class="text-gray-400 mb-6 text-sm">Classement final de la salle :</p>
+          
+          <div class="space-y-2 mb-6">
+            @for (j of (currentRoom()?.joueurs || []); track j.pseudo) {
+              <div class="flex justify-between items-center bg-[#0a0e17] p-3 rounded-xl border border-gray-800">
+                <span class="font-bold text-sm text-white">{{ j.pseudo }}</span>
+                <span class="font-mono font-bold text-base" [class]="j.pnl >= 0 ? 'text-green-400' : 'text-red-400'">
+                  {{ j.pnl >= 0 ? '+' : '' }}{{ j.pnl | number: '1.2-2' }} $
+                </span>
+              </div>
+            }
+          </div>
+        } @else {
+          <!-- MODE SOLO : SCORE + COACH -->
+          <p class="text-gray-400 mb-6 text-sm">Voici votre bilan de la session.</p>
+          
+          <div class="grid grid-cols-2 gap-3 mb-6 text-left">
+            <div class="bg-[#0a0e17] p-3 rounded-xl border border-gray-800">
+              <p class="text-[10px] text-gray-500 uppercase">Score Final (P&L)</p>
+              <p class="text-2xl font-mono font-bold" [class]="engine.getPnl() >= 0 ? 'text-green-400' : 'text-red-400'">
+                {{ engine.getPnl() >= 0 ? '+' : '' }}{{ engine.getPnl() | number: '1.2-2' }} $
+              </p>
+            </div>
+            <div class="bg-[#0a0e17] p-3 rounded-xl border border-gray-800">
+              <p class="text-[10px] text-gray-500 uppercase">Valeur Totale</p>
+              <p class="text-2xl font-mono font-bold text-white">{{ engine.getValeurTotale() | number: '1.2-2' }} $</p>
+            </div>
+          </div>
+
+          @if (profilFinal) {
+            <div class="bg-blue-500/10 border border-blue-500/30 p-3 rounded-xl text-left mb-6">
+              <h3 class="font-bold text-blue-400 mb-1 flex items-center gap-2 text-sm">
+                <span>🧠</span> Analyse du Coach IA ({{ profilFinal.niveau }})
+              </h3>
+              <p class="text-xs text-gray-300">{{ profilFinal.recommandation }}</p>
+            </div>
+          }
+        }
+
+        <div class="flex justify-center gap-3">
+          <button (click)="confirmerQuitter()" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition">
+            Retour au Lobby
+          </button>
+          
+          @if (profilFinal && !roomCode) {
+            <button (click)="allerAuCours()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg text-sm transition shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+              Aller au cours recommandé →
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modale de confirmation "Quitter" -->
+  @if (afficherModaleQuitter) {
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100]">
+      <div class="bg-[#131b26] border border-gray-700 rounded-2xl p-5 max-w-sm w-full mx-4 shadow-2xl">
+        <div class="flex items-center gap-2 mb-3 text-red-500">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+          <h2 class="text-lg font-bold text-white">Quitter la salle de marché ?</h2>
+        </div>
+        <p class="text-gray-400 mb-5 text-xs leading-relaxed">
+          Êtes-vous sûr de vouloir quitter ? Votre progression actuelle et vos gains virtuels seront définitivement perdus.
+        </p>
+        <div class="flex justify-end gap-2">
+          <button (click)="annulerQuitter()" class="px-3 py-1.5 rounded-lg font-medium text-gray-300 hover:bg-gray-800 transition text-xs">
+            Annuler
+          </button>
+          <button (click)="confirmerQuitter()" class="px-3 py-1.5 rounded-lg font-bold text-white bg-red-600 hover:bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] transition text-xs">
+            Oui, quitter
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

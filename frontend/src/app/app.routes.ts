@@ -25,7 +25,7 @@ export const routes: Routes = [
     component: AppLayoutComponent,
     children: [
       // ============================================================
-      // PAGES ORIGINALES DE TAILADMIN (base de code conservée)
+      // PAGES ORIGINALES DE TAILADMIN
       // ============================================================
       {
         path: '',
@@ -105,7 +105,7 @@ export const routes: Routes = [
       },
 
       // ============================================================
-      // VOS PAGES CRYPTO (à développer progressivement)
+      // PAGES CRYPTO
       // ============================================================
 
       // ---------- DASHBOARD CRYPTO ----------
@@ -165,8 +165,7 @@ export const routes: Routes = [
       {
         path: 'analysis/compare',
         loadComponent: () => import('./pages/analysis-compare/analysis-compare.component').then(m => m.AnalysisCompareComponent),
-        title: 'Comparaison Stratégies | Crypto Simulator',
-      },
+        title: 'Comparaison Banques | Crypto Simulator',      },
       {
         path: 'backtesting',
         loadComponent: () => import('./pages/backtesting/backtesting.component').then(m => m.BacktestingComponent),
@@ -209,7 +208,7 @@ export const routes: Routes = [
       {
         path: 'stress-testing/compare',
         loadComponent: () => import('./pages/stress-compare/stress-compare.component').then(m => m.StressCompareComponent),
-        title: 'Comparaison Banques | Crypto Simulator',
+        title: 'Comparaison Scénarios | Crypto Simulator',
       },
 
       // ---------- FORMATION ----------
@@ -262,7 +261,7 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin-stats/admin-stats.component').then(m => m.AdminStatsComponent),
         title: 'Statistiques | Crypto Simulator',
       },
-    ]
+    ],
   },
 
   // ============================================================

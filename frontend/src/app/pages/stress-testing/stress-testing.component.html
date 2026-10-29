@@ -1,1 +1,78 @@
-<p>stress-testing works!</p>
+<div class="page">
+    <div>
+        <h1 class="title">Stress Testing bancaire</h1>
+        <p class="subtitle">Évaluez la résilience des établissements face à un scénario macro-économique défavorable.
+        </p>
+    </div>
+
+    <div class="layout">
+        <!-- Scénario -->
+        <div class="panel">
+            <h3 class="section-title">1. Scénario</h3>
+            <select class="input" (change)="scenarioId.set($any($event.target).value)">
+                @for (s of scenarios; track s.id) {
+                <option [value]="s.id" [selected]="s.id === scenarioId()">{{ s.name }}</option>
+                }
+            </select>
+            <p class="description">{{ scenario().description }}</p>
+
+            <label class="label">Sévérité du choc</label>
+            <div class="chips">
+                @for (s of severities; track s.value) {
+                <button type="button" class="chip" [class.active]="severity() === s.value"
+                    (click)="severity.set(s.value)">
+                    {{ s.label }} ×{{ s.value }}
+                </button>
+                }
+            </div>
+
+            <h3 class="section-title">Hypothèses macro-économiques</h3>
+            @for (f of factors; track f.key) {
+            <div class="factor">
+                <div class="factor-row">
+                    <span>{{ f.label }}</span>
+                    <b [class.negative]="shock()[f.key] !== 0">{{ fmt(f, shock()[f.key]) }}</b>
+                </div>
+                @if (isCustom()) {
+                <input type="range" class="range" [min]="f.min" [max]="f.max" [step]="f.step" [value]="custom()[f.key]"
+                    (input)="setCustom(f.key, $any($event.target).value)" />
+                }
+            </div>
+            }
+        </div>
+
+        <!-- Établissements -->
+        <div class="panel">
+            <h3 class="section-title">2. Établissements</h3>
+            <div class="chips quick">
+                <button type="button" class="chip" (click)="selectType('all')">Toutes</button>
+                <button type="button" class="chip" (click)="selectType('conventional')">Conventionnelles</button>
+                <button type="button" class="chip" (click)="selectType('non-conventional')">Non
+                    conventionnelles</button>
+            </div>
+
+            @for (b of banks; track b.id) {
+            <label class="bank-row">
+                <input type="checkbox" [checked]="selectedBanks().includes(b.id)" (change)="toggleBank(b.id)" />
+                <div class="bank-info">
+                    <span class="bank-name">{{ b.name }}</span>
+                    <span class="sub">Actifs {{ b.totalAssets }} Mds · CET1 {{ b.indicators.cet1 }} % · NPL {{
+                        b.indicators.npl }} %</span>
+                </div>
+                <span class="type-badge" [class.islamic]="b.type === 'non-conventional'">
+                    {{ b.type === 'conventional' ? 'Conventionnelle' : 'Non conventionnelle' }}
+                </span>
+            </label>
+            }
+
+            <div class="buttons">
+                <button type="button" class="btn btn-primary" [disabled]="loading() || !selectedBanks().length"
+                    (click)="run()">
+                    {{ loading() ? 'Simulation en cours…' : 'Lancer le stress test' }}
+                </button>
+                <button type="button" class="btn btn-outline" (click)="compare()">Comparer les banques</button>
+            </div>
+            <p class="hint">Données de démonstration : à remplacer par les résultats du modèle du back.</p>
+        </div>
+    </div>
+</div>

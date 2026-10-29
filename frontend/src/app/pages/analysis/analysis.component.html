@@ -1,1 +1,104 @@
-<p>analysis works!</p>
+<div class="page">
+    <div class="header">
+        <div>
+            <h1 class="title">Analyse technique</h1>
+            <p class="subtitle">Indicateurs calculés sur les données Binance</p>
+        </div>
+        <div class="controls">
+            <select class="input" [value]="symbol()" (change)="setSymbol($any($event.target).value)">
+                @for (s of symbols; track s) { <option [value]="s">{{ s }}</option> }
+            </select>
+            <div class="chips">
+                @for (i of intervals; track i) {
+                <button type="button" class="chip" [class.active]="interval() === i" (click)="setInterval(i)">{{ i
+                    }}</button>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (stats(); as s) {
+    <div class="kpi-grid">
+        <div class="panel kpi">
+            <p class="label">Dernier prix</p>
+            <p class="value">{{ s.last | currency:'USD':'symbol':'1.2-2' }}</p>
+        </div>
+        <div class="panel kpi">
+            <p class="label">Variation (période)</p>
+            <p class="value" [class.positive]="s.change >= 0" [class.negative]="s.change < 0">
+                {{ s.change | number:'1.2-2' }} %
+            </p>
+        </div>
+        <div class="panel kpi">
+            <p class="label">Plus haut</p>
+            <p class="value">{{ s.high | currency:'USD':'symbol':'1.2-2' }}</p>
+        </div>
+        <div class="panel kpi">
+            <p class="label">Plus bas</p>
+            <p class="value">{{ s.low | currency:'USD':'symbol':'1.2-2' }}</p>
+        </div>
+    </div>
+    }
+
+    <div class="layout">
+        <div class="charts">
+            <div class="panel">
+                <div class="toggles">
+                    <label><input type="checkbox" [checked]="showSma()"
+                            (change)="showSma.set($any($event.target).checked)" /> SMA 20</label>
+                    <label><input type="checkbox" [checked]="showEma()"
+                            (change)="showEma.set($any($event.target).checked)" /> EMA 50</label>
+                    <label><input type="checkbox" [checked]="showBb()"
+                            (change)="showBb.set($any($event.target).checked)" /> Bollinger</label>
+                    @if (loading()) { <span class="loading">Chargement…</span> }
+                </div>
+                <apx-chart [series]="mainSeries()" [chart]="mainChart" [xaxis]="xaxis" [yaxis]="yaxis" [grid]="grid"
+                    [stroke]="stroke" [plotOptions]="plotOptions" [legend]="{ labels: { colors: '#d1d5db' } }"
+                    [theme]="{ mode: 'dark' }" [tooltip]="{ theme: 'dark' }">
+                </apx-chart>
+            </div>
+
+            <div class="panel">
+                <h3 class="section-title">RSI (14)</h3>
+                <apx-chart [series]="rsiSeries()" [chart]="rsiChart" [xaxis]="xaxis" [yaxis]="rsiYaxis" [grid]="grid"
+                    [stroke]="{ width: 2 }" [colors]="['#818cf8']" [annotations]="rsiAnnotations"
+                    [theme]="{ mode: 'dark' }" [tooltip]="{ theme: 'dark' }">
+                </apx-chart>
+            </div>
+
+            <div class="panel">
+                <h3 class="section-title">MACD (12, 26, 9)</h3>
+                <apx-chart [series]="macdSeries()" [chart]="macdChart" [xaxis]="xaxis" [yaxis]="yaxis" [grid]="grid"
+                    [stroke]="{ width: [0, 2, 2] }" [legend]="{ labels: { colors: '#d1d5db' } }"
+                    [theme]="{ mode: 'dark' }" [tooltip]="{ theme: 'dark' }">
+                </apx-chart>
+            </div>
+        </div>
+
+        <!-- Signaux -->
+        <div class="panel side">
+            <h3 class="section-title">Synthèse des signaux</h3>
+            @if (signals().length) {
+            <div class="verdict" [class]="'verdict ' + verdict().css">
+                <span class="verdict-label">{{ verdict().label }}</span>
+                <span class="verdict-detail">{{ verdict().buy }} achat · {{ verdict().sell }} vente</span>
+            </div>
+            <ul class="signal-list">
+                @for (s of signals(); track s.name) {
+                <li>
+                    <div>
+                        <p class="signal-name">{{ s.name }}</p>
+                        <p class="signal-value">{{ s.value }}</p>
+                    </div>
+                    <span class="tag" [class.buy]="s.signal === 'Achat'" [class.sell]="s.signal === 'Vente'"
+                        [class.neutral]="s.signal === 'Neutre'">{{ s.signal }}</span>
+                </li>
+                }
+            </ul>
+            <p class="hint">Indicatif uniquement, pas un conseil en investissement.</p>
+            } @else {
+            <p class="hint">Pas assez de données.</p>
+            }
+        </div>
+    </div>
+</div>

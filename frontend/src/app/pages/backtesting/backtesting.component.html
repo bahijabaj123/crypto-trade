@@ -1,1 +1,162 @@
-<p>backtesting works!</p>
+<div class="page">
+    <div class="header">
+        <div>
+            <h1 class="title">Backtesting</h1>
+            <p class="subtitle">
+                Testez une stratégie sur l'historique Binance ({{ candles().length }} bougies)
+                @if (loading()) { · chargement… }
+            </p>
+        </div>
+        <div class="controls">
+            <select class="input" [value]="symbol()" (change)="setSymbol($any($event.target).value)">
+                @for (s of symbols; track s) { <option [value]="s">{{ s }}</option> }
+            </select>
+            <div class="chips">
+                @for (i of intervals; track i) {
+                <button type="button" class="chip" [class.active]="interval() === i" (click)="setInterval(i)">{{ i
+                    }}</button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="layout">
+        <!-- Paramètres -->
+        <div class="panel side">
+            <h3 class="section-title">Stratégie</h3>
+            <select class="input" [value]="strategyId()" (change)="setStrategy($any($event.target).value)">
+                @for (s of strategies; track s.id) { <option [value]="s.id">{{ s.name }}</option> }
+            </select>
+            <p class="description">{{ strategy().description }}</p>
+
+            @for (p of strategy().params; track p.key) {
+            <label class="label">{{ p.label }} : <b>{{ params()[p.key] }}</b></label>
+            <input type="range" class="range" [min]="p.min" [max]="p.max" [step]="p.step" [value]="params()[p.key]"
+                (input)="setParam(p.key, $any($event.target).value)" />
+            }
+
+            <label class="label">Capital initial ($)</label>
+            <input type="number" class="input" min="100" step="100" [value]="capital()"
+                (change)="setCapital($any($event.target).value)" />
+
+            <label class="label">Frais par ordre : <b>{{ fee() }} %</b></label>
+            <input type="range" class="range" min="0" max="0.5" step="0.05" [value]="fee()"
+                (input)="setFee($any($event.target).value)" />
+
+            <button type="button" class="btn-outline" (click)="resetParams()">Réinitialiser les paramètres</button>
+            <p class="hint">Stratégie long uniquement. Achat et vente à la clôture de la bougie du signal.</p>
+        </div>
+
+        <!-- Résultats -->
+        <div class="main">
+            <div class="kpi-grid">
+                <div class="panel kpi">
+                    <p class="label">Capital final</p>
+                    <p class="value">{{ m().finalEquity | currency:'USD':'symbol':'1.0-0' }}</p>
+                </div>
+                <div class="panel kpi">
+                    <p class="label">Rendement stratégie</p>
+                    <p class="value" [class.positive]="m().returnPct >= 0" [class.negative]="m().returnPct < 0">
+                        {{ m().returnPct | number:'1.2-2' }} %
+                    </p>
+                    <p class="sub" [class.positive]="alpha() >= 0" [class.negative]="alpha() < 0">
+                        {{ alpha() >= 0 ? '+' : '' }}{{ alpha() | number:'1.2-2' }} pts vs Buy &amp; Hold
+                    </p>
+                </div>
+                <div class="panel kpi">
+                    <p class="label">Buy &amp; Hold</p>
+                    <p class="value" [class.positive]="m().buyHoldPct >= 0" [class.negative]="m().buyHoldPct < 0">
+                        {{ m().buyHoldPct | number:'1.2-2' }} %
+                    </p>
+                </div>
+                <div class="panel kpi">
+                    <p class="label">Drawdown maximum</p>
+                    <p class="value negative">{{ m().maxDrawdown | number:'1.2-2' }} %</p>
+                </div>
+                <div class="panel kpi">
+                    <p class="label">Ratio de Sharpe</p>
+                    <p class="value">{{ m().sharpe | number:'1.2-2' }}</p>
+                </div>
+                <div class="panel kpi">
+                    <p class="label">Taux de réussite</p>
+                    <p class="value">{{ m().winRate | number:'1.0-1' }} %</p>
+                    <p class="sub">{{ m().trades }} trade(s)</p>
+                </div>
+                <div class="panel kpi">
+                    <p class="label">Profit factor</p>
+                    <p class="value">{{ m().profitFactor === null ? '—' : (m().profitFactor | number:'1.2-2') }}</p>
+                </div>
+                <div class="panel kpi">
+                    <p class="label">Temps en position</p>
+                    <p class="value">{{ m().exposure | number:'1.0-0' }} %</p>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3 class="section-title">Courbe de capital</h3>
+                <apx-chart [series]="equitySeries()" [chart]="equityChart" [xaxis]="xaxis" [yaxis]="yMoney"
+                    [grid]="grid" [stroke]="{ width: 2 }" [colors]="['#22c55e', '#94a3b8']" [legend]="legend"
+                    [theme]="theme" [tooltip]="tooltip"></apx-chart>
+            </div>
+
+            <div class="panel">
+                <h3 class="section-title">Prix et signaux <span class="legend-dot buy"></span>achat <span
+                        class="legend-dot sell"></span>vente</h3>
+                <apx-chart [series]="priceSeries()" [chart]="priceChart" [xaxis]="xaxis" [yaxis]="yPrice" [grid]="grid"
+                    [stroke]="{ width: 1.5 }" [colors]="['#94a3b8']" [annotations]="priceAnnotations()" [theme]="theme"
+                    [tooltip]="tooltip"></apx-chart>
+            </div>
+
+            <div class="panel">
+                <h3 class="section-title">Drawdown</h3>
+                <apx-chart [series]="ddSeries()" [chart]="ddChart" [xaxis]="xaxis" [yaxis]="yPct" [grid]="grid"
+                    [stroke]="{ width: 1.5 }" [fill]="fillDd" [colors]="['#ef4444']" [dataLabels]="{ enabled: false }"
+                    [theme]="theme" [tooltip]="tooltip"></apx-chart>
+            </div>
+
+            <div class="panel table-wrap">
+                <h3 class="section-title">Trades ({{ m().trades }})</h3>
+                @if (tradesDesc().length) {
+                <div class="scroll">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Entrée</th>
+                                <th>Sortie</th>
+                                <th>Prix entrée</th>
+                                <th>Prix sortie</th>
+                                <th class="right">P&amp;L %</th>
+                                <th class="right">P&amp;L $</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (t of tradesDesc(); track t.entryTime) {
+                            <tr>
+                                <td>{{ t.entryTime | date:'dd/MM/yy HH:mm' }}</td>
+                                <td>
+                                    {{ t.exitTime | date:'dd/MM/yy HH:mm' }}
+                                    @if (t.open) { <span class="badge-open">ouvert</span> }
+                                </td>
+                                <td>{{ t.entryPrice | currency:'USD':'symbol':'1.2-2' }}</td>
+                                <td>{{ t.exitPrice | currency:'USD':'symbol':'1.2-2' }}</td>
+                                <td class="right" [class.positive]="t.pnlPct >= 0" [class.negative]="t.pnlPct < 0">
+                                    {{ t.pnlPct | number:'1.2-2' }} %
+                                </td>
+                                <td class="right" [class.positive]="t.pnl >= 0" [class.negative]="t.pnl < 0">
+                                    {{ t.pnl | currency:'USD':'symbol':'1.2-2' }}
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                } @else {
+                <p class="hint">Aucun trade généré avec ces paramètres sur cette période.</p>
+                }
+            </div>
+
+            <p class="hint">Les performances passées ne préjugent pas des performances futures. Simulation à but
+                pédagogique.</p>
+        </div>
+    </div>
+</div>

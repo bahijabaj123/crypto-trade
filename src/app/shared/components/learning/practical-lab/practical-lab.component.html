@@ -1,0 +1,32 @@
+<section
+  class="rounded-xl border border-crypto-blue/30 bg-gradient-to-br from-crypto-blue/10 to-crypto-green/5 p-5"
+  aria-labelledby="lab-title"
+>
+  <p class="text-xs font-semibold tracking-wide text-crypto-blue">Laboratoire pratique</p>
+  <h4 id="lab-title" class="mt-1 text-lg font-semibold text-crypto-text">{{ mission.title }}</h4>
+  <p class="mt-2 text-sm text-crypto-text-muted">{{ mission.objective }}</p>
+
+  <ul class="mt-4 space-y-2" aria-label="Tâches de la mission">
+    @for (task of mission.tasks; track task.id; let i = $index) {
+      <li class="flex items-center gap-2 text-sm text-crypto-text">
+        <span
+          class="flex h-5 w-5 items-center justify-center rounded-full text-xs"
+          [class]="i < 2 ? 'bg-crypto-green/20 text-crypto-green' : 'border border-crypto-border text-crypto-text-muted'"
+        >
+          {{ i < 2 ? '✓' : '○' }}
+        </span>
+        {{ task.label }}
+      </li>
+    }
+  </ul>
+
+  <p class="mt-4 text-sm text-crypto-yellow">Récompense : +{{ mission.xpReward }} XP</p>
+
+  <a
+    [routerLink]="mission.tradingRoute"
+    [queryParams]="mission.queryParams"
+    class="crypto-btn-buy mt-4 inline-flex w-full items-center justify-center py-2.5 text-sm sm:w-auto"
+  >
+    Lancer le laboratoire
+  </a>
+</section>

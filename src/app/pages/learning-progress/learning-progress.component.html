@@ -1,0 +1,101 @@
+<app-page-breadcrumb pageTitle="Progression" />
+
+<section class="formation-hero mb-6 p-6 sm:p-8">
+  <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+    <div>
+      <p class="text-sm text-crypto-text-muted">Niveau {{ level.level }}</p>
+      <h2 class="text-2xl font-bold text-crypto-text">{{ level.title }}</h2>
+      <p class="mt-2 text-sm text-crypto-text-muted">
+        {{ level.currentXp.toLocaleString('fr-FR') }} / {{ level.xpForNext.toLocaleString('fr-FR') }} XP
+      </p>
+      <p class="text-xs text-crypto-green">Prochain : {{ level.nextTitle }}</p>
+    </div>
+    <div class="w-full max-w-md">
+      <div class="h-3 overflow-hidden rounded-full bg-crypto-border">
+        <div class="h-full rounded-full bg-crypto-green" [style.width.%]="levelProgress()"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+  <div class="formation-stat"><span class="formation-stat-value">{{ stats.globalProgressPercent }}%</span><span class="formation-stat-label">Progression globale</span></div>
+  <div class="formation-stat"><span class="formation-stat-value">{{ stats.modulesCompleted }}</span><span class="formation-stat-label">Modules terminés</span></div>
+  <div class="formation-stat"><span class="formation-stat-value">{{ stats.lessonsCompleted }}</span><span class="formation-stat-label">Leçons terminées</span></div>
+  <div class="formation-stat"><span class="formation-stat-value">{{ stats.averageQuizScore }}%</span><span class="formation-stat-label">Score moyen</span></div>
+  <div class="formation-stat"><span class="formation-stat-value">{{ formation.formatDurationMinutes(stats.learningTimeMinutes) }}</span><span class="formation-stat-label">Temps d'apprentissage</span></div>
+  <div class="formation-stat"><span class="formation-stat-value">{{ stats.currentStreakDays }} j</span><span class="formation-stat-label">Série actuelle</span></div>
+</div>
+
+<div class="grid grid-cols-1 gap-6 xl:grid-cols-12">
+  <section class="formation-card p-5 xl:col-span-5">
+    <h3 class="text-base font-semibold text-crypto-text">Carte des compétences</h3>
+    <apx-chart
+      [series]="radarSeries"
+      [chart]="radarChart"
+      [xaxis]="radarXAxis"
+      [stroke]="radarStroke"
+      [fill]="radarFill"
+      [markers]="radarMarkers"
+      [colors]="['#0ECB81']"
+    ></apx-chart>
+    <ul class="mt-4 space-y-3">
+      @for (skill of skills; track skill.id) {
+        <li>
+          <div class="mb-1 flex justify-between text-xs">
+            <span class="text-crypto-text-muted">{{ skill.label }}</span>
+            <span class="text-crypto-green">{{ skill.percent }}%</span>
+          </div>
+          <div class="h-2 rounded-full bg-crypto-border">
+            <div class="h-full rounded-full bg-crypto-green" [style.width.%]="skill.percent"></div>
+          </div>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="formation-card p-5 xl:col-span-4">
+    <h3 class="text-base font-semibold text-crypto-text">Activité récente</h3>
+    <ul class="mt-4 space-y-4">
+      @for (item of activities; track item.id) {
+        <li class="border-s-2 border-crypto-green/40 ps-4">
+          <p class="text-xs text-crypto-text-muted">{{ item.dateLabel }}</p>
+          <p class="font-medium text-crypto-text">{{ item.title }}</p>
+          <p class="text-sm text-crypto-text-muted">{{ item.subtitle }}</p>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="formation-card p-5 xl:col-span-3">
+    <h3 class="text-base font-semibold text-crypto-text">Succès</h3>
+    <ul class="mt-4 space-y-3">
+      @for (a of achievements; track a.id) {
+        <li class="rounded-lg border border-crypto-border p-3" [class.opacity-50]="!a.unlocked">
+          <p class="font-medium text-crypto-text">{{ a.title }}</p>
+          <p class="text-xs text-crypto-text-muted">{{ a.description }}</p>
+          @if (!a.unlocked && a.progress !== undefined) {
+            <div class="mt-2 h-1.5 rounded-full bg-crypto-border">
+              <div class="h-full rounded-full bg-crypto-yellow" [style.width.%]="a.progress"></div>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="formation-card p-5 xl:col-span-12">
+    <h3 class="text-base font-semibold text-crypto-text">Activité hebdomadaire</h3>
+    <apx-chart
+      [series]="barSeries"
+      [chart]="barChart"
+      [xaxis]="barXAxis"
+      [yaxis]="barYAxis"
+      [grid]="barGrid"
+      [plotOptions]="barPlot"
+      [colors]="barColors"
+      [dataLabels]="barDataLabels"
+      [tooltip]="barTooltip"
+    ></apx-chart>
+  </section>
+</div>

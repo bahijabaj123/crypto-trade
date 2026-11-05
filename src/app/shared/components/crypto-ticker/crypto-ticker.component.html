@@ -1,0 +1,33 @@
+<div class="w-full bg-crypto-card border-b border-crypto-border overflow-hidden">
+  <div class="flex items-center h-10 crypto-ticker whitespace-nowrap">
+    <!-- Boucle 1 -->
+    <ng-container *ngFor="let crypto of cryptos">
+      <div class="inline-flex items-center gap-3 px-6 border-r border-crypto-border">
+        <span class="crypto-live-dot"></span>
+        <span class="text-crypto-text font-medium text-sm">{{ crypto.symbol }}</span>
+        <span class="crypto-price text-crypto-text text-sm">${{ formatPrice(crypto.price) }}</span>
+        <span
+          class="text-xs font-medium"
+          [ngClass]="crypto.change >= 0 ? 'text-crypto-green' : 'text-crypto-red'"
+        >
+          {{ crypto.change >= 0 ? '▲' : '▼' }} {{ crypto.change >= 0 ? '+' : '' }}{{ crypto.change.toFixed(2) }}%
+        </span>
+      </div>
+    </ng-container>
+
+    <!-- Boucle 2 (duplication pour défilement infini) -->
+    <ng-container *ngFor="let crypto of cryptos">
+      <div class="inline-flex items-center gap-3 px-6 border-r border-crypto-border">
+        <span class="crypto-live-dot"></span>
+        <span class="text-crypto-text font-medium text-sm">{{ crypto.symbol }}</span>
+        <span class="crypto-price text-crypto-text text-sm">${{ formatPrice(crypto.price) }}</span>
+        <span
+          class="text-xs font-medium"
+          [ngClass]="crypto.change >= 0 ? 'text-crypto-green' : 'text-crypto-red'"
+        >
+          {{ crypto.change >= 0 ? '▲' : '▼' }} {{ crypto.change >= 0 ? '+' : '' }}{{ crypto.change.toFixed(2) }}%
+        </span>
+      </div>
+    </ng-container>
+  </div>
+</div>

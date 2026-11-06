@@ -71,6 +71,22 @@ export class GameMultiplayerComponent implements OnDestroy {
     this.mpService.arreterPolling();
     this.mpService.currentRoom.set(null);
   }
+    // ============================================
+  // COPIER LE CODE DE LA SALLE
+  // ============================================
+  public copieReussie = false;
+
+  public copierCode(): void {
+    if (this.salleActive) {
+      navigator.clipboard.writeText(this.salleActive.code).then(() => {
+        this.copieReussie = true;
+        setTimeout(() => { this.copieReussie = false; }, 2000);
+      }).catch(err => {
+        console.error('Erreur de copie:', err);
+      });
+    }
+  }
+  
 
   ngOnDestroy(): void {
     this.mpService.arreterPolling();

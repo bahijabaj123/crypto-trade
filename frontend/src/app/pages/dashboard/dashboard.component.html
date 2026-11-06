@@ -1,5 +1,73 @@
 <div class="p-6 bg-crypto-bg min-h-screen">
+  <!-- ============================================================ -->
+  <!-- BANDEAU "AUJOURD'HUI" (Dynamique)                            -->
+  <!-- ============================================================ -->
+  <div class="mb-6 bg-gradient-to-r from-crypto-card to-crypto-bg border border-crypto-border rounded-2xl p-5 shadow-lg">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+      <h2 class="text-lg font-black text-crypto-text flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-crypto-green animate-pulse"></span>
+        Aujourd'hui
+        <span class="text-xs font-normal text-crypto-text-muted">{{ today | date:'EEEE d MMMM yyyy' }}</span>
+      </h2>
+      
+      <!-- Badges d'état des marchés (Dynamiques) -->
+      <div class="flex flex-wrap gap-2">
+        <!-- Crypto : Toujours ouvert -->
+        <span class="px-3 py-1 rounded-full text-xs font-bold bg-green-500/10 text-green-400 border border-green-500/30 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+          Crypto : Ouvert 24/7
+        </span>
 
+        <!-- Actions (Dynamique) -->
+        <span class="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 border"
+          [ngClass]="actionsOuvertes ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'">
+          <span class="w-1.5 h-1.5 rounded-full" 
+                [ngClass]="actionsOuvertes ? 'bg-green-500 animate-pulse' : 'bg-red-500'"></span>
+          Actions : {{ statutActions }}
+        </span>
+
+        <!-- Forex (Dynamique) -->
+        <span class="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 border"
+          [ngClass]="!isWeekend ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'">
+          <span class="w-1.5 h-1.5 rounded-full" 
+                [ngClass]="!isWeekend ? 'bg-green-500 animate-pulse' : 'bg-red-500'"></span>
+          Forex : {{ isWeekend ? 'Fermé (Week-end)' : 'Ouvert' }}
+        </span>
+
+        <!-- Matières premières (Dynamique) -->
+        <span class="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 border"
+          [ngClass]="matieresPremieresOuvertes ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'">
+          <span class="w-1.5 h-1.5 rounded-full" 
+                [ngClass]="matieresPremieresOuvertes ? 'bg-green-500 animate-pulse' : 'bg-red-500'"></span>
+          Matières premières : {{ statutMatieres }}
+        </span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div>
+        <p class="text-[10px] text-crypto-text-muted uppercase tracking-widest mb-1">Variation moyenne (24h)</p>
+        <p class="text-2xl font-mono font-bold" [class]="variationMoyenne >= 0 ? 'text-crypto-green' : 'text-crypto-red'">
+          {{ variationMoyenne >= 0 ? '+' : '' }}{{ variationMoyenne | number: '1.2-2' }} %
+        </p>
+      </div>
+      <div>
+        <p class="text-[10px] text-crypto-text-muted uppercase tracking-widest mb-1">Actifs en hausse</p>
+        <p class="text-2xl font-mono font-bold text-crypto-text">
+          <span class="text-green-400">{{ actifsEnHausse }}</span> <span class="text-crypto-text-muted">/ {{ tickers.length }}</span>
+        </p>
+      </div>
+      <div>
+        <p class="text-[10px] text-crypto-text-muted uppercase tracking-widest mb-1">Pouls du marché</p>
+        <p class="text-2xl font-mono font-bold" [ngClass]="getPulseColor()">{{ marketPulse }} <span class="text-xs">/ 100</span></p>
+      </div>
+      <div>
+        <p class="text-[10px] text-crypto-text-muted uppercase tracking-widest mb-1">Actifs suivis</p>
+        <p class="text-2xl font-mono font-bold text-crypto-text">{{ tickers.length }}</p>
+      </div>
+    </div>
+  </div>
+  
   <!-- Header -->
   <div class="mb-6">
     <h1 class="text-2xl font-bold text-crypto-text">Dashboard Marchés</h1>
@@ -59,7 +127,6 @@
       (click)="selectSymbol(ticker.symbol)">
       
       <div class="flex items-center justify-between mb-3">
-        <!-- Nom lisible (ex: Or (Gold)) avec le code en infobulle -->
         <span class="text-crypto-text font-medium" [title]="ticker.symbol">
           {{ ticker.name || ticker.symbol }}
         </span>
@@ -70,7 +137,6 @@
         ${{ formatPrice(ticker.price) }}
       </div>
 
-      <!-- Sparkline -->
       <svg
         *ngIf="watchlistSparklines[ticker.symbol]"
         viewBox="0 0 100 30"
@@ -99,7 +165,6 @@
     <div>
       <h2 class="text-lg font-semibold text-crypto-text mb-4">Pouls du marché</h2>
       <div class="flex items-center gap-6">
-        <!-- Jauge -->
         <div class="relative w-32 h-32">
           <svg viewBox="0 0 100 100" class="transform -rotate-90">
             <circle cx="50" cy="50" r="40" stroke="#2B3139" stroke-width="8" fill="none"/>
@@ -117,7 +182,6 @@
           </div>
         </div>
 
-        <!-- Décomposition XAI avec infobulles -->
         <div class="flex-1 space-y-3 text-sm">
           <div class="flex justify-between cursor-help group" title="Mesure l'ampleur des mouvements de prix. Une volatilité élevée indique un marché nerveux.">
             <span class="text-crypto-text-muted border-b border-dotted border-crypto-text-muted group-hover:text-crypto-text transition">Volatilité</span>
@@ -134,7 +198,6 @@
         </div>
       </div>
       
-      <!-- Formule mathématique -->
       <div class="mt-4 pt-3 border-t border-crypto-border">
         <p class="text-[10px] text-crypto-text-muted italic">
           * Formule de calcul : (Volatilité × 30%) + (Largeur × 30%) + (Momentum × 30%) + (Volume × 10%)
@@ -185,7 +248,6 @@
         [class.ring-white]="ticker.symbol === selectedSymbol">
         <div class="flex flex-col h-full justify-between min-h-[80px]">
           <div>
-            <!-- Nom lisible dans la Heatmap -->
             <div class="text-white font-bold text-sm">
               {{ ticker.name || ticker.symbol.replace('USDT', '') }}
             </div>
@@ -206,7 +268,6 @@
   <div class="xl:col-span-2 crypto-card">
     <div class="flex items-center justify-between mb-4">
       <div>
-        <!-- Titre du graphique avec nom lisible -->
         <h2 class="text-lg font-semibold text-crypto-text">
           {{ getCurrentAssetName() }}
         </h2>
@@ -224,9 +285,6 @@
       </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- ENCART XAI : POURQUOI ÇA BOUGE ? -->
-    <!-- ============================================================ -->
     <div class="mb-4 p-3 rounded-lg bg-crypto-bg border border-crypto-border flex items-start gap-3 text-sm">
       <div class="text-2xl mt-0.5">🧠</div>
       <div class="flex-1">
@@ -238,7 +296,6 @@
           {{ getXaiExplanation().text }}
         </p>
         
-        <!-- Barres de décomposition XAI -->
         <div class="mt-3 space-y-2">
           <div class="flex items-center gap-2 text-xs">
             <span class="w-24 text-crypto-text-muted">Tendance Marché</span>
@@ -263,7 +320,6 @@
       </div>
     </div>
 
-     <!-- Le graphique -->
     <app-dashboard-candle-chart
       [candles]="candles"
       [symbol]="selectedSymbol"
@@ -271,7 +327,6 @@
     </app-dashboard-candle-chart>
   </div>
 
-  <!-- TRANSACTIONS -->
   <div class="crypto-card">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-semibold text-crypto-text">Transactions</h2>

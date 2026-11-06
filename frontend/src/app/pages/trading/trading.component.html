@@ -106,7 +106,7 @@
           class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800" />
       </div>
 
-      <!-- Récapitulatif -->
+            <!-- Récapitulatif -->
       <dl class="space-y-2 text-sm">
         <div class="flex justify-between">
           <dt class="text-gray-500 dark:text-gray-400">{{ type === 'LIMIT' ? 'Montant maximum estimé' : 'Montant estimé' }}</dt>
@@ -117,45 +117,60 @@
         <div class="flex justify-between">
           <dt class="text-gray-500 dark:text-gray-400">Solde disponible</dt>
           <dd class="font-medium text-gray-800 dark:text-white/90">
-            @if (portefeuille(); as p) { {{ p.soldeDisponible | number: '1.2-2' }} USDT } @else { - }
+            @if (marketService.activeMarket === 'crypto') {
+              @if (portefeuille(); as p) { {{ p.soldeDisponible | number: '1.2-2' }} USDT } @else { - }
+            } @else {
+              {{ simulatedPortfolio.soldeDisponible | number: '1.2-2' }} USD
+            }
           </dd>
         </div>
       </dl>
 
-      <!-- 👇 NOUVEAU BLOC DE RISQUE (Optionnel) -->
-      @if (marketService.activeMarket === 'crypto') {
-        <div class="mt-2">
-          <button type="button" (click)="basculerRisque()" 
-            class="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1 transition-colors">
-            <span class="text-lg">{{ afficherRisque() ? '▼' : '▶' }}</span>
-            {{ afficherRisque() ? 'Masquer l\'analyse du risque' : 'Voir l\'analyse du risque (Optionnel)' }}
-          </button>
-        </div>
+      <!-- 👇 NOUVEAU : Bouton Risque pour TOUS les marchés -->
+      <div class="mt-2">
+        <button type="button" (click)="basculerRisque()" 
+          class="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1 transition-colors">
+          <span class="text-lg">{{ afficherRisque() ? '▼' : '▶' }}</span>
+          {{ afficherRisque() ? 'Masquer l\'analyse du risque' : 'Voir l\'analyse du risque (Optionnel)' }}
+        </button>
+      </div>
 
-        @if (afficherRisque() && apercu(); as a) {
+      <!-- 👇 NOUVEAU : Contenu du risque pour TOUS les marchés -->
+      @if (afficherRisque()) {
+        <!-- Mode Crypto (Backend Sarra) -->
+        @if (marketService.activeMarket === 'crypto' && apercu(); as a) {
           <div class="rounded-xl border p-4 text-sm mt-2" [class]="couleurApercu(a.niveau)">
-            <p class="mb-2 font-semibold">
-              Évaluation du risque :
-              @switch (a.niveau) {
-                @case ('OK') { OK }
-                @case ('ATTENTION') { à surveiller }
-                @default { ordre refusé }
-              }
-            </p>
+            <p class="mb-2 font-semibold">Évaluation du risque (Backend) :</p>
             <ul class="list-disc space-y-1 ps-5">
-              @for (m of a.messages; track m) {
-                <li>{{ m }}</li>
+              @for (m of a.messages; track m) { <li>{{ m }}</li> }
+            </ul>
+          </div>
+        } 
+        <!-- Mode Simulation (Actions, Forex, Commodities) -->
+        @else if (marketService.activeMarket !== 'crypto') {
+          <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/15 dark:text-blue-400 mt-2">
+            <p class="mb-2 font-semibold">Analyse du risque (Simulation) :</p>
+            <ul class="list-disc space-y-1 ps-5">
+              @if (montantEstime(); as m) {
+                <li>Coût total de l'ordre : <strong>{{ m | number: '1.2-2' }} $</strong></li>
+                @if (simulatedPortfolio.soldeDisponible > 0) {
+                  <li>Part du portefeuille : <strong>{{ (m / (simulatedPortfolio.soldeDisponible + m)) * 100 | number: '1.1-1' }} %</strong></li>
+                }
+                @if (stopLoss !== null && stopLoss > 0 && prixSelectionne() !== null) {
+                  <li>Perte max (si Stop-Loss touché) : <strong>{{ (prixSelectionne()! - stopLoss) * quantite! | number: '1.2-2' }} $</strong></li>
+                }
+                @if (takeProfit !== null && takeProfit > 0 && prixSelectionne() !== null) {
+                  <li>Gain max (si Take-Profit touché) : <strong>{{ (takeProfit - prixSelectionne()!) * quantite! | number: '1.2-2' }} $</strong></li>
+                }
+              } @else {
+                <li>Renseignez une quantité pour voir l'analyse.</li>
               }
             </ul>
-            @if (a.niveau === 'REFUSE' && a.quantiteMax !== null && a.quantiteMax > 0) {
-              <button type="button" (click)="utiliserQuantiteMax()"
-                class="mt-3 rounded-lg border border-current px-3 py-1.5 text-theme-xs font-medium hover:bg-white/40">
-                Utiliser la quantité maximale ({{ a.quantiteMax | number: '1.0-6' }})
-              </button>
-            }
           </div>
         }
       }
+
+      <!-- Le gros bouton Acheter/Vendre est déjà en dessous, on n'y touche pas -->
 
       <button type="submit"
         [disabled]="!formulaireValide() || envoiEnCours() || (marketService.activeMarket === 'crypto' && apercu()?.autorise === false)"

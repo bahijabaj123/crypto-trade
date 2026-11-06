@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
+import {  DatePipe } from '@angular/common';
 
 import { BinanceService } from '../../core/services/binance.service';
 import { MarketService, MarketType } from '../../core/services/market.service';
@@ -12,7 +13,7 @@ import { CandleChartComponent } from './components/candle-chart/candle-chart.com
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule,  CandleChartComponent],
+  imports: [CommonModule, CandleChartComponent,DatePipe],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
@@ -38,6 +39,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private lastPulseUpdate = 0;
   private refreshInterval?: any;
 
+  public readonly today = new Date();
+
   // SUBSCRIPTIONS
   private tickerSub?: Subscription;
   private klineSub?: Subscription;
@@ -55,17 +58,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-  this.tickerSub?.unsubscribe();
-  this.klineSub?.unsubscribe();
-  this.tradeSub?.unsubscribe();
-  this.tickersMultiSub?.unsubscribe();
-  if (this.refreshInterval) clearInterval(this.refreshInterval);
-}
+    this.tickerSub?.unsubscribe();
+    this.klineSub?.unsubscribe();
+    this.tradeSub?.unsubscribe();
+    this.tickersMultiSub?.unsubscribe();
+    if (this.refreshInterval) clearInterval(this.refreshInterval);
+  }
+
+  // ============================================================
+  // NOUVEAU : Propriétés pour le bandeau "Aujourd'hui"
+  // ============================================================
+  get variationMoyenne(): number {
+    if (this.tickers.length === 0) return 0;
+    return this.tickers.reduce((s, t) => s + t.changePercent, 0) / this.tickers.length;
+  }
+
+  get actifsEnHausse(): number {
+    return this.tickers.filter(t => t.changePercent > 0).length;
+  }
 
   // ============================================================
   // CHANGEMENT DE MARCHÉ
   // ============================================================
-     changeMarket(market: MarketType): void {
+  changeMarket(market: MarketType): void {
     this.activeMarket = market;
     this.marketService.setActiveMarket(market);
 
@@ -76,7 +91,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.tickersMultiSub?.unsubscribe();
     if (this.refreshInterval) clearInterval(this.refreshInterval);
 
-    // 2. 🔥 VIDER L'ECRAN IMMEDIATEMENT
+    // 2. VIDER L'ECRAN IMMEDIATEMENT
     this.tickers = [];
     this.candles = [];
     this.recentTrades = [];
@@ -103,6 +118,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.startWebSocketStreams();
     }
   }
+
   // ============================================================
   // CHARGEMENT DES DONNÉES
   // ============================================================
@@ -133,7 +149,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private startWebSocketStreams(): void {
     const symbols = this.binanceService.getPopularSymbols();
     
-    // 1. Tickers temps réel
     this.tickersMultiSub = this.binanceService.getMultipleTickersStream(symbols).subscribe({
       next: (msg: any) => {
         const data = msg.data;
@@ -163,7 +178,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
     });
 
-    // 2. Kline temps réel
     this.klineSub = this.binanceService.getKlineStream(this.selectedSymbol, '1m').subscribe({
       next: (msg: any) => {
         const k = msg.k;
@@ -187,7 +201,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
     });
 
-    // 3. Trades temps réel
     this.tradeSub = this.binanceService.getTradeStream(this.selectedSymbol).subscribe({
       next: (msg: any) => {
         const trade: TradeData = {
@@ -297,45 +310,36 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   calculateMarketPulse(): void {
-  if (this.tickers.length === 0) return;
+    if (this.tickers.length === 0) return;
 
-  // 1. Volatilité : Si les mouvements sont violents, la volatilité est basse (inversée pour le score)
-  const avgChange = this.tickers.reduce((s, t) => s + Math.abs(t.changePercent), 0) / this.tickers.length;
-  const volatilityScore = Math.max(0, 100 - avgChange * 10);
+    const avgChange = this.tickers.reduce((s, t) => s + Math.abs(t.changePercent), 0) / this.tickers.length;
+    const volatilityScore = Math.max(0, 100 - avgChange * 10);
 
-  // 2. Largeur (Breadth) : On donne un score de 50 si tout est neutre, 
-  // plus haut si ça monte, plus bas si ça baisse.
-  const upTickers = this.tickers.filter(t => t.changePercent > 0).length;
-  const downTickers = this.tickers.filter(t => t.changePercent < 0).length;
-  let breadthScore = 50; 
-  if (upTickers > 0 || downTickers > 0) {
-    breadthScore = (upTickers / (upTickers + downTickers)) * 100;
+    const upTickers = this.tickers.filter(t => t.changePercent > 0).length;
+    const downTickers = this.tickers.filter(t => t.changePercent < 0).length;
+    let breadthScore = 50; 
+    if (upTickers > 0 || downTickers > 0) {
+      breadthScore = (upTickers / (upTickers + downTickers)) * 100;
+    }
+
+    const avgVariation = this.tickers.reduce((s, t) => s + t.changePercent, 0) / this.tickers.length;
+    const momentumScore = Math.max(0, Math.min(100, 50 + avgVariation * 10));
+
+    const volumeScore = 50;
+
+    this.marketPulse = Math.round(
+      volatilityScore * 0.3 + breadthScore * 0.3 + momentumScore * 0.3 + volumeScore * 0.1
+    );
+
+    this.marketPulseBreakdown = {
+      volatility: Math.round(volatilityScore),
+      volume: Math.round(volumeScore),
+      breadth: Math.round(breadthScore),
+      momentum: Math.round(momentumScore)
+    };
+
+    this.cdr.detectChanges();
   }
-
-  // 3. Momentum : Variation moyenne des actifs (pondérée)
-  const avgVariation = this.tickers.reduce((s, t) => s + t.changePercent, 0) / this.tickers.length;
-  const momentumScore = Math.max(0, Math.min(100, 50 + avgVariation * 10));
-
-  // 4. Volume (Simulé pour l'instant)
-  const volumeScore = 50;
-
-  // Calcul Final
-  this.marketPulse = Math.round(
-    volatilityScore * 0.3 +
-    breadthScore * 0.3 +
-    momentumScore * 0.3 +
-    volumeScore * 0.1
-  );
-
-  this.marketPulseBreakdown = {
-    volatility: Math.round(volatilityScore),
-    volume: Math.round(volumeScore),
-    breadth: Math.round(breadthScore),
-    momentum: Math.round(momentumScore)
-  };
-
-  this.cdr.detectChanges();
-}
 
   getPulseLabel(): string {
     if (this.marketPulse >= 75) return 'Euphorie';
@@ -369,59 +373,40 @@ export class DashboardComponent implements OnInit, OnDestroy {
   getHeatmapOpacity(volume: number): number {
     if (this.tickers.length === 0) return 1;
     const maxVolume = Math.max(...this.tickers.map(t => t.volume));
-    if (maxVolume === 0) return 1; // Eviter la division par 0
+    if (maxVolume === 0) return 1;
     return 0.6 + (volume / maxVolume) * 0.4;
   }
 
-   getCurrentAssetName(): string {
-  // Pour le forex et les commodities, on affiche le nom traduit
-  if (this.activeMarket === 'commodities') {
-    const names: { [key: string]: string } = {
-      'GC=F': 'Or (Gold)', 'SI=F': 'Argent (Silver)', 'CL=F': 'Pétrole US (WTI)',
-      'BZ=F': 'Pétrole Brent', 'NG=F': 'Gaz Naturel', 'HG=F': 'Cuivre (Copper)', 'ZW=F': 'Blé (Wheat)'
-    };
-    return names[this.selectedSymbol] || this.selectedSymbol;
-  }
-  
-  if (this.activeMarket === 'forex') {
-    // Optionnel : tu peux aussi traduire les paires Forex ici si tu veux
+  getCurrentAssetName(): string {
+    if (this.activeMarket === 'commodities') {
+      const names: { [key: string]: string } = {
+        'GC=F': 'Or (Gold)', 'SI=F': 'Argent (Silver)', 'CL=F': 'Pétrole US (WTI)',
+        'BZ=F': 'Pétrole Brent', 'NG=F': 'Gaz Naturel', 'HG=F': 'Cuivre (Copper)', 'ZW=F': 'Blé (Wheat)'
+      };
+      return names[this.selectedSymbol] || this.selectedSymbol;
+    }
     return this.selectedSymbol;
   }
 
-  return this.selectedSymbol;
-}
-
-  // ============================================================
-  // XAI : "POURQUOI ÇA BOUGE ?" (Décomposition de la variation)
-  // ============================================================
-  
   getXaiExplanation(): { marketImpact: number, specificImpact: number, text: string, isPositive: boolean } {
     const currentTicker = this.tickers.find(t => t.symbol === this.selectedSymbol);
     if (!currentTicker) return { marketImpact: 0, specificImpact: 0, text: '', isPositive: true };
 
-    // 1. Calcul de la tendance générale du marché (Moyenne des variations)
     const avgMarketChange = this.tickers.reduce((sum, t) => sum + t.changePercent, 0) / this.tickers.length;
-    
-    // 2. Variation de l'actif
     const assetChange = currentTicker.changePercent;
     
-    // 3. Décomposition (Modèle simplifié)
-    // Si l'actif monte de 5% et le marché de 3%, l'impact marché est de 3% et l'impact spécifique de 2%.
     let marketImpact = avgMarketChange;
     let specificImpact = assetChange - avgMarketChange;
 
-    // Sécurité pour éviter les aberrations (si l'impact spécifique est plus grand que la variation totale)
     if (Math.abs(specificImpact) > Math.abs(assetChange) && Math.sign(assetChange) !== Math.sign(specificImpact)) {
       marketImpact = assetChange;
       specificImpact = 0;
     }
 
-    // 4. Calcul des pourcentages pour l'affichage
     const totalAbs = Math.abs(marketImpact) + Math.abs(specificImpact) || 1;
     const marketPercent = Math.round((Math.abs(marketImpact) / totalAbs) * 100);
     const specificPercent = 100 - marketPercent;
 
-    // 5. Texte explicatif généré
     const actionText = assetChange >= 0 ? 'augmenté' : 'baissé';
     const marketText = marketPercent >= specificPercent 
       ? `la tendance générale du marché (${avgMarketChange > 0 ? 'haussier' : 'baissier'})` 
@@ -437,7 +422,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       isPositive: assetChange >= 0
     };
   }
-  
 
   formatPrice(price: number): string {
     if (price < 0.0001) return price.toFixed(8);
@@ -446,5 +430,34 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
- 
+    // ============================================================
+  // LOGIQUE DES HORAIRES DE MARCHÉ
+  // ============================================================
+  
+  get isWeekend(): boolean {
+    const jour = new Date().getDay(); // 0 = Dimanche, 6 = Samedi
+    return jour === 0 || jour === 6;
+  }
+
+  get actionsOuvertes(): boolean {
+    // Les actions US sont ouvertes du lundi au vendredi (15h30 - 22h00 heure française)
+    if (this.isWeekend) return false;
+    const heure = new Date().getHours();
+    // Simplification : on dit que c'est ouvert si c'est la journée (8h - 18h)
+    return heure >= 8 && heure < 18;
+  }
+
+  get matieresPremieresOuvertes(): boolean {
+    // Le marché des matières premières (CBOE) suit globalement les mêmes horaires
+    return this.actionsOuvertes;
+  }
+
+  get statutActions(): string {
+    return this.actionsOuvertes ? 'Ouvert' : 'Fermé (Week-end ou hors séance)';
+  }
+
+  get statutMatieres(): string {
+    return this.matieresPremieresOuvertes ? 'Ouvert' : 'Fermé (Week-end ou hors séance)';
+  }
+  
 }

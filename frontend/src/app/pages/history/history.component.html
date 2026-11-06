@@ -1,1 +1,118 @@
-<p>history works!</p>
+<app-page-breadcrumb pageTitle="Historique des transactions" />
+
+<div class="p-6">
+  
+  <!-- Barre d'outils (Filtres + Recherche + Export) -->
+  <div class="mb-6 bg-white dark:bg-white/[0.03] rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Filtres -->
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- Source -->
+        <select 
+          (change)="filtreSource.set($any($event.target).value)"
+          class="h-10 rounded-lg border border-gray-300 bg-transparent px-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+          <option value="TOUS">📋 Toutes les sources</option>
+          <option value="CRYPTO">🪙 Crypto</option>
+          <option value="SIMULES">🎮 Simulés</option>
+        </select>
+
+        <!-- Sens -->
+        <select 
+          (change)="filtreSens.set($any($event.target).value)"
+          class="h-10 rounded-lg border border-gray-300 bg-transparent px-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+          <option value="TOUS">🔄 Tous les sens</option>
+          <option value="ACHAT">🟢 Achats</option>
+          <option value="VENTE">🔴 Ventes</option>
+        </select>
+      </div>
+
+      <!-- Recherche + Export -->
+      <div class="flex items-center gap-3 flex-1 justify-end">
+        <div class="relative max-w-xs w-full">
+          <input 
+            type="text" 
+            (input)="recherche.set($any($event.target).value)"
+            placeholder="Rechercher un actif (BTC, AAPL...)"
+            class="h-10 w-full rounded-lg border border-gray-300 bg-transparent pl-10 pr-3 text-sm text-gray-700 placeholder-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+          <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </div>
+
+        <button (click)="exporterCSV()"
+          [disabled]="transactionsFiltrees().length === 0"
+          class="h-10 px-4 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-medium text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exporter Excel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compteur -->
+  <div class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+    <strong class="text-gray-800 dark:text-white">{{ transactionsFiltrees().length }}</strong> transaction(s) trouvée(s)
+  </div>
+
+  <!-- Tableau -->
+  <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+    @if (chargement()) {
+      <p class="p-8 text-center text-sm text-gray-500">Chargement de l'historique...</p>
+    } @else if (transactionsFiltrees().length === 0) {
+      <div class="p-8 text-center">
+        <p class="text-sm text-gray-500 mb-4">Aucune transaction ne correspond à votre recherche.</p>
+        <a routerLink="/trading" class="inline-block bg-brand-500 hover:bg-brand-600 text-white font-medium py-2 px-6 rounded-lg transition">
+          Passer un ordre
+        </a>
+      </div>
+    } @else {
+      <div class="max-w-full overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="border-b border-gray-100 dark:border-white/[0.05]">
+            <tr>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Date</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Source</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Actif</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Sens</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-end text-theme-xs dark:text-gray-400">Quantité</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-end text-theme-xs dark:text-gray-400">Prix d'exécution</th>
+              <th class="px-5 py-3 font-medium text-gray-500 text-end text-theme-xs dark:text-gray-400">Montant total</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            @for (tx of transactionsFiltrees(); track $index) {
+              <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+                <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                  {{ getDate(tx) | date: 'dd/MM/yyyy HH:mm:ss' }}
+                </td>
+                <td class="px-5 py-4 text-sm">
+                  @if (isSimule(tx)) {
+                    <app-badge size="sm" color="warning">Simulé</app-badge>
+                  } @else {
+                    <app-badge size="sm" color="primary">Crypto</app-badge>
+                  }
+                </td>
+                <td class="px-5 py-4 text-sm font-medium text-gray-800 dark:text-white/90">
+                  {{ getSymbole(tx) }}
+                </td>
+                <td class="px-5 py-4 text-sm">
+                  <app-badge size="sm" [color]="getSens(tx) === 'ACHAT' ? 'success' : 'error'">
+                    {{ getSens(tx) }}
+                  </app-badge>
+                </td>
+                <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400 text-end font-mono">
+                  {{ getQuantite(tx) | number: '1.0-8' }}
+                </td>
+                <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400 text-end font-mono">
+                  {{ getPrix(tx) | number: '1.2-2' }} $
+                </td>
+                <td class="px-5 py-4 text-sm font-medium text-gray-800 dark:text-white/90 text-end font-mono">
+                  {{ getMontant(tx) | number: '1.2-2' }} $
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

@@ -183,19 +183,14 @@
   <!-- Modale de fin de jeu -->
   @if (state().jeuTermine) {
     <div class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100]">
-      <div class="bg-[#131b26] border border-gray-700 rounded-2xl p-6 max-w-lg w-full text-center">
+      <!-- 👇 LA RÉFÉRENCE #modaleResultat EST AJOUTÉE ICI POUR LE TÉLÉCHARGEMENT -->
+      <div #modaleResultat class="bg-[#131b26] border border-gray-700 rounded-2xl p-6 max-w-lg w-full text-center">
         
         @if (!profilFinal) { 
           <div class="hidden">{{ analyserFinDeJeu() }}</div> 
         }
 
-        <!-- Message de fin (Déconnexion ou Fin normale) -->
-        @if (currentRoom()?.evenements && currentRoom()!.evenements.length > 0 && currentRoom()!.evenements[currentRoom()!.evenements.length - 1].includes('a quitté')) {
-          <h2 class="text-3xl font-black text-red-500 mb-1">Partie Terminée</h2>
-          <p class="text-red-400 mb-6 text-sm">Un joueur a quitté la partie. La session est annulée.</p>
-        } @else {
-          <h2 class="text-3xl font-black text-white mb-1">Séance Terminée !</h2>
-        }
+        <h2 class="text-3xl font-black text-white mb-1">Séance Terminée !</h2>
         
         <!-- MODE MULTI : PODIUM -->
         @if (roomCode) {
@@ -238,16 +233,20 @@
           }
         }
 
-        <div class="flex justify-center gap-3">
+        <div class="flex flex-wrap justify-center gap-3">
           <button (click)="confirmerQuitter()" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition">
             Retour au Lobby
           </button>
           
           @if (profilFinal && !roomCode) {
             <button (click)="allerAuCours()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg text-sm transition shadow-[0_0_15px_rgba(59,130,246,0.4)]">
-              Aller au cours recommandé →
+              Aller au cours →
             </button>
           }
+
+          <button (click)="telechargerResultat()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-lg text-sm transition shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+            📸 Partager
+          </button>
         </div>
       </div>
     </div>

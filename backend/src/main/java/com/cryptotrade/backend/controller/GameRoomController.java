@@ -108,12 +108,12 @@ public class GameRoomController {
   public static class Player {
     public String pseudo;
     public double pnl;
-    public long derniereActivite = System.currentTimeMillis();
+    public long derniereActivite; // On enlève l'initialisation directe
 
     public Player(String pseudo, double pnl) {
       this.pseudo = pseudo;
       this.pnl = pnl;
-
+      this.derniereActivite = System.currentTimeMillis(); // 👈 Initialisé à la création
     }
   }
 

@@ -1,8 +1,9 @@
-import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, interval } from 'rxjs';
+import html2canvas from 'html2canvas';
 
 // Services
 import { GameEngineService } from '../../../core/services/game-engine.service';
@@ -32,6 +33,9 @@ export class GameDashboardComponent implements OnInit, OnDestroy {
   private readonly historical = inject(HistoricalDataService);
   public readonly engine = inject(GameEngineService);
   public readonly mpService = inject(GameMultiplayerService);
+
+  // Pour la capture d'écran
+  @ViewChild('modaleResultat') modaleResultat!: ElementRef<HTMLDivElement>;
 
   // Timers
   private heartbeatSub: any;
@@ -82,7 +86,7 @@ export class GameDashboardComponent implements OnInit, OnDestroy {
         if (room) {
           this.evenementsAutres = room.evenements ? room.evenements.slice(-5) : [];
           
-          // Si la salle est terminée (déconnexion d'un joueur)
+          // Si la salle est terminée (déconnexion d'un joueur ou fin de partie)
           if (room.statut === 'TERMINE' && this.state().jeuEnCours) {
             this.engine.arreterJeu();
           }
@@ -91,6 +95,11 @@ export class GameDashboardComponent implements OnInit, OnDestroy {
       });
 
       // 2. Heartbeat (Toutes les 3 secondes, on dit "Je suis là")
+      // 👇 On envoie un premier heartbeat IMMEDIATEMENT pour éviter le bug de déconnexion au début
+      if (this.pseudo) {
+        this.mpService.envoyerHeartbeat(this.roomCode, this.pseudo);
+      }
+
       this.heartbeatSub = interval(3000).subscribe(() => {
         if (this.roomCode && this.pseudo) {
           this.mpService.envoyerHeartbeat(this.roomCode, this.pseudo);
@@ -118,7 +127,6 @@ export class GameDashboardComponent implements OnInit, OnDestroy {
 
   @HostListener('window:beforeunload', ['$event'])
   onBeforeUnload(event: BeforeUnloadEvent) {
-    // On prévient aussi le serveur si on ferme brutalement l'onglet
     if (this.roomCode && this.pseudo) {
       this.mpService.signalerDeconnexion(this.roomCode, this.pseudo);
     }
@@ -286,5 +294,30 @@ export class GameDashboardComponent implements OnInit, OnDestroy {
       'EUR/USD': '#6366f1', 'GBP/USD': '#14b8a6', 'WTI': '#f97316'
     };
     return couleurs[actif] || '#ffffff';
+  }
+
+  // ============================================================
+  // TÉLÉCHARGEMENT DU RÉSULTAT EN IMAGE
+  // ============================================================
+  public telechargerResultat(): void {
+    if (!this.modaleResultat) {
+      console.error('Modale non trouvée dans le DOM');
+      return;
+    }
+
+    const element = this.modaleResultat.nativeElement;
+    
+    html2canvas(element, { 
+      backgroundColor: '#0a0e17', 
+      scale: 2,
+      useCORS: true 
+    }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = `resultat-simulation-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }).catch(err => {
+      console.error('Erreur lors de la capture:', err);
+    });
   }
 }

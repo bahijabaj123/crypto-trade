@@ -1,10 +1,10 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { EMPTY, Subject, catchError, debounceTime, interval, of, switchMap } from 'rxjs';
-import {  UpperCasePipe } from '@angular/common';
+
 // Composant graphique de SARRA (pour la Crypto)
 import { CandleChartComponent as SarraCandleChart } from '../../shared/components/candle-chart/candle-chart.component';
 // TON composant graphique (Dashboard) pour les autres marchés
@@ -19,17 +19,17 @@ import { LIBELLE_STATUT, LIBELLE_TYPE, conditionOrdre, couleurStatut } from '../
 import { MarketService } from '../../core/services/market.service';
 import { CandleData } from '../../core/models/kline.model';
 import { SimulatedOrdersService, SimulatedMarket } from '../../core/services/simulated-orders.service';
-
 import { SimulatedPortfolioService } from '../../core/services/simulated-portfolio.service';
+
 interface CryptoChoix { code: string; nom: string; }
 
 @Component({
   selector: 'app-trading',
   imports: [
-    DatePipe, DecimalPipe,UpperCasePipe, FormsModule, RouterLink,
+    DatePipe, DecimalPipe, UpperCasePipe, FormsModule, RouterLink,
     BadgeComponent, PageBreadcrumbComponent,
-    SarraCandleChart,      // Pour la Crypto
-    DashboardCandleChart   // Pour les autres marchés
+    SarraCandleChart,
+    DashboardCandleChart
   ],
   templateUrl: './trading.component.html',
   styleUrl: './trading.component.css',
@@ -37,13 +37,13 @@ interface CryptoChoix { code: string; nom: string; }
 export class TradingComponent {
   private readonly api = inject(CryptoApiService);
   public readonly marketService = inject(MarketService);
-    private readonly simulatedPortfolio = inject(SimulatedPortfolioService);
+  public readonly simulatedPortfolio = inject(SimulatedPortfolioService);
+  private readonly simulatedOrders = inject(SimulatedOrdersService);
 
   readonly libelleType = LIBELLE_TYPE;
   readonly libelleStatut = LIBELLE_STATUT;
   readonly couleurStatut = couleurStatut;
   readonly conditionOrdre = conditionOrdre;
-  private readonly simulatedOrders = inject(SimulatedOrdersService);
 
   // Listes d'actifs
   readonly cryptosList: CryptoChoix[] = [
@@ -74,6 +74,10 @@ export class TradingComponent {
   quantite: number | null = null;
   type: Extract<TypeOrdre, 'MARKET' | 'LIMIT'> = 'MARKET';
   prixLimite: number | null = null;
+  
+  // 👇 NOUVEAU : Stop-Loss et Take-Profit
+  public stopLoss: number | null = null;
+  public takeProfit: number | null = null;
 
   // Données Sarra (Crypto)
   readonly prix = signal<PrixVue[]>([]);
@@ -101,6 +105,8 @@ export class TradingComponent {
   readonly apercu = signal<ApercuRisque | null>(null);
   private readonly demandeApercu = new Subject<void>();
 
+  readonly afficherRisque = signal(false);
+
   constructor() {
     // Adapter la liste selon le marché
     this.marketService.activeMarket$.subscribe(market => {
@@ -111,7 +117,7 @@ export class TradingComponent {
 
       this.symbole = this.cryptos[0].code;
       this.chargerPrix();
-      this.chargerKlines(); // ← NOUVEAU
+      this.chargerKlines();
     });
 
     this.chargerCompte();
@@ -131,27 +137,22 @@ export class TradingComponent {
       takeUntilDestroyed(),
     ).subscribe((a) => this.apercu.set(a));
 
-    // Rafraîchissement toutes les 30s (au lieu de 5s pour ne pas saturer les APIs)
     interval(30_000).pipe(takeUntilDestroyed()).subscribe(() => {
       this.chargerCompte();
       this.chargerPrix();
     });
   }
 
-  /** Change de marché depuis la page Trading */
   changerMarche(market: 'crypto' | 'stocks' | 'forex' | 'commodities'): void {
     this.marketService.setActiveMarket(market);
   }
 
-  /** Change l'intervalle du graphique */
   changerIntervalle(interval: string): void {
     this.tradingInterval.set(interval);
     this.chargerKlines();
   }
 
-  /** Charge les klines pour le graphique multi-marchés */
   chargerKlines(): void {
-    // En Crypto, c'est le composant de Sarra qui gère tout seul ses klines
     if (this.marketService.activeMarket === 'crypto') {
       this.tradingCandles.set([]);
       this.klinesErreur.set(null);
@@ -174,13 +175,13 @@ export class TradingComponent {
       },
       error: (err) => {
         console.error('Erreur klines:', err);
-        this.klinesErreur.set('Impossible de charger le graphique (API saturée ou quota atteint).');
+        this.klinesErreur.set('Impossible de charger le graphique.');
         this.klinesLoading.set(false);
       }
     });
   }
 
-     chargerPrix(): void {
+  chargerPrix(): void {
     if (this.marketService.activeMarket === 'crypto') {
       this.api.getPrix(this.cryptos.map((c) => c.code)).pipe(
         catchError((e) => { this.erreurMarche.set(messageErreur(e)); return EMPTY; })
@@ -189,14 +190,12 @@ export class TradingComponent {
         this.erreurMarche.set(null);
       });
     } else {
-      // Pour les autres marchés
       this.marketService.getTickers().subscribe({
         next: (tickers) => {
           const found = tickers.find(t => t.symbol === this.symbole);
           if (found && found.price) {
             this.prixAutresMarches.set(found.price);
           } else {
-            // 👇 SI LE PRIX N'EST PAS TROUVÉ (Finnhub planté), ON CHERCHE CHEZ YAHOO
             this.chargerPrixSecoursYahoo();
           }
         },
@@ -206,9 +205,8 @@ export class TradingComponent {
   }
 
   private chargerPrixSecoursYahoo(): void {
-    // On utilise le service Yahoo qui est fiable pour les actions et les commodités
     if (this.marketService.activeMarket === 'stocks' || this.marketService.activeMarket === 'commodities') {
-      // @ts-ignore (On accède au service Yahoo via le marketService si possible, sinon on injecte)
+      // @ts-ignore
       this.marketService['yahooService'].getQuotes([this.symbole]).subscribe((quotes: any[]) => {
         if (quotes && quotes.length > 0) {
           this.prixAutresMarches.set(quotes[0].price);
@@ -260,7 +258,7 @@ export class TradingComponent {
     this.symbole = code;
     this.retour.set(null);
     this.chargerPrix();
-    this.chargerKlines(); // ← NOUVEAU
+    this.chargerKlines();
     this.majApercu();
   }
 
@@ -290,14 +288,13 @@ export class TradingComponent {
     return 'border-success-200 bg-success-50 text-success-700 dark:border-success-500/30 dark:bg-success-500/15 dark:text-success-500';
   }
 
-    passerOrdre(): void {
+  passerOrdre(): void {
     if (this.quantite === null || this.quantite <= 0) return;
 
     this.envoiEnCours.set(true);
     this.retour.set(null);
 
     if (this.marketService.activeMarket === 'crypto') {
-      // ===== LOGIQUE CRYPTO (Backend de Sarra) =====
       this.api.passerOrdre({
         symbole: this.symbole, sens: this.sens, type: this.type, quantite: this.quantite,
         ...(this.type === 'LIMIT' && this.prixLimite !== null ? { prixDeclenchement: this.prixLimite } : {}),
@@ -316,10 +313,8 @@ export class TradingComponent {
         },
       });
     } else {
-      // ===== LOGIQUE AUTRES MARCHÉS (Simulation locale) =====
       const prixActuel = this.prixSelectionne();
       
-      // Vérification du prix
       if (prixActuel === null) {
         this.retour.set({ type: 'erreur', texte: 'Prix indisponible, réessayez dans un instant.' });
         this.envoiEnCours.set(false);
@@ -345,11 +340,9 @@ export class TradingComponent {
         statut: 'EXECUTE',
       };
 
-      // 👇 ON VÉRIFIE LE SOLDE VIRTUEL ICI
       const succes = this.simulatedPortfolio.enregistrerOrdre(order);
 
       if (succes) {
-        // Si l'ordre est validé, on l'ajoute à l'historique
         this.simulatedOrders.addOrder(order);
         
         this.retour.set({
@@ -359,7 +352,6 @@ export class TradingComponent {
         this.quantite = null;
         this.prixLimite = null;
       } else {
-        // Si pas assez d'argent
         this.retour.set({
           type: 'erreur',
           texte: this.sens === 'ACHAT' 
@@ -372,10 +364,7 @@ export class TradingComponent {
     }
   }
 
-    readonly afficherRisque = signal(false);
-
   basculerRisque(): void {
     this.afficherRisque.set(!this.afficherRisque());
   }
-  
 }

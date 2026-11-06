@@ -3,7 +3,9 @@
 
   <div class="max-w-3xl w-full bg-[#0d121c] border border-gray-800 rounded-3xl p-8 relative z-10 shadow-2xl">
     
-    <!-- MENU PRINCIPAL (Choix pseudo + créer/rejoindre) -->
+    <!-- ========================================== -->
+    <!-- ÉCRAN 1 : MENU PRINCIPAL (Créer / Rejoindre) -->
+    <!-- ========================================== -->
     @if (!salleActive) {
       <div class="text-center mb-8">
         <div class="text-5xl mb-4">⚔️</div>
@@ -11,7 +13,7 @@
         <p class="text-gray-400">Créez une salle ou rejoignez vos amis.</p>
       </div>
 
-      <!-- Champ pseudo (Ajouté ici) -->
+      <!-- Champ pseudo -->
       <div class="mb-6">
         <label class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Votre Pseudo</label>
         <input type="text" [(ngModel)]="pseudo" placeholder="Ex: TraderPro" 
@@ -49,11 +51,28 @@
       </div>
     }
 
-    <!-- SALLE D'ATTENTE -->
+    <!-- ========================================== -->
+    <!-- ÉCRAN 2 : SALLE D'ATTENTE (Quand on a rejoint) -->
+    <!-- ========================================== -->
     @if (salleActive) {
       <div class="text-center mb-6">
         <p class="text-sm text-gray-400 mb-1">Code de la salle :</p>
         <p class="text-5xl font-mono font-black text-blue-400 tracking-widest mb-4 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">{{ salleActive.code }}</p>
+        
+        <!-- Bouton Copier -->
+        <button (click)="copierCode()" 
+          class="mb-2 px-4 py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-2 mx-auto"
+          [class]="copieReussie ? 'bg-green-500/20 border-green-500 text-green-400' : 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white'">
+          
+          @if (copieReussie) {
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Copié !
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            Copier le code
+          }
+        </button>
+
         <p class="text-xs text-gray-500">Partagez ce code avec vos amis.</p>
       </div>
 
@@ -85,8 +104,10 @@
       </button>
     }
 
+    <!-- Bas de page -->
     <div class="mt-6 text-center border-t border-gray-800 pt-4">
       <a routerLink="/game" class="text-sm text-gray-400 hover:text-white">← Retour au Lobby Solo</a>
     </div>
+
   </div>
 </div>

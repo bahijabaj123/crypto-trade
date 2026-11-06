@@ -1,1 +1,100 @@
-<p>stress-compare works!</p>
+<div class="page">
+    <div class="header">
+        <div>
+            <h1 class="title">Comparaison des banques</h1>
+            <p class="subtitle">Banques conventionnelles vs non conventionnelles face aux scénarios de stress</p>
+        </div>
+        <div class="actions">
+            <div class="chips">
+                @for (s of severities; track s.value) {
+                <button type="button" class="chip" [class.active]="severity() === s.value"
+                    (click)="severity.set(s.value)">
+                    {{ s.label }} ×{{ s.value }}
+                </button>
+                }
+            </div>
+            <a routerLink="/stress-testing" class="btn btn-outline">Modifier le scénario</a>
+        </div>
+    </div>
+
+    <!-- A. Conventionnelles vs non conventionnelles -->
+    <div class="panel">
+        <h3 class="section-title">Impact moyen sur le CET1 par type de banque (pts)</h3>
+        <apx-chart [series]="typeSeries()" [chart]="typeChart" [xaxis]="typeX" [yaxis]="yDelta"
+            [colors]="['#6366f1', '#f59e0b']" [plotOptions]="typePlot" [dataLabels]="noLabels" [grid]="grid"
+            [legend]="legend" [theme]="theme" [tooltip]="tooltip"></apx-chart>
+
+        <div class="summary">
+            @for (s of typeSummary(); track s.label) {
+            <div class="summary-card">
+                <span class="type-badge" [class.islamic]="s.islamic">{{ s.label }}</span>
+                <p class="value negative">{{ s.mean | number:'1.2-2' }} pts</p>
+                <p class="sub">Impact moyen · pire scénario : {{ s.worstName }} ({{ s.worst | number:'1.2-2' }} pts)</p>
+            </div>
+            }
+        </div>
+    </div>
+
+    <!-- B. Matrice -->
+    <div class="panel table-wrap">
+        <h3 class="section-title">CET1 après stress : scénarios × banques</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Scénario</th>
+                    @for (b of banks; track b.id) {
+                    <th>
+                        {{ b.name }}<br />
+                        <span class="type-badge" [class.islamic]="b.type === 'non-conventional'">{{ typeLabel[b.type]
+                            }}</span>
+                    </th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @for (m of matrix(); track m.scenario.id) {
+                <tr>
+                    <td class="bold">{{ m.scenario.name }}</td>
+                    @for (r of m.results; track r.bank.id) {
+                    <td><span [class]="'cell ' + r.status" [title]="statusLabel[r.status]">{{ r.after.cet1 |
+                            number:'1.1-1' }} %</span></td>
+                    }
+                </tr>
+                }
+            </tbody>
+        </table>
+        <p class="hint">Vert : ≥ 10 % (résiliente) · orange : 7 à 10 % (vulnérable) · rouge : &lt; 7 % (critique).
+            Seuils indicatifs.</p>
+    </div>
+
+    <!-- C. Pourquoi deux banques réagissent différemment -->
+    <div class="panel">
+        <h3 class="section-title">Pourquoi deux banques réagissent-elles différemment ?</h3>
+        <div class="controls">
+            <select class="input" (change)="xaiScenarioId.set($any($event.target).value)">
+                @for (s of presets; track s.id) {
+                <option [value]="s.id" [selected]="s.id === xaiScenarioId()">{{ s.name }}</option>
+                }
+            </select>
+            <select class="input" (change)="bankAId.set($any($event.target).value)">
+                @for (b of banks; track b.id) {
+                <option [value]="b.id" [selected]="b.id === bankAId()">{{ b.name }}</option>
+                }
+            </select>
+            <span class="vs">vs</span>
+            <select class="input" (change)="bankBId.set($any($event.target).value)">
+                @for (b of banks; track b.id) {
+                <option [value]="b.id" [selected]="b.id === bankBId()">{{ b.name }}</option>
+                }
+            </select>
+        </div>
+
+        <apx-chart [series]="xaiSeries()" [chart]="xaiChart" [xaxis]="xaiX"
+            [yaxis]="{ labels: { style: { colors: '#d1d5db' } } }" [colors]="['#6366f1', '#f59e0b']"
+            [plotOptions]="xaiPlot" [dataLabels]="noLabels" [grid]="grid" [legend]="legend" [theme]="theme"
+            [tooltip]="tooltip"></apx-chart>
+
+        <p class="xai-text">{{ xaiText() }}</p>
+        <p class="hint">Contribution de chaque facteur au CET1 (pts). Le back la remplacera par des valeurs SHAP.</p>
+    </div>
+</div>

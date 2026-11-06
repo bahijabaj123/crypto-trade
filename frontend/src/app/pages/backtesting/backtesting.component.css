@@ -1,0 +1,272 @@
+:host {
+    display: block;
+}
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    color: #fff;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.subtitle {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    margin: 0.25rem 0 0;
+}
+
+.controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #0b1426;
+    color: #fff;
+    font-size: 0.875rem;
+    outline: none;
+    margin-bottom: 0.75rem;
+    box-sizing: border-box;
+}
+
+.controls .input {
+    width: auto;
+    margin-bottom: 0;
+}
+
+.input:focus {
+    border-color: #22c55e;
+}
+
+.chips {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.chip {
+    padding: 0.5rem 0.875rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: #9ca3af;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.chip:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.chip.active {
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.panel {
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #111c33;
+    padding: 1.25rem;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 1280px) {
+    .layout {
+        grid-template-columns: 20rem 1fr;
+        align-items: start;
+    }
+}
+
+.side {
+    position: sticky;
+    top: 1rem;
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-width: 0;
+}
+
+.label {
+    display: block;
+    font-size: 0.8rem;
+    color: #9ca3af;
+    margin-bottom: 0.25rem;
+}
+
+.label b {
+    color: #fff;
+}
+
+.description {
+    margin: 0 0 1rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 0.75rem;
+    color: #d1d5db;
+}
+
+.range {
+    width: 100%;
+    margin-bottom: 1rem;
+    accent-color: #22c55e;
+}
+
+.btn-outline {
+    width: 100%;
+    padding: 0.55rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: #d1d5db;
+    font-size: 0.8rem;
+    transition: background 0.2s;
+}
+
+.btn-outline:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.hint {
+    font-size: 0.7rem;
+    color: #6b7280;
+    margin: 0.75rem 0 0;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+    .kpi-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.kpi {
+    padding: 1rem;
+}
+
+.kpi .label {
+    margin: 0;
+}
+
+.value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0.25rem 0 0;
+}
+
+.sub {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    margin: 0.2rem 0 0;
+}
+
+.positive {
+    color: #4ade80;
+}
+
+.negative {
+    color: #f87171;
+}
+
+.legend-dot {
+    display: inline-block;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    margin: 0 0.25rem 0 0.75rem;
+}
+
+.legend-dot.buy {
+    background: #22c55e;
+}
+
+.legend-dot.sell {
+    background: #ef4444;
+}
+
+.table-wrap {
+    overflow: hidden;
+}
+
+.scroll {
+    max-height: 22rem;
+    overflow: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.8rem;
+}
+
+.table thead {
+    color: #9ca3af;
+    position: sticky;
+    top: 0;
+    background: #111c33;
+}
+
+.table th,
+.table td {
+    padding: 0.5rem 0.75rem 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    white-space: nowrap;
+}
+
+.table .right {
+    text-align: right;
+    padding-right: 0;
+}
+
+.badge-open {
+    margin-left: 0.35rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    font-size: 0.65rem;
+}

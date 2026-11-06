@@ -1,1 +1,133 @@
-<p>analysis-compare works!</p>
+<div class="page">
+    <div class="header">
+        <div>
+            <h1 class="title">Comparaison des stratégies</h1>
+            <p class="subtitle">
+                Mêmes données, même capital, même date de départ
+                @if (loading()) { · chargement… }
+            </p>
+        </div>
+        <div class="controls">
+            <select class="input" [value]="symbol()" (change)="setSymbol($any($event.target).value)">
+                @for (s of symbols; track s) { <option [value]="s">{{ s }}</option> }
+            </select>
+            <div class="chips">
+                @for (i of intervals; track i) {
+                <button type="button" class="chip" [class.active]="interval() === i" (click)="setInterval(i)">{{ i
+                    }}</button>
+                }
+            </div>
+            <input type="number" class="input" min="100" step="100" [value]="capital()"
+                (change)="setCapital($any($event.target).value)" title="Capital initial ($)" />
+            <select class="input" [value]="fee()" (change)="setFee($any($event.target).value)" title="Frais par ordre">
+                <option value="0">Frais 0 %</option>
+                <option value="0.05">Frais 0,05 %</option>
+                <option value="0.1">Frais 0,1 %</option>
+                <option value="0.25">Frais 0,25 %</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Meilleure stratégie -->
+    @if (best(); as b) {
+    <div class="panel winner">
+        <div class="dot" [style.background]="b.color"></div>
+        <div>
+            <p class="label">Meilleure stratégie selon le critère choisi</p>
+            <p class="winner-name">{{ b.name }}</p>
+        </div>
+        <div class="winner-stats">
+            <span>Rendement <b [class.positive]="b.result.metrics.returnPct >= 0"
+                    [class.negative]="b.result.metrics.returnPct < 0">
+                    {{ b.result.metrics.returnPct | number:'1.2-2' }} %</b></span>
+            <span>Sharpe <b>{{ b.result.metrics.sharpe | number:'1.2-2' }}</b></span>
+            <span>Drawdown <b class="negative">{{ b.result.metrics.maxDrawdown | number:'1.2-2' }} %</b></span>
+        </div>
+    </div>
+    }
+
+    <div class="panel">
+        <h3 class="section-title">Courbes de capital</h3>
+        <apx-chart [series]="equitySeries()" [chart]="equityChart" [xaxis]="xaxis" [yaxis]="yMoney" [grid]="grid"
+            [stroke]="{ width: 2 }" [colors]="colors()" [legend]="legend" [theme]="theme"
+            [tooltip]="tooltip"></apx-chart>
+    </div>
+
+    <div class="two-cols">
+        <div class="panel">
+            <h3 class="section-title">Rendement par stratégie</h3>
+            <apx-chart [series]="barSeries()" [chart]="barChart"
+                [xaxis]="{ categories: barCategories(), labels: { style: { colors: '#9ca3af' } } }"
+                [yaxis]="{ labels: { style: { colors: '#d1d5db' } } }" [plotOptions]="barPlot"
+                [dataLabels]="barDataLabels" [grid]="grid" [theme]="theme" [tooltip]="{ theme: 'dark' }"></apx-chart>
+        </div>
+
+        <div class="panel">
+            <h3 class="section-title">Classement</h3>
+            <div class="chips sort">
+                @for (o of sortOptions; track o.key) {
+                <button type="button" class="chip" [class.active]="sortKey() === o.key" (click)="sortKey.set(o.key)">{{
+                    o.label }}</button>
+                }
+            </div>
+            <ol class="rank-list">
+                @for (r of ranked(); track r.id; let idx = $index) {
+                <li>
+                    <span class="rank">{{ idx + 1 }}</span>
+                    <span class="dot-sm" [style.background]="r.color"></span>
+                    <span class="rank-name">{{ r.name }}</span>
+                    <span class="rank-val" [class.positive]="r.result.metrics.returnPct >= 0"
+                        [class.negative]="r.result.metrics.returnPct < 0">
+                        {{ r.result.metrics.returnPct | number:'1.1-2' }} %
+                    </span>
+                </li>
+                }
+            </ol>
+        </div>
+    </div>
+
+    <div class="panel table-wrap">
+        <h3 class="section-title">Détail des performances</h3>
+        <div class="scroll">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Stratégie</th>
+                        <th>Capital final</th>
+                        <th>Rendement</th>
+                        <th>Drawdown max</th>
+                        <th>Sharpe</th>
+                        <th>Win rate</th>
+                        <th>Trades</th>
+                        <th>Profit factor</th>
+                        <th>En position</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (r of ranked(); track r.id) {
+                    <tr>
+                        <td class="bold"><span class="dot-sm" [style.background]="r.color"></span>{{ r.name }}</td>
+                        <td>{{ r.result.metrics.finalEquity | currency:'USD':'symbol':'1.0-0' }}</td>
+                        <td [class.positive]="r.result.metrics.returnPct >= 0"
+                            [class.negative]="r.result.metrics.returnPct < 0">
+                            {{ r.result.metrics.returnPct | number:'1.2-2' }} %
+                        </td>
+                        <td class="negative">{{ r.result.metrics.maxDrawdown | number:'1.2-2' }} %</td>
+                        <td>{{ r.result.metrics.sharpe | number:'1.2-2' }}</td>
+                        <td>{{ r.result.metrics.winRate | number:'1.0-1' }} %</td>
+                        <td>{{ r.result.metrics.trades }}</td>
+                        <td>{{ r.result.metrics.profitFactor === null ? '—' : (r.result.metrics.profitFactor |
+                            number:'1.2-2') }}</td>
+                        <td>{{ r.result.metrics.exposure | number:'1.0-0' }} %</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <p class="hint">
+        Paramètres par défaut de chaque stratégie, ajustables dans la page Backtesting.
+        Un bon résultat passé ne garantit rien : attention au surajustement. Simulation à but pédagogique.
+    </p>
+</div>

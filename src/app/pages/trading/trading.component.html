@@ -1,0 +1,331 @@
+<app-page-breadcrumb pageTitle="Trading" />
+
+@if (erreurMarche(); as message) {
+  <div class="mb-6 rounded-xl border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
+    {{ message }}
+  </div>
+}
+
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+  <!-- ===== Formulaire d'ordre ===== -->
+  <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+    <h3 class="mb-5 text-base font-medium text-gray-800 dark:text-white/90">Passer un ordre</h3>
+
+    <form (ngSubmit)="passerOrdre()" class="space-y-5">
+      
+      <!-- SÉLECTEUR DE MARCHÉ -->
+      <div class="flex gap-1 mb-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+        <button type="button" (click)="changerMarche('crypto')" 
+          [class]="marketService.activeMarket === 'crypto' ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-500' : 'text-gray-500'"
+          class="flex-1 py-1.5 text-xs font-medium rounded-md transition">🪙 Crypto</button>
+        
+        <button type="button" (click)="changerMarche('stocks')" 
+          [class]="marketService.activeMarket === 'stocks' ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-500' : 'text-gray-500'"
+          class="flex-1 py-1.5 text-xs font-medium rounded-md transition">📈 Actions</button>
+        
+        <button type="button" (click)="changerMarche('forex')" 
+          [class]="marketService.activeMarket === 'forex' ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-500' : 'text-gray-500'"
+          class="flex-1 py-1.5 text-xs font-medium rounded-md transition">💱 Forex</button>
+        
+        <button type="button" (click)="changerMarche('commodities')" 
+          [class]="marketService.activeMarket === 'commodities' ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-500' : 'text-gray-500'"
+          class="flex-1 py-1.5 text-xs font-medium rounded-md transition">🛢️ Mat.</button>
+      </div>
+
+      <!-- Choix de l'actif -->
+      <div>
+        <label for="symbole" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Actif</label>
+        <select
+          id="symbole"
+          name="symbole"
+          [(ngModel)]="symbole"
+          (ngModelChange)="choisir(symbole)"
+          class="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
+        >
+          @for (c of cryptos; track c.code) {
+            <option [value]="c.code" class="text-gray-700 dark:bg-gray-900 dark:text-gray-400">{{ c.nom }} ({{ c.code }})</option>
+          }
+        </select>
+      </div>
+
+      <!-- Prix actuel -->
+      <div class="rounded-xl bg-gray-50 p-4 dark:bg-white/[0.03]">
+        <span class="text-sm text-gray-500 dark:text-gray-400">Prix actuel</span>
+        <p class="mt-1 text-2xl font-bold text-gray-800 dark:text-white/90">
+          @if (prixSelectionne(); as p) {
+            {{ p | number: '1.2-4' }} <span class="text-sm font-medium text-gray-500">{{ marketService.activeMarket === 'forex' ? '' : 'USD' }}</span>
+          } @else {
+            <span class="text-base font-medium text-gray-400">Chargement...</span>
+          }
+        </p>
+      </div>
+
+      <!-- Achat / vente -->
+      <div class="grid grid-cols-2 gap-2">
+        <button type="button" (click)="changerSens('ACHAT')"
+          class="rounded-lg px-4 py-2.5 text-sm font-medium transition"
+          [class]="sens === 'ACHAT' ? 'bg-success-500 text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'">
+          Acheter
+        </button>
+        <button type="button" (click)="changerSens('VENTE')"
+          class="rounded-lg px-4 py-2.5 text-sm font-medium transition"
+          [class]="sens === 'VENTE' ? 'bg-error-500 text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'">
+          Vendre
+        </button>
+      </div>
+
+      <!-- Type d'ordre -->
+      <div class="grid grid-cols-2 gap-2">
+        <button type="button" (click)="changerType('MARKET')"
+          class="rounded-lg border px-4 py-2 text-sm font-medium transition"
+          [class]="type === 'MARKET' ? 'border-brand-500 text-brand-500' : 'border-gray-300 text-gray-500 dark:border-gray-700 dark:text-gray-400'">
+          Au prix du marché
+        </button>
+        <button type="button" (click)="changerType('LIMIT')"
+          class="rounded-lg border px-4 py-2 text-sm font-medium transition"
+          [class]="type === 'LIMIT' ? 'border-brand-500 text-brand-500' : 'border-gray-300 text-gray-500 dark:border-gray-700 dark:text-gray-400'">
+          Ordre limite
+        </button>
+      </div>
+
+      @if (type === 'LIMIT') {
+        <div>
+          <label for="prixLimite" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Prix limite</label>
+          <input id="prixLimite" name="prixLimite" type="number" min="0" step="any"
+            [placeholder]="sens === 'ACHAT' ? 'Acheter quand le prix descend à...' : 'Vendre quand le prix monte à...'"
+            [(ngModel)]="prixLimite" (ngModelChange)="majApercu()"
+            class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800" />
+        </div>
+      }
+
+      <!-- Quantité -->
+      <div>
+        <label for="quantite" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Quantité</label>
+        <input id="quantite" name="quantite" type="number" min="0" step="any" placeholder="Ex. 0.1"
+          [(ngModel)]="quantite" (ngModelChange)="majApercu()"
+          class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800" />
+      </div>
+
+            <!-- Récapitulatif -->
+      <dl class="space-y-2 text-sm">
+        <div class="flex justify-between">
+          <dt class="text-gray-500 dark:text-gray-400">{{ type === 'LIMIT' ? 'Montant maximum estimé' : 'Montant estimé' }}</dt>
+          <dd class="font-medium text-gray-800 dark:text-white/90">
+            @if (montantEstime(); as m) { {{ m | number: '1.2-2' }} {{ marketService.activeMarket === 'forex' ? '' : 'USD' }} } @else { - }
+          </dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-gray-500 dark:text-gray-400">Solde disponible</dt>
+          <dd class="font-medium text-gray-800 dark:text-white/90">
+            @if (marketService.activeMarket === 'crypto') {
+              @if (portefeuille(); as p) { {{ p.soldeDisponible | number: '1.2-2' }} USDT } @else { - }
+            } @else {
+              {{ simulatedPortfolio.soldeDisponible | number: '1.2-2' }} USD
+            }
+          </dd>
+        </div>
+      </dl>
+
+      <!-- 👇 NOUVEAU : Bouton Risque pour TOUS les marchés -->
+      <div class="mt-2">
+        <button type="button" (click)="basculerRisque()" 
+          class="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1 transition-colors">
+          <span class="text-lg">{{ afficherRisque() ? '▼' : '▶' }}</span>
+          {{ afficherRisque() ? 'Masquer l\'analyse du risque' : 'Voir l\'analyse du risque (Optionnel)' }}
+        </button>
+      </div>
+
+      <!-- 👇 NOUVEAU : Contenu du risque pour TOUS les marchés -->
+      @if (afficherRisque()) {
+        <!-- Mode Crypto (Backend Sarra) -->
+        @if (marketService.activeMarket === 'crypto' && apercu(); as a) {
+          <div class="rounded-xl border p-4 text-sm mt-2" [class]="couleurApercu(a.niveau)">
+            <p class="mb-2 font-semibold">Évaluation du risque (Backend) :</p>
+            <ul class="list-disc space-y-1 ps-5">
+              @for (m of a.messages; track m) { <li>{{ m }}</li> }
+            </ul>
+          </div>
+        } 
+        <!-- Mode Simulation (Actions, Forex, Commodities) -->
+        @else if (marketService.activeMarket !== 'crypto') {
+          <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/15 dark:text-blue-400 mt-2">
+            <p class="mb-2 font-semibold">Analyse du risque (Simulation) :</p>
+            <ul class="list-disc space-y-1 ps-5">
+              @if (montantEstime(); as m) {
+                <li>Coût total de l'ordre : <strong>{{ m | number: '1.2-2' }} $</strong></li>
+                @if (simulatedPortfolio.soldeDisponible > 0) {
+                  <li>Part du portefeuille : <strong>{{ (m / (simulatedPortfolio.soldeDisponible + m)) * 100 | number: '1.1-1' }} %</strong></li>
+                }
+                @if (stopLoss !== null && stopLoss > 0 && prixSelectionne() !== null) {
+                  <li>Perte max (si Stop-Loss touché) : <strong>{{ (prixSelectionne()! - stopLoss) * quantite! | number: '1.2-2' }} $</strong></li>
+                }
+                @if (takeProfit !== null && takeProfit > 0 && prixSelectionne() !== null) {
+                  <li>Gain max (si Take-Profit touché) : <strong>{{ (takeProfit - prixSelectionne()!) * quantite! | number: '1.2-2' }} $</strong></li>
+                }
+              } @else {
+                <li>Renseignez une quantité pour voir l'analyse.</li>
+              }
+            </ul>
+          </div>
+        }
+      }
+
+      <!-- Le gros bouton Acheter/Vendre est déjà en dessous, on n'y touche pas -->
+
+      <button type="submit"
+        [disabled]="!formulaireValide() || envoiEnCours() || (marketService.activeMarket === 'crypto' && apercu()?.autorise === false)"
+        class="w-full rounded-lg px-4 py-3 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-50"
+        [class]="sens === 'ACHAT' ? 'bg-success-500 hover:bg-success-600' : 'bg-error-500 hover:bg-error-600'">
+        @if (envoiEnCours()) { Envoi en cours... } @else if (type === 'LIMIT') { Placer l'ordre limite } @else { {{ sens === 'ACHAT' ? 'Acheter' : 'Vendre' }} au prix du marché }
+      </button>
+
+      @if (retour(); as r) {
+        <div class="rounded-xl border p-4 text-sm"
+          [class]="r.type === 'succes' ? 'border-success-200 bg-success-50 text-success-700 dark:border-success-500/30 dark:bg-success-500/15 dark:text-success-500' : 'border-error-200 bg-error-50 text-error-700 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400'">
+          {{ r.texte }}
+        </div>
+      }
+    </form>
+  </div>
+
+  <!-- ===== Marché + derniers ordres ===== -->
+  <div class="space-y-6 lg:col-span-2">
+    
+    <!-- GRAPHIQUE MULTI-MARCHÉS -->
+    @if (marketService.activeMarket === 'crypto') {
+      <app-candle-chart [symbole]="symbole"></app-candle-chart>
+    } @else {
+      <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+          <div>
+            <h3 class="text-base font-medium text-gray-800 dark:text-white/90">
+              {{ symbole }} · {{ marketService.activeMarket | uppercase }}
+            </h3>
+            <p class="text-theme-xs text-gray-500 dark:text-gray-400">
+              Graphique historique · {{ tradingInterval() }}
+            </p>
+          </div>
+          <div class="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+            @for (iv of intervalles; track iv.code) {
+              <button type="button" (click)="changerIntervalle(iv.code)"
+                [class]="tradingInterval() === iv.code ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-500' : 'text-gray-500'"
+                class="px-3 py-1 text-xs font-medium rounded-md transition">
+                {{ iv.nom }}
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (klinesLoading()) {
+          <div class="p-12 text-center">
+            <div class="text-4xl mb-2 animate-spin inline-block">⏳</div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Chargement des chandeliers...</p>
+          </div>
+        } @else if (klinesErreur()) {
+          <div class="p-12 text-center">
+            <div class="text-4xl mb-2">⚠️</div>
+            <p class="text-sm text-error-500">{{ klinesErreur() }}</p>
+            <button type="button" (click)="chargerKlines()"
+              class="mt-4 px-4 py-2 text-sm rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition">
+              Réessayer
+            </button>
+          </div>
+        } @else if (tradingCandles().length > 0) {
+          <div class="p-4">
+            <app-dashboard-candle-chart
+              [candles]="tradingCandles()"
+              [symbol]="symbole"
+              [interval]="tradingInterval()">
+            </app-dashboard-candle-chart>
+          </div>
+        } @else {
+          <div class="p-12 text-center">
+            <div class="text-4xl mb-2">📊</div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              Aucune donnée historique disponible pour <strong>{{ symbole }}</strong>.
+            </p>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Prix du marché (Crypto) -->
+    @if (marketService.activeMarket === 'crypto') {
+      <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+        <div class="px-5 py-4 sm:px-6">
+          <h3 class="text-base font-medium text-gray-800 dark:text-white/90">Prix du marché (Binance)</h3>
+          <p class="text-theme-xs text-gray-500 dark:text-gray-400">Clique sur une ligne pour la sélectionner.</p>
+        </div>
+        <div class="max-w-full overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="border-y border-gray-100 dark:border-white/[0.05]">
+              <tr>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Actif</th>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Prix</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              @for (p of prix(); track p.symbole) {
+                <tr (click)="choisir(p.symbole)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.03]"
+                  [class]="p.symbole === symbole ? 'bg-brand-50 dark:bg-brand-500/10' : ''">
+                  <td class="px-5 py-3 text-sm font-medium text-gray-800 dark:text-white/90">{{ p.symbole }}</td>
+                  <td class="px-5 py-3 text-sm text-gray-500 dark:text-gray-400">{{ p.prix | number: '1.2-8' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="2" class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">Chargement des prix...</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- Derniers ordres -->
+    <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+      <div class="px-5 py-4 sm:px-6">
+        <h3 class="text-base font-medium text-gray-800 dark:text-white/90">Mes derniers ordres</h3>
+        <a routerLink="/trading/orderbook" class="text-theme-xs font-medium text-brand-500 hover:underline">Voir tout le carnet d'ordres</a>
+      </div>
+      @if (ordres().length === 0) {
+        <p class="px-5 pb-6 text-sm text-gray-500 dark:text-gray-400 sm:px-6">Aucun ordre pour l'instant.</p>
+      } @else {
+        <div class="max-w-full overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="border-y border-gray-100 dark:border-white/[0.05]">
+              <tr>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Date</th>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Actif</th>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Sens</th>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Type</th>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Quantité</th>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Prix</th>
+                <th class="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Statut</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              @for (o of ordres(); track o.id) {
+                <tr>
+                  <td class="px-5 py-3 text-sm text-gray-500 dark:text-gray-400">{{ o.date | date: 'dd/MM HH:mm:ss' }}</td>
+                  <td class="px-5 py-3 text-sm font-medium text-gray-800 dark:text-white/90">{{ o.symbole }}</td>
+                  <td class="px-5 py-3 text-sm">
+                    <app-badge size="sm" [color]="o.sens === 'ACHAT' ? 'success' : 'error'">{{ o.sens }}</app-badge>
+                  </td>
+                  <td class="px-5 py-3 text-sm text-gray-500 dark:text-gray-400">{{ libelleType[o.type] }}</td>
+                  <td class="px-5 py-3 text-sm text-gray-500 dark:text-gray-400">{{ o.quantite | number: '1.0-8' }}</td>
+                  <td class="px-5 py-3 text-sm text-gray-500 dark:text-gray-400">
+                    @if (o.prixExecution !== null) { {{ o.prixExecution | number: '1.2-8' }} } @else { {{ conditionOrdre(o) }} }
+                  </td>
+                  <td class="px-5 py-3 text-sm">
+                    <app-badge size="sm" [color]="couleurStatut(o.statut)">{{ libelleStatut[o.statut] }}</app-badge>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>

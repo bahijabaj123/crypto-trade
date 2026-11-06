@@ -1,0 +1,34 @@
+{
+  "id": "dotcom-2000",
+  "nom": "La Bulle Internet (2000)",
+  "description": "Mars 2000. Les entreprises technologiques sans revenus s'effondrent. Le Nasdaq perd 78% de sa valeur.",
+  "dateDebut": "2000-03-01",
+  "dateFin": "2000-04-15",
+  "actifs": ["BTCUSDT", "SOLUSDT"],
+  "donnees": {
+    "BTCUSDT": [
+      { "time": 951868800000, "open": 200, "high": 220, "low": 195, "close": 210, "volume": 5000 },
+      { "time": 951955200000, "open": 210, "high": 230, "low": 205, "close": 220, "volume": 5500 },
+      { "time": 952041600000, "open": 220, "high": 225, "low": 180, "close": 185, "volume": 7000 },
+      { "time": 952128000000, "open": 185, "high": 190, "low": 150, "close": 155, "volume": 9000 },
+      { "time": 952214400000, "open": 155, "high": 160, "low": 130, "close": 135, "volume": 11000 },
+      { "time": 952300800000, "open": 135, "high": 145, "low": 120, "close": 125, "volume": 13000 },
+      { "time": 952387200000, "open": 125, "high": 130, "low": 100, "close": 105, "volume": 15000 },
+      { "time": 952473600000, "open": 105, "high": 110, "low": 85, "close": 90, "volume": 18000 },
+      { "time": 952560000000, "open": 90, "high": 95, "low": 70, "close": 75, "volume": 20000 },
+      { "time": 952646400000, "open": 75, "high": 80, "low": 55, "close": 60, "volume": 25000 }
+    ],
+    "SOLUSDT": [
+      { "time": 951868800000, "open": 5, "high": 6, "low": 4.5, "close": 5.5, "volume": 1000 },
+      { "time": 951955200000, "open": 5.5, "high": 6.5, "low": 5, "close": 6, "volume": 1200 },
+      { "time": 952041600000, "open": 6, "high": 6.2, "low": 4, "close": 4.2, "volume": 2000 },
+      { "time": 952128000000, "open": 4.2, "high": 4.5, "low": 3, "close": 3.2, "volume": 3000 },
+      { "time": 952214400000, "open": 3.2, "high": 3.5, "low": 2, "close": 2.5, "volume": 4000 },
+      { "time": 952300800000, "open": 2.5, "high": 3, "low": 1.8, "close": 2, "volume": 5000 },
+      { "time": 952387200000, "open": 2, "high": 2.5, "low": 1.2, "close": 1.5, "volume": 6000 },
+      { "time": 952473600000, "open": 1.5, "high": 2, "low": 1, "close": 1.2, "volume": 7000 },
+      { "time": 952560000000, "open": 1.2, "high": 1.5, "low": 0.8, "close": 0.9, "volume": 8000 },
+      { "time": 952646400000, "open": 0.9, "high": 1.2, "low": 0.5, "close": 0.6, "volume": 10000 }
+    ]
+  }
+}

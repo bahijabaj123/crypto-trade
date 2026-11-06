@@ -1,0 +1,40 @@
+.crypto-card {
+  background-color: #1E2329;
+  border: 1px solid #2B3139;
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.2s ease;
+}
+
+.crypto-card:hover {
+  background-color: #2B3139;
+  transform: translateY(-2px);
+}
+
+.crypto-price {
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.crypto-live-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #0ECB81;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.text-crypto-text { color: #EAECEF; }
+.text-crypto-text-muted { color: #848E9C; }
+.text-crypto-green { color: #0ECB81; }
+.text-crypto-red { color: #F6465D; }
+.bg-crypto-bg { background-color: #0B0E11; }
+.bg-crypto-card-hover { background-color: #2B3139; }
+.border-crypto-border { border-color: #2B3139; }

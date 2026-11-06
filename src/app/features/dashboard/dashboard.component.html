@@ -1,0 +1,98 @@
+<div class="p-6 bg-crypto-bg min-h-screen">
+
+  <!-- Header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-crypto-text">Dashboard Crypto</h1>
+    <p class="text-crypto-text-muted text-sm mt-1">Données en temps réel via Binance API</p>
+  </div>
+
+  <!-- Cartes de tickers -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+    <div
+      *ngFor="let ticker of tickers"
+      class="crypto-card cursor-pointer transition-all"
+      [class.ring-2]="ticker.symbol === selectedSymbol"
+      [class.ring-crypto-green]="ticker.symbol === selectedSymbol"
+      (click)="selectSymbol(ticker.symbol)"
+    >
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-crypto-text font-medium">{{ ticker.symbol }}</span>
+        <span class="crypto-live-dot"></span>
+      </div>
+      <div class="crypto-price text-2xl text-crypto-text mb-2">
+        ${{ formatPrice(ticker.price) }}
+      </div>
+      <div
+        class="text-sm font-medium"
+        [ngClass]="ticker.changePercent >= 0 ? 'text-crypto-green' : 'text-crypto-red'"
+      >
+        {{ ticker.changePercent >= 0 ? '▲' : '▼' }}
+        {{ ticker.changePercent >= 0 ? '+' : '' }}{{ ticker.changePercent.toFixed(2) }}%
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphique + Transactions récentes -->
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+    <!-- Graphique placeholder (on branchera une lib de charts ensuite) -->
+    <div class="xl:col-span-2 crypto-card">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-crypto-text">{{ selectedSymbol }}</h2>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="crypto-price text-2xl text-crypto-text">
+              ${{ candles.length > 0 ? formatPrice(candles[candles.length - 1].close) : '---' }}
+            </span>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button class="px-3 py-1.5 text-xs rounded-md bg-crypto-card-hover text-crypto-text-muted hover:text-crypto-text transition">1H</button>
+          <button class="px-3 py-1.5 text-xs rounded-md bg-crypto-green/10 text-crypto-green">24H</button>
+          <button class="px-3 py-1.5 text-xs rounded-md bg-crypto-card-hover text-crypto-text-muted hover:text-crypto-text transition">7J</button>
+        </div>
+      </div>
+
+      <!-- Placeholder pour le graphique -->
+      <div class="h-64 flex items-center justify-center bg-crypto-bg rounded-lg border border-crypto-border">
+        <div class="text-center">
+          <div class="text-4xl mb-2">📊</div>
+          <p class="text-crypto-text-muted text-sm">Graphique en chandeliers</p>
+          <p class="text-crypto-text-muted text-xs mt-1">
+            {{ candles.length }} chandeliers chargés (1h)
+          </p>
+          <p class="text-crypto-text-muted text-xs mt-1">SciChart.js sera intégré ici</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transactions récentes -->
+    <div class="crypto-card">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-crypto-text">Transactions</h2>
+        <span class="crypto-live-dot"></span>
+      </div>
+
+      <div class="space-y-1 max-h-80 overflow-y-auto custom-scrollbar">
+        <div
+          *ngFor="let trade of recentTrades"
+          class="flex items-center justify-between p-2 rounded bg-crypto-bg text-xs"
+        >
+          <span class="crypto-price text-crypto-text">${{ formatPrice(trade.price) }}</span>
+          <span class="crypto-price text-crypto-text-muted">{{ trade.quantity.toFixed(4) }}</span>
+          <span
+            class="font-medium"
+            [ngClass]="trade.isBuyer ? 'text-crypto-green' : 'text-crypto-red'"
+          >
+            {{ trade.isBuyer ? 'BUY' : 'SELL' }}
+          </span>
+          <span class="text-crypto-text-muted">
+            {{ trade.time | date:'HH:mm:ss' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

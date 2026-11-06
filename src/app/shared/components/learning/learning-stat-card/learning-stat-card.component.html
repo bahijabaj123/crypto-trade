@@ -1,0 +1,13 @@
+<div class="formation-card flex h-full flex-col p-5">
+  @if (iconSvg) {
+    <div
+      class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-crypto-green/10 text-crypto-green"
+      [innerHTML]="iconSvg | safeHtml"
+    ></div>
+  }
+  <span class="text-sm text-crypto-text-muted">{{ label }}</span>
+  <p class="mt-2 font-semibold text-title-sm text-crypto-text">{{ value }}</p>
+  @if (hint) {
+    <p class="mt-1 text-xs text-crypto-text-muted">{{ hint }}</p>
+  }
+</div>

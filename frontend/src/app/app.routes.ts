@@ -34,7 +34,7 @@ export const routes: Routes = [
       },
 
       // ============================================================
-      // PAGES ORIGINALES DE TAILADMIN (base de code conservée)
+      // PAGES ORIGINALES DE TAILADMIN
       // ============================================================
       { path: 'calendar', component: CalenderComponent, title: 'Calendrier | Crypto Simulator' },
       { path: 'profile', component: ProfileComponent, title: 'Mon Profil | Crypto Simulator' },
@@ -52,7 +52,7 @@ export const routes: Routes = [
       { path: 'videos', component: VideosComponent, title: 'Videos | Crypto Simulator' },
 
       // ============================================================
-      // VOS PAGES MULTI-MARCHÉS (Existant)
+      // PAGES MULTI-MARCHÉS
       // ============================================================
 
       // ---------- DASHBOARD ----------
@@ -62,7 +62,7 @@ export const routes: Routes = [
         title: 'Dashboard Marchés | Crypto Simulator',
       },
 
-      // ---------- MARCHÉ (Routes dynamiques) ----------
+      // ---------- MARCHÉ ----------
       {
         path: 'market',
         redirectTo: 'market/crypto',
@@ -109,10 +109,17 @@ export const routes: Routes = [
       },
 
       // ---------- ANALYSE & BACKTESTING ----------
+      // 👇 LA ROUTE /analysis POINTE VERS LA PAGE VIDE (pour Ramii)
       {
         path: 'analysis',
         loadComponent: () => import('./pages/analysis/analysis.component').then(m => m.AnalysisComponent),
         title: 'Analyse Technique | Crypto Simulator',
+      },
+      // 👇 LA ROUTE /analysis/portfolio POINTE VERS TON COMPOSANT
+      {
+        path: 'analysis/portfolio',
+        loadComponent: () => import('./pages/analysis-technical/analysis-technical.component').then(m => m.AnalysisTechnicalComponent),
+        title: 'Analyse Portefeuille | Crypto Simulator',
       },
       {
         path: 'analysis/compare',
@@ -125,9 +132,7 @@ export const routes: Routes = [
         title: 'Backtesting | Crypto Simulator',
       },
 
-      // ============================================================
-      // 🎮 NOUVEAU MODULE : JEU DE SALLE DE MARCHÉ (Simulation Historique)
-      // ============================================================
+      // ---------- JEU DE SALLE DE MARCHÉ ----------
       {
         path: 'game',
         loadComponent: () => import('./pages/game/game-lobby/game-lobby.component').then(m => m.GameLobbyComponent),
@@ -188,7 +193,7 @@ export const routes: Routes = [
         title: 'Comparaison Banques | Crypto Simulator',
       },
 
-      // ---------- FORMATION (Adapté pour le Jeu) ----------
+      // ---------- FORMATION ----------
       {
         path: 'learning',
         loadComponent: () => import('./pages/learning/learning.component').then(m => m.LearningComponent),
@@ -242,7 +247,7 @@ export const routes: Routes = [
   },
 
   // ============================================================
-  // PAGES D'AUTHENTIFICATION (hors layout)
+  // PAGES D'AUTHENTIFICATION
   // ============================================================
   {
     path: 'signin',
@@ -256,7 +261,7 @@ export const routes: Routes = [
   },
 
   // ============================================================
-  // PAGE 404 (Wildcard - DOIT ÊTRE EN DERNIER)
+  // PAGE 404
   // ============================================================
   {
     path: '**',

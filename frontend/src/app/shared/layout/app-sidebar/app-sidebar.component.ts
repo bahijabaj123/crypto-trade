@@ -77,6 +77,7 @@ export class AppSidebarComponent {
       subItems: [
         { name: "Analyse technique", path: "/analysis" },
         { name: "Backtesting", path: "/backtesting" },
+        { name: "Analyse Portefeuille", path: "/analysis/portfolio" },
         { name: "Comparaison", path: "/analysis/compare" },
       ],
     },

@@ -126,9 +126,24 @@ export const routes: Routes = [
 
       // ---------- FORMATION ----------
       {
-        path: 'learning',
-        loadComponent: () => import('./pages/learning/learning.component').then(m => m.LearningComponent),
-        title: 'Formation | Crypto Simulator',
+        path: 'learning/course/:courseId/lesson/:lessonId',
+        loadComponent: () => import('./pages/learning-course/learning-course.component').then(m => m.LearningCourseComponent),
+        title: 'Leçon | Crypto Simulator',
+      },
+      {
+        path: 'learning/course/:courseId',
+        loadComponent: () => import('./pages/learning-course/learning-course.component').then(m => m.LearningCourseComponent),
+        title: 'Module | Crypto Simulator',
+      },
+      {
+        path: 'learning/quiz/:quizId',
+        loadComponent: () => import('./pages/quiz-player/quiz-player.component').then(m => m.QuizPlayerComponent),
+        title: 'Quiz en cours | Crypto Simulator',
+      },
+      {
+        path: 'learning/quiz',
+        loadComponent: () => import('./pages/quiz/quiz.component').then(m => m.QuizComponent),
+        title: 'Quiz | Crypto Simulator',
       },
       {
         path: 'learning/progress',
@@ -136,9 +151,14 @@ export const routes: Routes = [
         title: 'Progression | Crypto Simulator',
       },
       {
+        path: 'learning',
+        loadComponent: () => import('./pages/learning/learning.component').then(m => m.LearningComponent),
+        title: 'Formation | Crypto Simulator',
+      },
+      {
         path: 'quiz',
-        loadComponent: () => import('./pages/quiz/quiz.component').then(m => m.QuizComponent),
-        title: 'Quiz | Crypto Simulator',
+        redirectTo: 'learning/quiz',
+        pathMatch: 'full',
       },
 
       // ---------- GRAPHIQUES ----------

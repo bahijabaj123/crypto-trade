@@ -1,0 +1,117 @@
+@if (notFound) {
+  <div class="mx-auto max-w-lg rounded-2xl border border-crypto-border bg-crypto-card p-8 text-center">
+    <h2 class="text-xl font-semibold text-crypto-text">Quiz introuvable</h2>
+    <a routerLink="/learning/quiz" class="crypto-btn-buy mt-6 inline-flex px-6 py-2.5 text-sm">Retour aux quiz</a>
+  </div>
+} @else if (quiz) {
+  <div class="mb-4">
+    <a routerLink="/learning/quiz" class="text-sm text-crypto-text-muted hover:text-crypto-green">← Quiz</a>
+  </div>
+
+  @if (mode() === 'play' && currentQuestion; as question) {
+    <div class="mx-auto max-w-3xl">
+      <div class="mb-6 flex items-center justify-between gap-4">
+        <h1 class="text-xl font-semibold text-crypto-text">{{ quiz.title }}</h1>
+        <span class="text-sm text-crypto-text-muted">
+          Question {{ currentIndex() + 1 }} / {{ quiz.questions.length }}
+        </span>
+      </div>
+      <div class="mb-6 h-2 overflow-hidden rounded-full bg-crypto-border">
+        <div class="h-full bg-crypto-green transition-all" [style.width.%]="progressPercent()"></div>
+      </div>
+
+      <div class="rounded-2xl border border-crypto-border bg-crypto-card p-6">
+        <p class="text-lg font-medium text-crypto-text">{{ question.question }}</p>
+        <div class="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" [attr.aria-label]="question.question">
+          @for (opt of question.options; track opt; let i = $index) {
+            <button
+              type="button"
+              role="radio"
+              [attr.aria-checked]="selectedIndex() === i"
+              class="flex items-start gap-3 rounded-xl border px-4 py-3 text-start text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-crypto-green/50"
+              [class]="
+                selectedIndex() === i
+                  ? 'border-crypto-green bg-crypto-green/10 text-crypto-text'
+                  : 'border-crypto-border text-crypto-text-muted hover:border-crypto-green/30'
+              "
+              (click)="selectAnswer(i)"
+            >
+              <span class="font-semibold text-crypto-green">{{ letter(i) }}</span>
+              <span>{{ opt }}</span>
+            </button>
+          }
+        </div>
+
+        <div class="mt-6 flex flex-wrap items-center gap-3 border-t border-crypto-border pt-4">
+          <button type="button" class="rounded-lg border border-crypto-border px-4 py-2 text-sm" (click)="prev()" [disabled]="currentIndex() === 0">
+            Précédent
+          </button>
+          @if (currentIndex() < quiz.questions.length - 1) {
+            <button type="button" class="rounded-lg border border-crypto-border px-4 py-2 text-sm" (click)="next()">
+              Suivant
+            </button>
+          } @else {
+            <button type="button" class="crypto-btn-buy px-5 py-2 text-sm" (click)="submit()">Soumettre le quiz</button>
+          }
+          @if (submitError) {
+            <p class="w-full text-sm text-crypto-red" role="alert">{{ submitError }}</p>
+          }
+          <button
+            type="button"
+            class="ms-auto text-sm text-crypto-text-muted hover:text-crypto-yellow"
+            (click)="toggleMark()"
+          >
+            {{ isMarked() ? '★ Marqué' : '☆ Marquer pour révision' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (mode() === 'result' && result) {
+    <div class="mx-auto max-w-xl rounded-2xl border border-crypto-border bg-gradient-to-br from-crypto-card to-crypto-green/5 p-8 text-center">
+      <h2 class="text-2xl font-bold text-crypto-text">Quiz terminé</h2>
+      <p class="mt-4 text-4xl font-bold text-crypto-green">{{ result.score }} / {{ result.total }}</p>
+      <p class="text-xl text-crypto-text">{{ scorePercent() }} %</p>
+      <p class="mt-2 text-lg font-semibold" [class]="result.passed ? 'text-crypto-green' : 'text-crypto-red'">
+        {{ result.passed ? 'Réussi' : 'Échoué' }}
+      </p>
+      <p class="mt-2 text-crypto-yellow">+{{ result.xpEarned }} XP</p>
+      <div class="mt-6 grid grid-cols-2 gap-4 text-sm text-crypto-text-muted">
+        <div>Correct : <span class="text-crypto-text">{{ result.score }}</span></div>
+        <div>Incorrect : <span class="text-crypto-text">{{ result.total - result.score }}</span></div>
+        <div class="col-span-2">Temps : {{ formation.formatSeconds(result.durationSeconds) }}</div>
+      </div>
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <button type="button" class="rounded-lg border border-crypto-border px-4 py-2 text-sm" (click)="openReview()">
+          Voir les corrections
+        </button>
+        <button type="button" class="rounded-lg border border-crypto-border px-4 py-2 text-sm" (click)="retake()">
+          Recommencer
+        </button>
+        <a routerLink="/learning/quiz" class="crypto-btn-buy px-5 py-2 text-sm">Retour aux quiz</a>
+      </div>
+    </div>
+  }
+
+  @if (mode() === 'review') {
+    <div class="mx-auto max-w-3xl space-y-4">
+      <h2 class="text-xl font-semibold text-crypto-text">Corrections — {{ quiz.title }}</h2>
+      @for (q of quiz.questions; track q.id; let qi = $index) {
+        @let user = answers()[q.id];
+        <article class="rounded-xl border border-crypto-border bg-crypto-card p-4">
+          <p class="text-sm font-medium text-crypto-text">{{ qi + 1 }}. {{ q.question }}</p>
+          <p class="mt-2 text-sm text-crypto-text-muted">
+            Votre réponse :
+            <span [class]="user === q.correctIndex ? 'text-crypto-green' : 'text-crypto-red'">
+              {{ user !== undefined ? q.options[user] : '—' }}
+            </span>
+          </p>
+          <p class="mt-1 text-sm text-crypto-green">Bonne réponse : {{ q.options[q.correctIndex] }}</p>
+          <p class="mt-2 text-xs text-crypto-text-muted">{{ q.explanation }}</p>
+        </article>
+      }
+      <a routerLink="/learning/quiz" class="crypto-btn-buy inline-flex px-5 py-2 text-sm">Retour aux quiz</a>
+    </div>
+  }
+}

@@ -1305,3 +1305,31 @@ pre[class*="language-"].line-numbers {
 .crypto-ticker:hover {
   animation-play-state: paused;
 }
+
+@utility formation-hero {
+  @apply rounded-2xl border border-crypto-border bg-gradient-to-br from-crypto-card via-crypto-card to-crypto-green/10 shadow-sm;
+}
+
+@utility formation-card {
+  @apply rounded-2xl border border-crypto-border bg-crypto-card shadow-sm transition hover:border-crypto-green/20 hover:shadow-md;
+}
+
+@utility formation-stat {
+  @apply flex flex-col rounded-xl border border-crypto-border bg-crypto-card p-4;
+}
+
+@utility formation-stat-value {
+  @apply text-xl font-bold text-crypto-text;
+}
+
+@utility formation-stat-label {
+  @apply mt-1 text-xs text-crypto-text-muted;
+}
+
+@utility formation-btn-primary {
+  @apply inline-flex items-center justify-center rounded-lg bg-crypto-green px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-crypto-green-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-crypto-green/50;
+}
+
+@utility formation-btn-outline {
+  @apply inline-flex items-center justify-center rounded-lg border border-crypto-green/40 bg-crypto-green/10 px-4 py-2.5 text-sm font-semibold text-crypto-green transition hover:bg-crypto-green/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-crypto-green/50;
+}

@@ -3,11 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { texteErreur } from '../../../../core/services/admin.service';
+import { AuthShowcaseComponent } from '../auth-showcase.component';
 
 @Component({
   selector: 'app-signin-form',
   standalone: true,
-  imports: [RouterModule, FormsModule],
+  imports: [RouterModule, FormsModule,AuthShowcaseComponent],
   templateUrl: './signin-form.component.html'
 })
 export class SigninFormComponent {

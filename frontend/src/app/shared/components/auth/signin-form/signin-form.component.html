@@ -1,52 +1,68 @@
-<div class="w-full max-w-md pt-10 mx-auto">
-  <a routerLink="/" class="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20" fill="none" class="size-5 stroke-current"><path d="M12.7083 5L7.5 10.2083L12.7083 15.4167" stroke="" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-    Retour au tableau de bord
-  </a>
-</div>
+<!-- Page plein écran : recouvre le layout d'authentification existant. Importer AuthShowcaseComponent dans le composant. -->
+<div class="fixed inset-0 z-[9999] overflow-y-auto bg-[#05080f] text-white">
+  <div class="grid min-h-full lg:h-full lg:grid-cols-2">
 
-<div class="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
-  <div class="mb-5 sm:mb-8">
-    <h1 class="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">Connexion</h1>
-    <p class="text-sm text-gray-500 dark:text-gray-400">Entrez votre email et votre mot de passe.</p>
-  </div>
-
-  @if (info()) {
-    <p class="mb-5 rounded-lg border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-700 dark:border-warning-500/30 dark:bg-warning-500/15 dark:text-warning-400">{{ info() }}</p>
-  }
-
-  <form (ngSubmit)="onSignIn()" class="space-y-6">
-    <div>
-      <label for="email" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Email <span class="text-error-500">*</span></label>
-      <input id="email" name="email" type="email" [(ngModel)]="email" required autocomplete="username" placeholder="vous@exemple.com"
-        class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" />
-    </div>
-
-    <div>
-      <label for="password" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Mot de passe <span class="text-error-500">*</span></label>
-      <div class="relative">
-        <input id="password" name="password" [type]="showPassword() ? 'text' : 'password'" [(ngModel)]="password" required
-          autocomplete="current-password" placeholder="Votre mot de passe"
-          class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 pr-20 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" />
-        <button type="button" (click)="togglePasswordVisibility()"
-          class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">
-          {{ showPassword() ? 'Masquer' : 'Afficher' }}
-        </button>
+    <main class="relative flex min-w-0 flex-col px-6 py-8 sm:px-10 lg:overflow-y-auto lg:px-14">
+      <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        <div class="absolute top-1/4 right-0 h-72 w-72 rounded-full bg-brand-500/10 blur-[100px]"></div>
       </div>
-    </div>
 
-    @if (erreur()) {
-      <p class="rounded-lg border border-error-200 bg-error-50 px-4 py-2.5 text-sm text-error-700 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">{{ erreur() }}</p>
-    }
+      <div class="relative w-full max-w-md mx-auto">
+    <a routerLink="/" class="group inline-flex items-center gap-1 text-sm text-gray-400 transition-colors hover:text-white">
+      <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20" fill="none" class="size-5 stroke-current transition-transform group-hover:-translate-x-0.5"><path d="M12.7083 5L7.5 10.2083L12.7083 15.4167" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      Retour au tableau de bord
+    </a>
+      </div>
 
-    <button type="submit" [disabled]="enCours() || !email || !password"
-      class="flex h-11 w-full items-center justify-center rounded-lg bg-brand-500 text-sm font-medium text-white transition hover:bg-brand-600 disabled:opacity-60">
-      {{ enCours() ? 'Connexion…' : 'Se connecter' }}
-    </button>
-  </form>
+      <div class="relative flex flex-1 flex-col justify-center w-full max-w-md mx-auto py-8">
+        <div class="mb-7">
+          <span class="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-300">
+            <span class="h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse"></span>Bon retour parmi nous
+          </span>
+          <h1 class="mb-2 text-3xl font-black tracking-tight text-white sm:text-4xl">Connexion</h1>
+          <p class="text-sm text-gray-400">Prêt à entrer en salle de marché ? Entrez votre email et votre mot de passe.</p>
+        </div>
+        @if (info()) {
+          <p class="mb-5 rounded-xl border border-warning-500/30 bg-warning-500/10 px-4 py-3 text-sm text-warning-400">{{ info() }}</p>
+        }
 
-  <p class="mt-5 text-center text-sm text-gray-700 dark:text-gray-400 sm:text-start">
-    Pas encore de compte ?
-    <a routerLink="/signup" class="text-brand-500 hover:text-brand-600 dark:text-brand-400">S’inscrire</a>
-  </p>
+        <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-2xl shadow-black/40 backdrop-blur sm:p-6">
+          <form (ngSubmit)="onSignIn()" class="space-y-5">
+        <div>
+          <label for="email" class="mb-1.5 block text-sm font-medium text-gray-300">Email <span class="text-error-500">*</span></label>
+          <input id="email" name="email" type="email" [(ngModel)]="email" required autocomplete="username" placeholder="vous@exemple.com"
+            class="h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white placeholder:text-gray-500 transition hover:border-white/25 focus:border-brand-400 focus:bg-white/[0.07] focus:outline-hidden focus:ring-3 focus:ring-brand-500/20" />
+        </div>
+        <div>
+          <label for="password" class="mb-1.5 block text-sm font-medium text-gray-300">Mot de passe <span class="text-error-500">*</span></label>
+          <div class="relative">
+            <input id="password" name="password" [type]="showPassword() ? 'text' : 'password'" [(ngModel)]="password" required
+              autocomplete="current-password" placeholder="Votre mot de passe"
+              class="h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 pr-24 text-sm text-white placeholder:text-gray-500 transition hover:border-white/25 focus:border-brand-400 focus:bg-white/[0.07] focus:outline-hidden focus:ring-3 focus:ring-brand-500/20" />
+            <button type="button" (click)="togglePasswordVisibility()"
+              class="absolute right-3 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-medium text-gray-400 transition hover:bg-white/10 hover:text-white">
+              {{ showPassword() ? 'Masquer' : 'Afficher' }}
+            </button>
+          </div>
+        </div>
+        @if (erreur()) {
+          <p class="rounded-xl border border-error-500/30 bg-error-500/10 px-4 py-2.5 text-sm text-error-400">{{ erreur() }}</p>
+        }
+        <button type="submit" [disabled]="enCours() || !email || !password"
+          class="group relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-brand-500 to-purple-600 text-sm font-bold text-white shadow-lg shadow-brand-500/30 transition hover:-translate-y-0.5 hover:shadow-brand-500/50 active:translate-y-0 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none">
+          {{ enCours() ? 'Connexion…' : 'Se connecter' }}
+          <svg class="transition-transform group-hover:translate-x-1" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+          </form>
+        </div>
+
+        <p class="mt-6 text-center text-sm text-gray-400 sm:text-start">
+          Pas encore de compte ?
+          <a routerLink="/signup" class="font-semibold text-brand-400 transition hover:text-brand-300">S’inscrire</a>
+        </p>
+      </div>
+    </main>
+
+    <app-auth-showcase class="hidden min-w-0 lg:block lg:h-full" />
+  </div>
 </div>

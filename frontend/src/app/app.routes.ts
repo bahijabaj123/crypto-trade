@@ -18,40 +18,50 @@ import { SignInComponent } from './pages/auth-pages/sign-in/sign-in.component';
 import { SignUpComponent } from './pages/auth-pages/sign-up/sign-up.component';
 import { CalenderComponent } from './pages/calender/calender.component';
 import { ADMIN_ROUTES } from './app.routes.admin'; // 👈 Import de Sarra conservé
+import { AccueilComponent } from './pages/accueil/accueil.component';
+
 
 export const routes: Routes = [
   {
     path: '',
     component: AppLayoutComponent,
     children: [
-      
+
+      // ---------- ACCUEIL (page d'arrivée) ----------
+      {
+        path: '',
+        component: AccueilComponent,
+        pathMatch: 'full',
+        title: 'Accueil | TradeLAB',
+      },
+
       // ---------- ACTUARIAT (TES ROUTES) ----------
       {
         path: 'actuariat',
         loadComponent: () => import('./pages/actuariat/actuariat.component').then(m => m.ActuariatComponent),
-        title: 'Module Actuariat | Crypto Simulator',
+        title: 'Module Actuariat | TradeLAB',
       },
       {
         path: 'provisions',
         loadComponent: () => import('./pages/provisions/provisions.component').then(m => m.ProvisionsComponent),
-        title: 'Provisions de Sinistres | Crypto Simulator',
+        title: 'Provisions de Sinistres | TradeLAB',
       },
       {
         path: 'assurance-parametrique',
         loadComponent: () => import('./pages/assurance-parametrique/assurance-parametrique.component').then(m => m.AssuranceParametriqueComponent),
-        title: 'Assurance Paramétrique | Crypto Simulator',
+        title: 'Assurance Paramétrique | TradeLAB',
       },
       {
         path: 'mode-assureur',
         loadComponent: () => import('./pages/mode-assureur/mode-assureur.component').then(m => m.ModeAssureurComponent),
-        title: 'Mode Assureur | Crypto Simulator',
+        title: 'Mode Assureur | TradeLAB',
       },
 
       // ---------- DASHBOARD ----------
       {
         path: 'dashboard',
         loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
-        title: 'Dashboard Marchés | Crypto Simulator',
+        title: 'Dashboard Marchés | TradeLAB',
       },
 
       // ---------- MARCHÉ ----------
@@ -63,95 +73,95 @@ export const routes: Routes = [
       {
         path: 'market/:type',
         loadComponent: () => import('./pages/market/market.component').then(m => m.MarketComponent),
-        title: 'Marché | Crypto Simulator',
+        title: 'Marché | TradeLAB',
       },
       {
         path: 'market/detail/:symbol',
         loadComponent: () => import('./pages/market-detail/market-detail.component').then(m => m.MarketDetailComponent),
-        title: 'Détail Actif | Crypto Simulator',
+        title: 'Détail Actif | TradeLAB',
       },
 
       // ---------- TRADING ----------
       {
         path: 'trading',
         loadComponent: () => import('./pages/trading/trading.component').then(m => m.TradingComponent),
-        title: 'Trading | Crypto Simulator',
+        title: 'Trading | TradeLAB',
       },
       {
         path: 'trading/orderbook',
         loadComponent: () => import('./pages/orderbook/orderbook.component').then(m => m.OrderbookComponent),
-        title: "Carnet d'ordres | Crypto Simulator",
+        title: "Carnet d'ordres | TradeLAB",
       },
       {
         path: 'trading/risk',
         loadComponent: () => import('./pages/risk/risk.component').then(m => m.RiskComponent),
-        title: 'Stop-loss / Take-profit | Crypto Simulator',
+        title: 'Stop-loss / Take-profit | TradeLAB',
       },
 
       // ---------- PORTEFEUILLE & HISTORIQUE ----------
       {
         path: 'portfolio',
         loadComponent: () => import('./pages/portfolio/portfolio.component').then(m => m.PortfolioComponent),
-        title: 'Portefeuille | Crypto Simulator',
+        title: 'Portefeuille | TradeLAB',
       },
       {
         path: 'history',
         loadComponent: () => import('./pages/history/history.component').then(m => m.HistoryComponent),
-        title: 'Historique | Crypto Simulator',
+        title: 'Historique | TradeLAB',
       },
 
       // ---------- ANALYSE & BACKTESTING ----------
       {
         path: 'analysis',
         loadComponent: () => import('./pages/analysis/analysis.component').then(m => m.AnalysisComponent),
-        title: 'Analyse Technique | Crypto Simulator',
+        title: 'Analyse Technique | TradeLAB',
       },
       {
         path: 'analysis/portfolio',
         loadComponent: () => import('./pages/analysis-technical/analysis-technical.component').then(m => m.AnalysisTechnicalComponent),
-        title: 'Analyse Portefeuille | Crypto Simulator',
+        title: 'Analyse Portefeuille | TradeLAB',
       },
       {
         path: 'analysis/compare',
         loadComponent: () => import('./pages/analysis-compare/analysis-compare.component').then(m => m.AnalysisCompareComponent),
-        title: 'Comparaison Stratégies | Crypto Simulator',
+        title: 'Comparaison Stratégies | TradeLAB',
       },
       {
         path: 'backtesting',
         loadComponent: () => import('./pages/backtesting/backtesting.component').then(m => m.BacktestingComponent),
-        title: 'Backtesting | Crypto Simulator',
+        title: 'Backtesting | TradeLAB',
       },
       {
         path: 'stress-testing',
         loadComponent: () => import('./pages/stress-testing/stress-testing.component').then(m => m.StressTestingComponent),
-        title: 'Stress Testing | Crypto Simulator',
+        title: 'Stress Testing | TradeLAB',
       },
       {
         path: 'stress-testing/results',
         loadComponent: () => import('./pages/stress-results/stress-results.component').then(m => m.StressResultsComponent),
-        title: 'Résultats Stress Test | Crypto Simulator',
+        title: 'Résultats Stress Test | TradeLAB',
       },
       {
         path: 'stress-testing/compare',
         loadComponent: () => import('./pages/stress-compare/stress-compare.component').then(m => m.StressCompareComponent),
-        title: 'Comparaison Scénarios | Crypto Simulator',
+        title: 'Comparaison Scénarios | TradeLAB',
       },
 
       // ---------- JEU DE SALLE DE MARCHÉ ----------
       {
         path: 'game',
         loadComponent: () => import('./pages/game/game-lobby/game-lobby.component').then(m => m.GameLobbyComponent),
-        title: 'Salle de Marché - Défi Multijoueur | Crypto Simulator',
+        title: 'Salle de Marché - Défi Multijoueur | TradeLAB',
       },
       {
         path: 'game/play/:scenarioId',
         loadComponent: () => import('./pages/game/game-dashboard/game-dashboard.component').then(m => m.GameDashboardComponent),
-        title: 'Jeu de Trading Historique | Crypto Simulator',
+        title: 'Jeu de Trading Historique | TradeLAB',
       },
       {
         path: 'game/results',
         loadComponent: () => import('./pages/game/game-results/game-results.component').then(m => m.GameResultsComponent),
-        title: 'Résultats de la Simulation | Crypto Simulator',
+        title: 'Résultats de la Simulation | TradeLAB',
       },
       {
         path: 'game/multiplayer',
@@ -160,41 +170,41 @@ export const routes: Routes = [
       },
 
       // ---------- IA & XAI ----------
-      { path: 'ai', loadComponent: () => import('./pages/ai/ai.component').then(m => m.AiComponent), title: 'Prédictions IA | Crypto Simulator' },
-      { path: 'ai/agent', loadComponent: () => import('./pages/ai-agent/ai-agent.component').then(m => m.AiAgentComponent), title: 'Agent de Trading IA | Crypto Simulator' },
-      { path: 'ai/sentiment', loadComponent: () => import('./pages/ai-sentiment/ai-sentiment.component').then(m => m.AiSentimentComponent), title: 'Analyse de Sentiment | Crypto Simulator' },
-      { path: 'xai', loadComponent: () => import('./pages/xai/xai.component').then(m => m.XaiComponent), title: 'Explicabilité XAI | Crypto Simulator' },
+      { path: 'ai', loadComponent: () => import('./pages/ai/ai.component').then(m => m.AiComponent), title: 'Prédictions IA | TradeLAB' },
+      { path: 'ai/agent', loadComponent: () => import('./pages/ai-agent/ai-agent.component').then(m => m.AiAgentComponent), title: 'Agent de Trading IA | TradeLAB' },
+      { path: 'ai/sentiment', loadComponent: () => import('./pages/ai-sentiment/ai-sentiment.component').then(m => m.AiSentimentComponent), title: 'Analyse de Sentiment | TradeLAB' },
+      { path: 'xai', loadComponent: () => import('./pages/xai/xai.component').then(m => m.XaiComponent), title: 'Explicabilité XAI | TradeLAB' },
 
       // ---------- FORMATION ----------
       {
         path: 'learning/course/:courseId/lesson/:lessonId',
         loadComponent: () => import('./pages/learning-course/learning-course.component').then(m => m.LearningCourseComponent),
-        title: 'Leçon | Crypto Simulator',
+        title: 'Leçon | TradeLAB',
       },
       {
         path: 'learning/course/:courseId',
         loadComponent: () => import('./pages/learning-course/learning-course.component').then(m => m.LearningCourseComponent),
-        title: 'Module | Crypto Simulator',
+        title: 'Module | TradeLAB',
       },
       {
         path: 'learning/quiz/:quizId',
         loadComponent: () => import('./pages/quiz-player/quiz-player.component').then(m => m.QuizPlayerComponent),
-        title: 'Quiz en cours | Crypto Simulator',
+        title: 'Quiz en cours | TradeLAB',
       },
       {
         path: 'learning/quiz',
         loadComponent: () => import('./pages/quiz/quiz.component').then(m => m.QuizComponent),
-        title: 'Quiz | Crypto Simulator',
+        title: 'Quiz | TradeLAB',
       },
       {
         path: 'learning/progress',
         loadComponent: () => import('./pages/learning-progress/learning-progress.component').then(m => m.LearningProgressComponent),
-        title: 'Progression | Crypto Simulator',
+        title: 'Progression | TradeLAB',
       },
       {
         path: 'learning',
         loadComponent: () => import('./pages/learning/learning.component').then(m => m.LearningComponent),
-        title: 'Formation | Crypto Simulator',
+        title: 'Formation | TradeLAB',
       },
       {
         path: 'quiz',
@@ -203,8 +213,8 @@ export const routes: Routes = [
       },
 
       // ---------- GRAPHIQUES ----------
-      { path: 'charts/candles', loadComponent: () => import('./pages/charts-candles/charts-candles.component').then(m => m.ChartsCandlesComponent), title: 'Chandeliers | Crypto Simulator' },
-      { path: 'charts/indicators', loadComponent: () => import('./pages/charts-indicators/charts-indicators.component').then(m => m.ChartsIndicatorsComponent), title: 'Indicateurs | Crypto Simulator' },
+      { path: 'charts/candles', loadComponent: () => import('./pages/charts-candles/charts-candles.component').then(m => m.ChartsCandlesComponent), title: 'Chandeliers | TradeLAB' },
+      { path: 'charts/indicators', loadComponent: () => import('./pages/charts-indicators/charts-indicators.component').then(m => m.ChartsIndicatorsComponent), title: 'Indicateurs | TradeLAB' },
 
       // ---------- ADMINISTRATION (PROTÉGÉE PAR SARRA) ----------
       ...ADMIN_ROUTES,
@@ -212,10 +222,10 @@ export const routes: Routes = [
   },
 
   // ---------- AUTHENTIFICATION ----------
-  { path: 'signin', component: SignInComponent, title: 'Connexion | Crypto Simulator' },
-  { path: 'signup', component: SignUpComponent, title: 'Inscription | Crypto Simulator' },
-{ path: 'profile', component: ProfileComponent, title: 'Mon Profil | Crypto Simulator' },
+  { path: 'signin', component: SignInComponent, title: 'Connexion | TradeLAB' },
+  { path: 'signup', component: SignUpComponent, title: 'Inscription | TradeLAB' },
+{ path: 'profile', component: ProfileComponent, title: 'Mon Profil | TradeLAB' },
 
   // ---------- 404 ----------
-  { path: '**', component: NotFoundComponent, title: 'Page introuvable | Crypto Simulator' },
+  { path: '**', component: NotFoundComponent, title: 'Page introuvable | TradeLAB' },
 ];

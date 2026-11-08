@@ -1,35 +1,45 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-type Theme = 'light' | 'dark';
+export type Theme = 'light' | 'dark';
 
 @Injectable({ providedIn: 'root' })
-
 export class ThemeService {
-  private themeSubject = new BehaviorSubject<Theme>('light');
+  private readonly CLE = 'theme';
+
+  // Thème enregistré, sinon sombre (identité de l'app)
+  private themeSubject = new BehaviorSubject<Theme>(this.lire());
   theme$ = this.themeSubject.asObservable();
 
   constructor() {
-    const savedTheme = (localStorage.getItem('theme') as Theme) || 'light';
-    this.setTheme(savedTheme);
+    this.appliquer(this.themeSubject.value);
   }
 
-  toggleTheme() {
-    const newTheme = this.themeSubject.value === 'light' ? 'dark' : 'light';
-    this.setTheme(newTheme);
+  get theme(): Theme { return this.themeSubject.value; }
+  get isDark(): boolean { return this.themeSubject.value === 'dark'; }
+
+  toggleTheme(): void {
+    this.setTheme(this.isDark ? 'light' : 'dark');
   }
 
-  setTheme(theme: Theme) {
+  setTheme(theme: Theme): void {
     this.themeSubject.next(theme);
-    localStorage.setItem('theme', theme);
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.documentElement.setAttribute('data-color-scheme', 'dark');
-      document.body.classList.add('dark:bg-gray-900');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.setAttribute('data-color-scheme', 'light');
-      document.body.classList.remove('dark:bg-gray-900');
-    }
+    try { localStorage.setItem(this.CLE, theme); } catch { /* navigation privée */ }
+    this.appliquer(theme);
+  }
+
+  private lire(): Theme {
+    try {
+      const v = localStorage.getItem(this.CLE);
+      if (v === 'light' || v === 'dark') return v;
+    } catch { /* ignore */ }
+    return 'dark';
+  }
+
+  private appliquer(theme: Theme): void {
+    const html = document.documentElement;
+    html.classList.toggle('dark', theme === 'dark');
+    html.setAttribute('data-color-scheme', theme);
+    html.setAttribute('data-theme', theme);
   }
 }

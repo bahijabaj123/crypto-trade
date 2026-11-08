@@ -3,11 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { texteErreur } from '../../../../core/services/admin.service';
+import { AuthShowcaseComponent } from '../auth-showcase.component';
 
 @Component({
   selector: 'app-signup-form',
   standalone: true,
-  imports: [RouterModule, FormsModule],
+  imports: [RouterModule, FormsModule,AuthShowcaseComponent],
   templateUrl: './signup-form.component.html'
 })
 export class SignupFormComponent {

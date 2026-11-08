@@ -144,28 +144,6 @@
      COULEURS CRYPTO - Simulateur de Salle de Marché
      ============================================================ */
 
-  /* Fonds principaux (style Binance) */
-  --color-crypto-bg: #0B0E11;
-  --color-crypto-card: #1E2329;
-  --color-crypto-card-hover: #2B3139;
-  --color-crypto-border: #2B3139;
-
-  /* Couleurs de marché */
-  --color-crypto-green: #0ECB81;
-  --color-crypto-green-dark: #0A9E63;
-  --color-crypto-red: #F6465D;
-  --color-crypto-red-dark: #C93A4E;
-  --color-crypto-yellow: #F0B90B;
-  --color-crypto-blue: #1E90FF;
-
-  /* Couleur pour les modules IA */
-  --color-crypto-purple: #8B5CF6;
-  --color-crypto-magenta: #EC4899;
-
-  /* Textes */
-  --color-crypto-text: #EAECEF;
-  --color-crypto-text-muted: #848E9C;
-
   /* Police pour les chiffres */
   --font-crypto-mono: "JetBrains Mono", "Roboto Mono", "Courier New", monospace;
 
@@ -203,13 +181,76 @@
   --z-index-999999: 999999;
 }
 
+/* ============================================================
+   THEME CLAIR / SOMBRE - couleurs "crypto" pilotées par variables
+   Le bouton ajoute/retire la classe .dark sur <html> : seules ces
+   variables changent, donc TOUTE l'app bascule (avant, ces couleurs
+   étaient figées en sombre, d'où le bouton qui "ne marchait pas").
+   ============================================================ */
+@theme inline {
+  --color-crypto-bg: var(--crypto-bg);
+  --color-crypto-card: var(--crypto-card);
+  --color-crypto-card-hover: var(--crypto-card-hover);
+  --color-crypto-border: var(--crypto-border);
+
+  --color-crypto-green: var(--crypto-green);
+  --color-crypto-green-dark: var(--crypto-green-dark);
+  --color-crypto-red: var(--crypto-red);
+  --color-crypto-red-dark: var(--crypto-red-dark);
+  --color-crypto-yellow: var(--crypto-yellow);
+  --color-crypto-blue: var(--crypto-blue);
+
+  --color-crypto-purple: var(--crypto-purple);
+  --color-crypto-magenta: var(--crypto-magenta);
+
+  --color-crypto-text: var(--crypto-text);
+  --color-crypto-text-muted: var(--crypto-text-muted);
+}
+
+:root {
+  color-scheme: light;
+  --crypto-bg: #f3f5f9;
+  --crypto-card: #ffffff;
+  --crypto-card-hover: #eef1f6;
+  --crypto-border: #e1e5ec;
+  --crypto-green: #0a9f6b;
+  --crypto-green-dark: #077a52;
+  --crypto-red: #e0344c;
+  --crypto-red-dark: #b52a3d;
+  --crypto-yellow: #c98a00;
+  --crypto-blue: #1e7fe0;
+  --crypto-purple: #7c4ddb;
+  --crypto-magenta: #d63384;
+  --crypto-text: #1b2230;
+  --crypto-text-muted: #667085;
+}
+
+:root.dark,
+html.dark {
+  color-scheme: dark;
+  --crypto-bg: #0b0e11;
+  --crypto-card: #1e2329;
+  --crypto-card-hover: #2b3139;
+  --crypto-border: #2b3139;
+  --crypto-green: #0ecb81;
+  --crypto-green-dark: #0a9e63;
+  --crypto-red: #f6465d;
+  --crypto-red-dark: #c93a4e;
+  --crypto-yellow: #f0b90b;
+  --crypto-blue: #1e90ff;
+  --crypto-purple: #8b5cf6;
+  --crypto-magenta: #ec4899;
+  --crypto-text: #eaecef;
+  --crypto-text-muted: #848e9c;
+}
+
 @layer base {
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
+    border-color: var(--crypto-border, var(--color-gray-200, currentColor));
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
@@ -217,6 +258,7 @@
   }
    body {
     @apply relative font-normal font-outfit z-1 bg-crypto-bg text-crypto-text;
+    transition: background-color .25s ease, color .25s ease;
   }
 }
 

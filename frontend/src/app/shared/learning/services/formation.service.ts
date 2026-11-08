@@ -519,4 +519,15 @@ export class FormationService {
     const done = lessons.filter((l) => this.state.completedLessonIds.includes(l.id)).length;
     return Math.round((done / lessons.length) * 100);
   }
+
+  estCertifieActuaire(): boolean {
+    const coursActuariat = [
+      'actuariat-tarification', 
+      'actuariat-provisionnement', 
+      'actuariat-parametrique', 
+      'actuariat-mode-assureur'
+    ];
+    return coursActuariat.every(id => this.getCourseProgressPercent(id) >= 100);
+  }
+
 }

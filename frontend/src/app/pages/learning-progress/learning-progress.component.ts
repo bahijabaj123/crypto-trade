@@ -3,10 +3,11 @@ import { PageBreadcrumbComponent } from '../../shared/components/common/page-bre
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { ApexAxisChartSeries, ApexChart, ApexDataLabels, ApexPlotOptions, ApexStroke, ApexXAxis, ApexYAxis, ApexGrid, ApexFill, ApexTooltip } from 'ng-apexcharts';
 import { FormationService } from '../../shared/learning/services/formation.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-learning-progress',
-  imports: [PageBreadcrumbComponent, NgApexchartsModule],
+  imports: [CommonModule, PageBreadcrumbComponent, NgApexchartsModule],
   templateUrl: './learning-progress.component.html',
   styleUrl: './learning-progress.component.css',
 })
@@ -17,8 +18,20 @@ export class LearningProgressComponent {
   readonly level = this.formation.getLearnerLevel();
   readonly skills = this.formation.getSkillProgress();
   readonly activities = this.formation.getActivityLog();
-  readonly achievements = this.formation.getAchievements();
   readonly weekly = this.formation.getWeeklyActivity();
+
+  // 👇 LA SEULE MODIFICATION EST ICI : On fusionne les succès existants avec le nouveau badge
+  readonly achievements = [
+    ...this.formation.getAchievements(),
+    {
+      id: 'actuaire-certifie',
+      title: 'Actuaire Certifié',
+      description: 'Terminer tous les cours d\'Actuariat',
+      unlocked: this.formation.estCertifieActuaire(),
+      progress: this.formation.estCertifieActuaire() ? 100 : 0,
+      icon: 'award'
+    }
+  ];
 
   levelProgress(): number {
     return this.formation.getLevelProgressPercent();

@@ -1,15 +1,20 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common'; // 👈 AJOUT (pour le pipe number)
+import { FormsModule } from '@angular/forms';   // 👈 AJOUT (pour ngModel)
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { LessonRoadmapComponent } from '../../shared/components/learning/lesson-roadmap/lesson-roadmap.component';
 import { PracticalLabComponent } from '../../shared/components/learning/practical-lab/practical-lab.component';
 import { MiniPriceChartComponent } from '../../shared/components/learning/mini-price-chart/mini-price-chart.component';
 import { Course, Lesson, LessonStatus } from '../../shared/learning/models/formation.models';
 import { FormationService } from '../../shared/learning/services/formation.service';
-import { LessonWithResource } from '../../shared/learning/data/actuariat-data'; // 👈 AJOUT
+import { LessonWithResource } from '../../shared/learning/data/actuariat-data';
 
 @Component({
   selector: 'app-learning-course',
+  standalone: true, // 👈 Assure-toi que c'est bien standalone: true
   imports: [
+    CommonModule, // 👈 AJOUT
+    FormsModule,  // 👈 AJOUT
     RouterModule,
     LessonRoadmapComponent,
     PracticalLabComponent,
@@ -22,14 +27,32 @@ export class LearningCourseComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly formation = inject(FormationService);
 
+  // On garde achievements au cas où tu l'utilises ailleurs, 
+  // mais normalement il est géré dans learning-progress.component.ts
+  readonly achievements = this.formation.getAchievements();
+  
   course: Course | undefined;
   lessons: Lesson[] = [];
-  activeLesson: LessonWithResource | undefined; // 👈 MODIFIÉ (Lesson -> LessonWithResource)
+  activeLesson: LessonWithResource | undefined;
   notFound = false;
   locked = false;
   unlockMessage?: string;
   knowledgeAnswer: number | null = null;
   completeMessage = '';
+
+  // 👇 VARIABLES DU SIMULATEUR
+  public simulateurInput = 10000;
+  public simulateurProb = 15;
+
+  // 👇 GETTERS DU SIMULATEUR
+  public get primeSimulee(): number {
+    const coutAttendu = this.simulateurInput * (this.simulateurProb / 100);
+    return Math.round(coutAttendu * 1.2);
+  }
+
+  public get provisionSimulee(): number {
+    return Math.round(this.simulateurInput * (this.simulateurProb / 100));
+  }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -81,7 +104,7 @@ export class LearningCourseComponent implements OnInit {
       }
       return;
     }
-    this.activeLesson = lesson as LessonWithResource; // 👈 CAST AJOUTÉ
+    this.activeLesson = lesson as LessonWithResource;
     this.knowledgeAnswer = null;
     this.completeMessage = '';
   }

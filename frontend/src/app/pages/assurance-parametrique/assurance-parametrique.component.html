@@ -1,0 +1,240 @@
+<app-page-breadcrumb pageTitle="Assurance Paramétrique" />
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+  <!-- ============================================================
+       COLONNE GAUCHE : Paramètres du contrat
+       ============================================================ -->
+  <div class="xl:col-span-1 space-y-6">
+
+    <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 transition-shadow hover:shadow-lg">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-500/15 text-purple-600 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-gray-800 dark:text-white/90 leading-tight">Paramètres du contrat</h2>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Déclenchement automatique si le seuil est atteint</p>
+        </div>
+      </div>
+
+      <!-- Actif -->
+      <div class="mb-5">
+        <label for="actif" class="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1.5">Actif surveillé</label>
+        <div class="relative group">
+          <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-600 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9 8h4.5a2 2 0 0 1 0 4H9m0 0h5a2 2 0 0 1 0 4H9M9 6v12"/></svg>
+          </span>
+          <select id="actif" [(ngModel)]="actif" (ngModelChange)="changerActif($event)"
+            class="w-full h-11 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent pl-11 pr-4 text-sm dark:text-white/90 outline-none transition hover:border-purple-400 focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10">
+            <option value="BTCUSDT">Bitcoin (BTC)</option>
+            <option value="ETHUSDT">Ethereum (ETH)</option>
+            <option value="SOLUSDT">Solana (SOL)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Seuil -->
+      <div class="mb-5">
+        <div class="flex items-center justify-between mb-2">
+          <label for="seuil" class="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-400">
+            <svg class="text-error-500" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>
+            Seuil de baisse
+          </label>
+          <span class="px-2.5 py-0.5 rounded-full bg-error-50 dark:bg-error-500/15 text-error-600 text-xs font-bold font-mono">-{{ seuilBaisse }} %</span>
+        </div>
+        <input id="seuil" type="range" min="5" max="80" [(ngModel)]="seuilBaisse" (ngModelChange)="calculerTout()" class="w-full accent-error-500 cursor-pointer">
+      </div>
+
+      <!-- Durée -->
+      <div class="mb-5">
+        <div class="flex items-center justify-between mb-2">
+          <label for="duree" class="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-400">
+            <svg class="text-brand-500" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Durée d'observation
+          </label>
+          <span class="px-2.5 py-0.5 rounded-full bg-brand-50 dark:bg-brand-500/15 text-brand-600 text-xs font-bold font-mono">{{ dureeJours }} jours</span>
+        </div>
+        <input id="duree" type="range" min="1" max="30" [(ngModel)]="dureeJours" (ngModelChange)="calculerTout()" class="w-full accent-brand-500 cursor-pointer">
+      </div>
+
+      <!-- Montant -->
+      <div class="mb-4">
+        <label for="montant" class="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1.5">Montant garanti (€)</label>
+        <div class="relative group">
+          <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-600 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>
+          </span>
+          <input id="montant" type="number" [(ngModel)]="montantGaranti" (ngModelChange)="calculerTout()"
+            class="w-full h-11 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent pl-11 pr-4 text-sm dark:text-white/90 outline-none transition hover:border-purple-400 focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10">
+        </div>
+      </div>
+
+      @if (chargement()) {
+        <div class="flex items-center gap-2 text-xs text-gray-500 animate-pulse">
+          <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.55"/></svg>
+          Chargement des données Binance...
+        </div>
+      }
+    </div>
+
+    <!-- Régime de volatilité -->
+    <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 transition-shadow hover:shadow-lg">
+      <div class="flex items-center gap-2 mb-3">
+        <svg class="text-brand-500" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <h3 class="text-sm font-bold text-gray-800 dark:text-white/90">Régime de volatilité</h3>
+      </div>
+      <p class="text-3xl font-black font-mono text-gray-800 dark:text-white/90">×{{ regimeVol | number: '1.2-2' }}</p>
+      <p class="text-xs text-gray-500 mt-2 leading-relaxed">
+        @if (regimeVol > 1.1) { Le marché est plus agité que d'habitude sur les 30 derniers jours : la simulation durcit le risque. }
+        @else if (regimeVol < 0.9) { Le marché est plus calme que d'habitude : la simulation allège le risque. }
+        @else { La volatilité récente est proche de sa moyenne de long terme. }
+      </p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       COLONNE DROITE : Résultats
+       ============================================================ -->
+  <div class="xl:col-span-2 space-y-6">
+
+    <!-- Prime (hero) -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl p-6 sm:p-8 text-white shadow-lg transition-shadow hover:shadow-2xl">
+      <div class="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-white/10"></div>
+      <div class="pointer-events-none absolute right-10 bottom-[-4rem] h-40 w-40 rounded-full bg-white/5"></div>
+      <div class="relative flex flex-wrap items-end justify-between gap-6">
+        <div>
+          <p class="flex items-center gap-2 text-purple-100 font-medium mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            Prime d'assurance paramétrique
+          </p>
+          <p class="text-5xl font-black tracking-tight">{{ prime.toLocaleString('fr-FR') }} €</p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <div class="rounded-xl bg-white/15 backdrop-blur px-4 py-3">
+            <p class="text-xs text-purple-100">Taux de prime</p>
+            <p class="text-lg font-bold font-mono">{{ tauxPrime | number: '1.2-2' }} %</p>
+          </div>
+          <div class="rounded-xl bg-white/15 backdrop-blur px-4 py-3">
+            <p class="text-xs text-purple-100">Fréquence attendue</p>
+            <p class="text-lg font-bold font-mono">1 fois / {{ periodeRetourAns | number: '1.0-1' }} an(s)</p>
+          </div>
+        </div>
+      </div>
+      <p class="relative text-purple-100 text-sm mt-5">
+        Si {{ actif.replace('USDT', '') }} descend de {{ seuilBaisse }} % (plus bas atteint) en {{ dureeJours }} jours, vous recevez {{ montantGaranti.toLocaleString('fr-FR') }} € automatiquement.
+      </p>
+    </div>
+
+    <!-- Probabilité -->
+    <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 transition-shadow hover:shadow-lg">
+      <div class="flex items-center justify-between flex-wrap gap-3 mb-5">
+        <h3 class="text-sm font-bold text-gray-800 dark:text-white/90 flex items-center gap-2">
+          <svg class="text-warning-500" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+          Probabilité de déclenchement
+        </h3>
+        <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold rounded-full px-2.5 py-1"
+          [class]="fiabilite === 'bonne' ? 'bg-success-50 text-success-600 dark:bg-success-500/15' : (fiabilite === 'moyenne' ? 'bg-warning-50 text-warning-600 dark:bg-warning-500/15' : 'bg-error-50 text-error-600 dark:bg-error-500/15')">
+          Fiabilité des données : {{ fiabilite }}
+        </span>
+      </div>
+
+      <div class="flex items-center gap-4 mb-5">
+        <p class="text-4xl font-black font-mono" [class]="probabilite > 10 ? 'text-error-500' : 'text-success-500'">{{ probabilite | number: '1.0-1' }} %</p>
+        <div class="flex-1 h-3 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+          <div class="h-full rounded-full transition-all duration-500"
+               [class]="probabilite > 10 ? 'bg-error-500' : 'bg-success-500'"
+               [style.width.%]="largeurBarre()"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="rounded-xl border border-gray-200 dark:border-gray-800 p-4 transition hover:-translate-y-0.5 hover:shadow-md hover:border-brand-500/50">
+          <p class="text-xs text-gray-500 mb-1">Observée (historique)</p>
+          <p class="text-xl font-bold font-mono text-gray-800 dark:text-white/90">{{ probaHistorique | number: '1.0-1' }} %</p>
+          <p class="text-[11px] text-gray-500 mt-1">{{ evenements }} événement(s) sur {{ fenetres }} fenêtres</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 dark:border-gray-800 p-4 transition hover:-translate-y-0.5 hover:shadow-md hover:border-purple-500/50">
+          <p class="text-xs text-gray-500 mb-1">Simulée (Monte-Carlo)</p>
+          <p class="text-xl font-bold font-mono text-gray-800 dark:text-white/90">{{ probaSimulee | number: '1.0-1' }} %</p>
+          <p class="text-[11px] text-gray-500 mt-1">5 000 trajectoires, volatilité ×{{ regimeVol | number: '1.2-2' }}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 dark:border-gray-800 p-4 transition hover:-translate-y-0.5 hover:shadow-md hover:border-warning-500/50">
+          <p class="text-xs text-gray-500 mb-1">Intervalle à 95 %</p>
+          <p class="text-xl font-bold font-mono text-gray-800 dark:text-white/90">{{ probaMin | number: '1.0-1' }} – {{ probaMax | number: '1.0-1' }} %</p>
+          <p class="text-[11px] text-gray-500 mt-1">Poids de l'historique : {{ credibilite * 100 | number: '1.0-0' }} %</p>
+        </div>
+      </div>
+
+      <p class="text-xs text-gray-500 mt-4 leading-relaxed">
+        Basé sur les {{ historiquePrix.length }} derniers jours de données Binance pour {{ actif }}.
+        La probabilité retenue combine l'historique et la simulation : moins il y a d'événements observés, plus la simulation pèse.
+      </p>
+    </div>
+
+    <!-- Décomposition de la prime -->
+    <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 transition-shadow hover:shadow-lg">
+      <h3 class="text-sm font-bold text-gray-800 dark:text-white/90 mb-4 flex items-center gap-2">
+        <svg class="text-brand-500" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+        De quoi est faite la prime ?
+      </h3>
+      <div class="flex h-4 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 mb-4">
+        <div class="bg-brand-500 transition-all duration-500" [style.width.%]="partie(primePure)"></div>
+        <div class="bg-warning-500 transition-all duration-500" [style.width.%]="partie(chargementRisque)"></div>
+        <div class="bg-purple-500 transition-all duration-500" [style.width.%]="partie(chargementIncertitude)"></div>
+        <div class="bg-gray-400 transition-all duration-500" [style.width.%]="partie(frais)"></div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+        <div class="flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-gray-800 px-4 py-3 transition hover:border-brand-500/50 hover:bg-brand-50/50 dark:hover:bg-brand-500/5">
+          <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-brand-500"></span><span><span class="font-semibold text-gray-800 dark:text-white/90">Prime pure</span><br><span class="text-xs text-gray-500">montant × probabilité</span></span></span>
+          <span class="font-mono font-bold">{{ primePure.toLocaleString('fr-FR') }} €</span>
+        </div>
+        <div class="flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-gray-800 px-4 py-3 transition hover:border-warning-500/50 hover:bg-warning-50/50 dark:hover:bg-warning-500/5">
+          <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-warning-500"></span><span><span class="font-semibold text-gray-800 dark:text-white/90">Chargement de risque</span><br><span class="text-xs text-gray-500">10 % de l'écart-type de l'indemnité</span></span></span>
+          <span class="font-mono font-bold">{{ chargementRisque.toLocaleString('fr-FR') }} €</span>
+        </div>
+        <div class="flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-gray-800 px-4 py-3 transition hover:border-purple-500/50 hover:bg-purple-50/50 dark:hover:bg-purple-500/5">
+          <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-purple-500"></span><span><span class="font-semibold text-gray-800 dark:text-white/90">Marge d'incertitude</span><br><span class="text-xs text-gray-500">plus forte si peu d'événements observés</span></span></span>
+          <span class="font-mono font-bold">{{ chargementIncertitude.toLocaleString('fr-FR') }} €</span>
+        </div>
+        <div class="flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-gray-800 px-4 py-3 transition hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-white/5">
+          <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-gray-400"></span><span><span class="font-semibold text-gray-800 dark:text-white/90">Frais de gestion</span><br><span class="text-xs text-gray-500">10 % de la prime</span></span></span>
+          <span class="font-mono font-bold">{{ frais.toLocaleString('fr-FR') }} €</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test sur l'historique -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 transition-all hover:-translate-y-1 hover:shadow-lg">
+        <p class="text-xs text-gray-500 mb-1">Pire baisse observée sur {{ dureeJours }} jours</p>
+        <p class="text-2xl font-black font-mono text-error-500">-{{ pireBaisse | number: '1.0-1' }} %</p>
+        <p class="text-[11px] text-gray-500 mt-2">Pour juger si le seuil choisi est réaliste.</p>
+      </div>
+      <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 transition-all hover:-translate-y-1 hover:shadow-lg">
+        <p class="text-xs text-gray-500 mb-1">S/P historique du contrat</p>
+        <p class="text-2xl font-black font-mono" [class]="ratioSPHistorique <= 100 ? 'text-success-500' : 'text-error-500'">{{ ratioSPHistorique }} %</p>
+        <p class="text-[11px] text-gray-500 mt-2">Indemnités versées / primes encaissées si ce contrat avait été vendu à chaque date.</p>
+      </div>
+      <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 transition-all hover:-translate-y-1 hover:shadow-lg">
+        <p class="text-xs text-gray-500 mb-1">Événements indépendants</p>
+        <p class="text-2xl font-black font-mono text-gray-800 dark:text-white/90">{{ evenements }}</p>
+        <p class="text-[11px] text-gray-500 mt-2">Des fenêtres qui se chevauchent comptent pour un seul événement.</p>
+      </div>
+    </div>
+
+    <!-- Explication -->
+    <div class="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-2xl p-6">
+      <h3 class="text-sm font-bold text-blue-800 dark:text-blue-400 mb-3 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+        Comment ça marche ?
+      </h3>
+      <p class="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+        L'assurance paramétrique ne nécessite pas de constat de sinistre. Le déclenchement est automatique dès que la condition objective est remplie :
+        si {{ actif.replace('USDT', '') }} touche {{ seuilBaisse }} % sous son prix de départ en {{ dureeJours }} jours (plus bas journalier Binance), vous êtes indemnisé sans dossier à remplir.
+        La prime vient de la probabilité de ce déclenchement, estimée sur l'historique et par simulation.
+      </p>
+    </div>
+
+  </div>
+</div>

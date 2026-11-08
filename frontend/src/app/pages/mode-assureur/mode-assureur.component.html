@@ -1,0 +1,140 @@
+<app-page-breadcrumb pageTitle="Mode Assureur" />
+
+<app-bande-bienvenue
+  cle="MODE ASSUREUR"
+  titre="Bienvenue, vous êtes maintenant assureur"
+  texte="Vous gérez une compagnie d'assurance sur 10 ans. Fixez vos primes, choisissez votre réassurance, et évitez la ruine ! Cliquez sur les termes soulignés pour comprendre chaque mécanisme."
+  variante="purple"
+  icone="🏢">
+</app-bande-bienvenue>
+
+<div class="my-4 flex justify-end">
+  <app-niveau-switch></app-niveau-switch>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+  <!-- Colonne gauche : Décisions -->
+  <div class="xl:col-span-1 space-y-6">
+    <div class="bg-gradient-to-br from-purple-600 to-purple-800 rounded-2xl p-6 text-white shadow-lg">
+      <p class="text-purple-100 text-sm mb-1">Jeu de gestion</p>
+      <h2 class="text-2xl font-black mb-2">Devenez Assureur</h2>
+      <p class="text-purple-100 text-sm leading-relaxed">
+        Gérez une compagnie d'assurance sur 10 ans. Évitez la <app-terme cle="ruine">ruine</app-terme> !
+      </p>
+    </div>
+
+    <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+      <h3 class="text-sm font-bold text-gray-800 dark:text-white/90 mb-4">Vos décisions</h3>
+
+      <div class="mb-6">
+        <div class="flex justify-between mb-2">
+          <label class="text-sm text-gray-700 dark:text-gray-400"><app-terme cle="niveau-prime">Niveau de prime</app-terme></label>
+          <span class="text-sm font-bold text-brand-500">{{ niveauPrime() }} %</span>
+        </div>
+        <input type="range" min="70" max="130" [ngModel]="niveauPrime()" (ngModelChange)="niveauPrime.set($event)"
+          [disabled]="partieTerminee()" class="w-full accent-brand-500">
+        <p class="text-[11px] text-gray-500 mt-1">
+          {{ niveauPrime() < 100 ? 'Sous le tarif : vous gagnez des clients mais perdez de l\'argent.' : (niveauPrime() > 100 ? 'Au-dessus du tarif : plus de marge mais moins de clients.' : 'Prix du marché.') }}
+        </p>
+      </div>
+
+      <div class="mb-6">
+        <div class="flex justify-between mb-2">
+          <label class="text-sm text-gray-700 dark:text-gray-400"><app-terme cle="reassurance">Réassurance</app-terme></label>
+          <span class="text-sm font-bold text-brand-500">{{ reassurance() }} %</span>
+        </div>
+        <input type="range" min="0" max="60" step="5" [ngModel]="reassurance()" (ngModelChange)="reassurance.set($event)"
+          [disabled]="partieTerminee()" class="w-full accent-brand-500">
+        <p class="text-[11px] text-gray-500 mt-1">
+          Vous cédez cette part au réassureur (coût : 35 % des primes cédées).
+        </p>
+      </div>
+
+      <div class="space-y-2">
+        <button (click)="simulerAnnee()" [disabled]="partieTerminee()"
+          class="w-full bg-brand-500 hover:bg-brand-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition">
+          {{ partieTerminee() ? 'Partie terminée' : 'Simuler l\'année suivante' }}
+        </button>
+        <button (click)="reinitialiser()"
+          class="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-xl transition">
+          🔄 Réinitialiser
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+        <p class="text-[11px] text-gray-500">Année</p>
+        <p class="text-xl font-black text-gray-800 dark:text-white/90">{{ anneeActuelle() }} <span class="text-sm text-gray-500">/ 10</span></p>
+      </div>
+      <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+        <p class="text-[11px] text-gray-500">Capital</p>
+        <p class="text-xl font-black" [class]="capital() >= 0 ? 'text-success-500' : 'text-error-500'">{{ capital() | number: '1.0-0' }} k€</p>
+      </div>
+      <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+        <p class="text-[11px] text-gray-500"><app-terme cle="solvabilite">Solvabilité</app-terme></p>
+        <p class="text-xl font-black" [class]="solvabilite() >= 100 ? 'text-success-500' : 'text-error-500'">{{ solvabilite() }} %</p>
+      </div>
+      <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+        <p class="text-[11px] text-gray-500"><app-terme cle="ratio-combine">Ratio combiné</app-terme></p>
+        <p class="text-xl font-black" [class]="(dernierRatioCombine() ?? 0) <= 100 ? 'text-success-500' : 'text-error-500'">
+          {{ dernierRatioCombine() ? (dernierRatioCombine() | number: '1.0-0') + ' %' : '—' }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Colonne droite -->
+  <div class="xl:col-span-2 space-y-6">
+
+    @if (partieTerminee()) {
+      <div class="rounded-2xl border p-6"
+        [class]="enRuine() ? 'bg-error-50 border-error-300 dark:bg-error-500/10 dark:border-error-500/30' : 'bg-success-50 border-success-300 dark:bg-success-500/10 dark:border-success-500/30'">
+        <p class="text-lg font-bold" [class]="enRuine() ? 'text-error-700 dark:text-error-400' : 'text-success-700 dark:text-success-500'">
+          {{ messageFin }}
+        </p>
+      </div>
+    }
+
+    <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+      <h3 class="text-sm font-bold text-gray-800 dark:text-white/90 mb-4">Évolution de votre capital sur 10 ans</h3>
+      <apx-chart
+        [series]="chartOptions().series!"
+        [chart]="chartOptions().chart!"
+        [colors]="chartOptions().colors!"
+        [fill]="chartOptions().fill!"
+        [stroke]="chartOptions().stroke!"
+        [xaxis]="chartOptions().xaxis!"
+        [yaxis]="chartOptions().yaxis!"
+        [grid]="chartOptions().grid!"
+        [dataLabels]="chartOptions().dataLabels!"
+        [theme]="chartOptions().theme!">
+      </apx-chart>
+    </div>
+
+    <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+      <h3 class="text-sm font-bold text-gray-800 dark:text-white/90 mb-4">Journal des 5 dernières années</h3>
+      @if (journal().length === 0) {
+        <p class="text-sm text-gray-500 italic">Aucune année simulée pour l'instant.</p>
+      } @else {
+        <div class="space-y-2">
+          @for (entry of journal(); track entry.annee) {
+            <div class="flex justify-between items-center p-3 rounded-lg bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-gray-800">
+              <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold">{{ entry.annee }}</span>
+                <span class="text-sm text-gray-800 dark:text-white/90">{{ entry.evenement }}</span>
+              </div>
+              <span class="font-mono text-sm font-bold" [class]="entry.net >= 0 ? 'text-success-500' : 'text-error-500'">
+                {{ entry.net >= 0 ? '+' : '' }}{{ entry.net }} k€
+              </span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <app-demarche etape="assureur"></app-demarche>
+
+  </div>
+</div>

@@ -24,7 +24,27 @@ export const routes: Routes = [
     component: AppLayoutComponent,
     children: [
       // ... (toutes les routes originales TailAdmin restent ici)
+{
+  path: 'actuariat',
+  loadComponent: () => import('./pages/actuariat/actuariat.component').then(m => m.ActuariatComponent),
+  title: 'Module Actuariat | Crypto Simulator',
+},
+{
+  path: 'provisions',
+  loadComponent: () => import('./pages/provisions/provisions.component').then(m => m.ProvisionsComponent),
+  title: 'Provisions de Sinistres | Crypto Simulator',
+},
+{
+  path: 'assurance-parametrique',
+  loadComponent: () => import('./pages/assurance-parametrique/assurance-parametrique.component').then(m => m.AssuranceParametriqueComponent),
+  title: 'Assurance Paramétrique | Crypto Simulator',
+},
 
+{
+  path: 'mode-assureur',
+  loadComponent: () => import('./pages/mode-assureur/mode-assureur.component').then(m => m.ModeAssureurComponent),
+  title: 'Mode Assureur | Crypto Simulator',
+},
       // ---------- DASHBOARD ----------
       {
         path: 'dashboard',

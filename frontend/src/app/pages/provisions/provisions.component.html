@@ -1,0 +1,168 @@
+<app-page-breadcrumb pageTitle="Provisions de Sinistres" />
+
+<app-bande-bienvenue
+  cle="PROVISIONS"
+  titre="Bienvenue dans le provisionnement"
+  texte="Vous allez estimer l'argent à mettre de côté pour payer les sinistres futurs. Choisissez votre niveau, cliquez sur les termes soulignés pour comprendre, et suivez la démarche en bas."
+  variante="brand"
+  icone="🏦">
+</app-bande-bienvenue>
+
+<div class="my-4 flex flex-wrap items-center justify-between gap-3">
+  <p class="text-sm text-gray-500 dark:text-gray-400">
+    Méthode : <strong>{{ methode() === 'CHAIN_LADDER' ? 'Chain-Ladder' : 'Bornhuetter-Ferguson' }}</strong>
+  </p>
+  <app-niveau-switch></app-niveau-switch>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+  <!-- Colonne gauche -->
+  <div class="xl:col-span-1 space-y-6">
+    <div class="bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl p-6 text-white shadow-lg">
+      <p class="text-brand-100 text-sm mb-1">Actuariat - §3.7</p>
+      <h2 class="text-2xl font-black mb-2">Triangle de Provisions</h2>
+      <p class="text-brand-100 text-sm leading-relaxed">
+        Estimez les indemnisations futures. Méthode
+        <app-terme cle="chain-ladder">Chain-Ladder</app-terme> ou
+        <app-terme cle="bornhuetter-ferguson">Bornhuetter-Ferguson</app-terme>.
+      </p>
+    </div>
+
+    <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+      <h3 class="text-sm font-bold text-gray-800 dark:text-white/90 mb-4">Méthode de calcul</h3>
+      <div class="space-y-2">
+        <button (click)="changerMethode('CHAIN_LADDER')"
+          [class]="methode() === 'CHAIN_LADDER' ? 'bg-brand-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400'"
+          class="w-full text-left px-4 py-3 rounded-xl transition font-medium">
+          <div class="font-bold">Chain-Ladder</div>
+          <div class="text-xs opacity-80">Basé sur les facteurs historiques</div>
+        </button>
+        <button (click)="changerMethode('BORNHUETTER_FERGUSON')"
+          [class]="methode() === 'BORNHUETTER_FERGUSON' ? 'bg-brand-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400'"
+          class="w-full text-left px-4 py-3 rounded-xl transition font-medium">
+          <div class="font-bold">Bornhuetter-Ferguson</div>
+          <div class="text-xs opacity-80">Combine historique et primes attendues</div>
+        </button>
+      </div>
+
+      @if (methode() === 'BORNHUETTER_FERGUSON') {
+        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
+          <div class="flex justify-between mb-2">
+            <label class="text-sm text-gray-700 dark:text-gray-400">Ratio <app-terme cle="ratio-sp">S/P</app-terme> a priori</label>
+            <span class="text-sm font-bold text-brand-500">{{ ratioSP() }} %</span>
+          </div>
+          <input type="range" min="50" max="100" [ngModel]="ratioSP()" (ngModelChange)="ratioSP.set($event)"
+            class="w-full accent-brand-500">
+        </div>
+      }
+    </div>
+
+    <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+      <h3 class="text-sm font-bold text-gray-800 dark:text-white/90 mb-3"><app-terme cle="provision">Provision</app-terme> totale</h3>
+      <p class="text-4xl font-black text-brand-500">{{ provisionTotale() | number: '1.0-0' }} <span class="text-lg">k€</span></p>
+      <p class="text-xs text-gray-500 mt-2">Estimation des sinistres futurs à payer (2020–2025).</p>
+    </div>
+  </div>
+
+  <!-- Colonne droite -->
+  <div class="xl:col-span-2 space-y-6">
+
+    <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+      <h3 class="text-sm font-bold text-gray-800 dark:text-white/90 mb-4"><app-terme cle="triangle">Triangle</app-terme> de développement (k€)</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-xs">
+          <thead>
+            <tr>
+              <th class="px-2 py-2 text-left text-gray-500 font-medium">Survenance</th>
+              @for (dev of anneesDeveloppement; track dev) {
+                <th class="px-2 py-2 text-center text-gray-500 font-medium">Dév. {{ dev }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (annee of anneesSurvenance; track annee; let i = $index) {
+              <tr>
+                <td class="px-2 py-2 font-mono font-bold text-gray-800 dark:text-white/90">{{ annee }}</td>
+                @for (dev of anneesDeveloppement; track dev; let j = $index) {
+                  <td class="px-2 py-2 text-center">
+                    @if (estObservee(i, j)) {
+                      <span class="inline-block px-2 py-1 rounded bg-brand-500/10 text-brand-500 font-mono font-medium">
+                        {{ triangle()[i][j] | number: '1.0-0' }}
+                      </span>
+                    } @else {
+                      <span class="inline-block px-2 py-1 rounded bg-yellow-500/10 border border-dashed border-yellow-500/50 text-yellow-500 font-mono font-medium">
+                        {{ triangleProjete()[i][j] | number: '1.0-0' }}
+                      </span>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+            <tr class="border-t border-gray-200 dark:border-gray-800">
+              <td class="px-2 py-2 font-bold text-gray-500"><app-terme cle="facteur">Facteurs</app-terme></td>
+              @for (f of facteursDeveloppement(); track $index) {
+                <td class="px-2 py-2 text-center font-mono text-brand-500 font-bold">{{ f | number: '1.3-3' }}</td>
+              }
+              <td class="px-2 py-2 text-center font-mono text-gray-400">1,000</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+      <h3 class="text-sm font-bold text-gray-800 dark:text-white/90 mb-4">Payé vs Provision par année</h3>
+      <apx-chart
+        [series]="chartOptions().series!"
+        [chart]="chartOptions().chart!"
+        [colors]="chartOptions().colors!"
+        [plotOptions]="chartOptions().plotOptions!"
+        [dataLabels]="chartOptions().dataLabels!"
+        [xaxis]="chartOptions().xaxis!"
+        [yaxis]="chartOptions().yaxis!"
+        [grid]="chartOptions().grid!"
+        [theme]="chartOptions().theme!"
+        [legend]="chartOptions().legend!">
+      </apx-chart>
+    </div>
+
+    <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+      <h3 class="text-sm font-bold text-gray-800 dark:text-white/90 mb-4">Détail des provisions par année</h3>
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-200 dark:border-gray-800">
+            <th class="py-2 text-left text-xs text-gray-500 font-medium">Année</th>
+            <th class="py-2 text-right text-xs text-gray-500 font-medium">Dernier payé</th>
+            <th class="py-2 text-right text-xs text-gray-500 font-medium">CDF</th>
+            <th class="py-2 text-right text-xs text-gray-500 font-medium"><app-terme cle="ultime">Ultime</app-terme></th>
+            <th class="py-2 text-right text-xs text-gray-500 font-medium">Provision</th>
+            <th class="py-2 text-right text-xs text-gray-500 font-medium">S/P ultime</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of provisions(); track p.annee) {
+            <tr class="border-b border-gray-100 dark:border-gray-800/50">
+              <td class="py-2 font-mono font-bold text-gray-800 dark:text-white/90">{{ p.annee }}</td>
+              <td class="py-2 text-right font-mono text-gray-500">{{ p.dernierPaye | number: '1.0-0' }} k€</td>
+              <td class="py-2 text-right font-mono text-brand-500">{{ p.cdf | number: '1.2-2' }}</td>
+              <td class="py-2 text-right font-mono text-gray-800 dark:text-white/90">{{ p.ultime | number: '1.0-0' }} k€</td>
+              <td class="py-2 text-right font-mono font-bold text-yellow-500">{{ p.provision | number: '1.0-0' }} k€</td>
+              <td class="py-2 text-right font-mono" [class]="p.spUltime <= 100 ? 'text-success-500' : 'text-error-500'">
+                {{ p.spUltime | number: '1.0-0' }} %
+              </td>
+            </tr>
+          }
+          <tr class="border-t-2 border-gray-300 dark:border-gray-700">
+            <td class="py-3 font-bold text-gray-800 dark:text-white/90" colspan="4">TOTAL</td>
+            <td class="py-3 text-right font-mono font-black text-lg text-yellow-500">{{ provisionTotale() | number: '1.0-0' }} k€</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-demarche etape="provisions"></app-demarche>
+
+  </div>
+</div>

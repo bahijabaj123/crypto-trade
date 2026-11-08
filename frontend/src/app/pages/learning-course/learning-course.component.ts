@@ -5,6 +5,7 @@ import { PracticalLabComponent } from '../../shared/components/learning/practica
 import { MiniPriceChartComponent } from '../../shared/components/learning/mini-price-chart/mini-price-chart.component';
 import { Course, Lesson, LessonStatus } from '../../shared/learning/models/formation.models';
 import { FormationService } from '../../shared/learning/services/formation.service';
+import { LessonWithResource } from '../../shared/learning/data/actuariat-data'; // 👈 AJOUT
 
 @Component({
   selector: 'app-learning-course',
@@ -23,7 +24,7 @@ export class LearningCourseComponent implements OnInit {
 
   course: Course | undefined;
   lessons: Lesson[] = [];
-  activeLesson: Lesson | undefined;
+  activeLesson: LessonWithResource | undefined; // 👈 MODIFIÉ (Lesson -> LessonWithResource)
   notFound = false;
   locked = false;
   unlockMessage?: string;
@@ -80,7 +81,7 @@ export class LearningCourseComponent implements OnInit {
       }
       return;
     }
-    this.activeLesson = lesson;
+    this.activeLesson = lesson as LessonWithResource; // 👈 CAST AJOUTÉ
     this.knowledgeAnswer = null;
     this.completeMessage = '';
   }

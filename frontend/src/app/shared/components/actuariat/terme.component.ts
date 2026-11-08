@@ -1,5 +1,6 @@
 import { Component, Input, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router'; // 👈 IMPORT AJOUTÉ
 import { GlossaireService } from '../../../core/services/glossaire.service';
 import { CoursDrawerComponent } from './cours-drawer.component';
 
@@ -51,6 +52,8 @@ export class TermeComponent {
   @Input({ required: true }) cle!: string;
 
   private readonly glossaire = inject(GlossaireService);
+  private readonly router = inject(Router); // 👈 INJECTION AJOUTÉE
+
   readonly ouvert = signal(false);
   readonly drawerOuvert = signal(false);
 
@@ -58,5 +61,12 @@ export class TermeComponent {
 
   ouvrir() { this.ouvert.set(true); }
   fermer() { this.ouvert.set(false); }
-  ouvrirCours() { this.drawerOuvert.set(true); this.ouvert.set(false); }
+  
+  ouvrirCours() {
+    this.ouvert.set(false);
+    if (this.terme()?.cours) {
+      // 👇 Redirection directe vers le bon cours et la bonne leçon
+      this.router.navigate([this.terme()!.cours!.route]); 
+    }
+  }
 }

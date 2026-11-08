@@ -73,9 +73,11 @@
         <p class="text-xl font-black" [class]="capital() >= 0 ? 'text-success-500' : 'text-error-500'">{{ capital() | number: '1.0-0' }} k€</p>
       </div>
       <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-xl p-4">
-        <p class="text-[11px] text-gray-500"><app-terme cle="solvabilite">Solvabilité</app-terme></p>
-        <p class="text-xl font-black" [class]="solvabilite() >= 100 ? 'text-success-500' : 'text-error-500'">{{ solvabilite() }} %</p>
-      </div>
+  <p class="text-[11px] text-gray-500"><app-terme cle="solvabilite">Solvabilité</app-terme></p>
+  <p class="text-xl font-black" [class]="solvabilite() >= 100 ? 'text-success-500' : 'text-error-500'">
+    {{ solvabilite() }} %
+  </p>
+</div>
       <div class="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-xl p-4">
         <p class="text-[11px] text-gray-500"><app-terme cle="ratio-combine">Ratio combiné</app-terme></p>
         <p class="text-xl font-black" [class]="(dernierRatioCombine() ?? 0) <= 100 ? 'text-success-500' : 'text-error-500'">

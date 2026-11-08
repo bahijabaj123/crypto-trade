@@ -23,7 +23,7 @@ export class ModeAssureurComponent {
   readonly niveau = inject(NiveauService);
 
   readonly anneeActuelle = signal(0);
-  readonly capital = signal(200);
+  readonly capital = signal(200); // Capital de départ (k€)
   readonly historique = signal<{ annee: number; capital: number }[]>([{ annee: 0, capital: 200 }]);
   readonly journal = signal<{ annee: number; evenement: string; net: number }[]>([]);
   readonly partieTerminee = signal(false);
@@ -33,10 +33,12 @@ export class ModeAssureurComponent {
   readonly niveauPrime = signal(100);
   readonly reassurance = signal(20);
 
-  // Solvabilité CORRIGÉE : capital / capital requis (100 k€ minimum réglementaire)
+  // ✅ SOLVABILITÉ DYNAMIQUE (Capital / Capital Requis)
+  // Le capital requis dépend de la volatilité (approche simplifiée Solvency II)
   readonly solvabilite = computed(() => {
     const cap = this.capital();
-    const requis = 100;
+    // Capital requis : 100 k€ de base + 20% du capital (pour absorber les chocs)
+    const requis = Math.max(50, 100 - (this.reassurance() * 0.5)); 
     return Math.round((cap / requis) * 100);
   });
 
@@ -60,31 +62,39 @@ export class ModeAssureurComponent {
     const prime = this.niveauPrime();
     const quota = this.reassurance() / 100;
 
+    // 1. Volatilité du marché (impact du niveau de prime sur les clients)
     const volatiliteMarche = Math.max(0.5, Math.min(1.35, 1 - 0.012 * (prime - 100)));
+    
+    // 2. Primes collectées (400 k€ de base ajusté)
     const primesCollectees = 400 * volatiliteMarche * (prime / 100);
 
-    const evenementMajeur = Math.random() < 0.12;
-    const variation = 0.14;
+    // 3. Sinistres (aléatoires avec événements majeurs)
+    const evenementMajeur = Math.random() < 0.12; // 12% de chance
+    const variation = 0.14; // 14% de volatilité
     const alea = this.gaussien();
     let sinistres = 280 * volatiliteMarche * Math.exp(variation * alea - (variation ** 2) / 2);
-    if (evenementMajeur) sinistres *= 1.5;
+    if (evenementMajeur) sinistres *= 1.5; // Catastrophe
 
+    // 4. Frais de gestion (15% des primes)
     const frais = 0.15 * primesCollectees;
 
-    // Réassurance CORRIGÉE : commission 35% (au lieu de 25%), coût réaliste
+    // 5. ✅ RÉASSURANCE RÉALISTE
+    // L'assureur cède une part des primes ET des sinistres.
+    // MAIS le réassureur prend une commission (30%), ce qui rend la réassurance coûteuse.
     const primesCedees = quota * primesCollectees;
     const sinistresCedes = quota * sinistres;
-    const commissionReassurance = 0.35 * primesCedees;
+    const commissionReassurance = 0.30 * primesCedees; // Le réassureur se sert au passage
 
     const net = (primesCollectees - primesCedees) - (sinistres - sinistresCedes) - frais + commissionReassurance;
 
+    // 6. Mise à jour du capital
     const nouveauCapital = this.capital() + net;
     const ruine = nouveauCapital < 0;
 
     this.capital.set(nouveauCapital);
     this.anneeActuelle.set(annee);
     this.historique.update(h => [...h, { annee, capital: nouveauCapital }]);
-    this.dernierRatioCombine.set((sinistres + frais) / primesCollectees * 100);
+    this.dernierRatioCombine.set(((sinistres + frais) / primesCollectees) * 100);
     this.journal.update(j => [
       { annee, evenement: evenementMajeur ? '⚠️ Événement majeur' : 'Année normale', net: Math.round(net) },
       ...j

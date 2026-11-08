@@ -1,4 +1,5 @@
 import { Course, Lesson, Quiz } from '../models/formation.models';
+import { ACTUARIAT_COURSES, ACTUARIAT_LESSONS, ACTUARIAT_QUIZZES } from './actuariat-data';
 
 export const FORMATION_COURSES: Omit<Course, 'progress'>[] = [
   {
@@ -97,6 +98,8 @@ export const FORMATION_COURSES: Omit<Course, 'progress'>[] = [
       message: 'Atteignez 70 % sur Analyse Technique pour débloquer IA & Trading.',
     },
   },
+  // 👇 FUSION DES COURS D'ACTUARIAT ICI
+  ...ACTUARIAT_COURSES
 ];
 
 function lesson(
@@ -221,6 +224,8 @@ export const FORMATION_LESSONS: Lesson[] = [
   ...['Machine Learning', 'Price prediction', 'Classification B/H/S', 'Sentiment analysis', 'Explainable AI', 'SHAP', 'Limites de l’IA'].map((t, i) =>
     lesson('ai-trading', i + 1, t, `Comprendre ${t} pour le trading assisté.`),
   ),
+  // 👇 FUSION DES LEÇONS D'ACTUARIAT ICI
+  ...ACTUARIAT_LESSONS
 ];
 
 function q(id: string, question: string, options: string[], correctIndex: number, explanation: string) {
@@ -382,6 +387,8 @@ export const FORMATION_QUIZZES: Quiz[] = [
       q('ia12', 'Human-in-the-loop :', ['Trader valide signaux', 'IA seule obligatoire', 'Pas de SL', 'Only meme'], 0, 'Supervision humaine.'),
     ],
   },
+  // 👇 FUSION DES QUIZ D'ACTUARIAT ICI
+  ...ACTUARIAT_QUIZZES
 ];
 
 export const LESSON_XP = 30;

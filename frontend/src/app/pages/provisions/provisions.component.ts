@@ -49,7 +49,7 @@ export class ProvisionsComponent {
 
   readonly triangle = signal<number[][]>(TRIANGLE_DEFAUT.map(l => [...l]));
   readonly methode = signal<Methode>('CHAIN_LADDER');
-  readonly ratioSP = signal(70);
+  readonly ratioSP = signal(70); // Ratio S/P a priori (70%)
 
   readonly facteursDeveloppement = computed(() => {
     const tri = this.triangle();
@@ -108,9 +108,11 @@ export class ProvisionsComponent {
       let ultime: number;
 
       if (methode === 'CHAIN_LADDER') {
+        // Chain-Ladder classique
         ultime = paye * cdfI;
       } else {
-        // Bornhuetter-Ferguson CORRIGÉ
+        // ✅ BORNHUETTER-FERGUSON CORRIGÉ (Formule exacte)
+        // Ultime = Payé + (Prime * SP) * (1 - 1/CDF)
         const prime = this.primesAcquises[i];
         const expectedUltime = prime * sp;
         const pctNonPaye = 1 - (1 / cdfI);

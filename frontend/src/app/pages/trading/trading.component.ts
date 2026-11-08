@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { EMPTY, Subject, catchError, debounceTime, interval, of, switchMap } from 'rxjs';
+import { MarketIconComponent } from '../../shared/components/market-icon/market-icon.component'; // 👈 Import de Sarra
 
 // Composant graphique de SARRA (pour la Crypto)
 import { CandleChartComponent as SarraCandleChart } from '../../shared/components/candle-chart/candle-chart.component';
@@ -26,6 +27,7 @@ interface CryptoChoix { code: string; nom: string; }
 @Component({
   selector: 'app-trading',
   imports: [
+    MarketIconComponent, // 👈 Ajout de l'icône de marché
     DatePipe, DecimalPipe, UpperCasePipe, FormsModule, RouterLink,
     BadgeComponent, PageBreadcrumbComponent,
     SarraCandleChart,
@@ -75,7 +77,7 @@ export class TradingComponent {
   type: Extract<TypeOrdre, 'MARKET' | 'LIMIT'> = 'MARKET';
   prixLimite: number | null = null;
   
-  // 👇 NOUVEAU : Stop-Loss et Take-Profit
+  // 👇 Stop-Loss et Take-Profit (Ton code)
   public stopLoss: number | null = null;
   public takeProfit: number | null = null;
 
@@ -105,6 +107,7 @@ export class TradingComponent {
   readonly apercu = signal<ApercuRisque | null>(null);
   private readonly demandeApercu = new Subject<void>();
 
+  // 👇 Ton code
   readonly afficherRisque = signal(false);
 
   constructor() {
@@ -175,7 +178,7 @@ export class TradingComponent {
       },
       error: (err) => {
         console.error('Erreur klines:', err);
-        this.klinesErreur.set('Impossible de charger le graphique.');
+        this.klinesErreur.set('Impossible de charger le graphique (API saturée ou quota atteint).');
         this.klinesLoading.set(false);
       }
     });
@@ -364,6 +367,7 @@ export class TradingComponent {
     }
   }
 
+  // 👇 Ton code
   basculerRisque(): void {
     this.afficherRisque.set(!this.afficherRisque());
   }

@@ -1,7 +1,7 @@
+import { MarketIconComponent } from '../../shared/components/market-icon/market-icon.component';
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Subscription } from 'rxjs';
-import {  DatePipe } from '@angular/common';
 
 import { BinanceService } from '../../core/services/binance.service';
 import { MarketService, MarketType } from '../../core/services/market.service';
@@ -13,7 +13,8 @@ import { CandleChartComponent } from './components/candle-chart/candle-chart.com
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, CandleChartComponent,DatePipe],
+  // 👇 Fusion des imports : MarketIconComponent (Sarra) + DatePipe (Toi)
+  imports: [MarketIconComponent, CommonModule, CandleChartComponent, DatePipe],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
@@ -430,25 +431,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-    // ============================================================
+  // ============================================================
   // LOGIQUE DES HORAIRES DE MARCHÉ
   // ============================================================
   
   get isWeekend(): boolean {
-    const jour = new Date().getDay(); // 0 = Dimanche, 6 = Samedi
+    const jour = new Date().getDay();
     return jour === 0 || jour === 6;
   }
 
   get actionsOuvertes(): boolean {
-    // Les actions US sont ouvertes du lundi au vendredi (15h30 - 22h00 heure française)
     if (this.isWeekend) return false;
     const heure = new Date().getHours();
-    // Simplification : on dit que c'est ouvert si c'est la journée (8h - 18h)
     return heure >= 8 && heure < 18;
   }
 
   get matieresPremieresOuvertes(): boolean {
-    // Le marché des matières premières (CBOE) suit globalement les mêmes horaires
     return this.actionsOuvertes;
   }
 

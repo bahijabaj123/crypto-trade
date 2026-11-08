@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { GameLobbyComponent } from './game-lobby.component';
 
 describe('GameLobbyComponent', () => {
@@ -7,7 +9,8 @@ describe('GameLobbyComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [GameLobbyComponent]
+      imports: [GameLobbyComponent],
+      providers: [provideHttpClient(), provideRouter([])]
     })
       .compileComponents();
 

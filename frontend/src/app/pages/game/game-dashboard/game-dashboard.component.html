@@ -1,5 +1,5 @@
 <div class="p-3 md:p-4 h-screen flex flex-col bg-[#0a0e17] text-white font-sans overflow-hidden">
-  
+
   @if (scenario) {
     <!-- HEADER -->
     <div class="flex justify-between items-center mb-2 bg-[#131b26] p-3 rounded-xl border border-gray-800 shadow-lg shrink-0">
@@ -9,7 +9,7 @@
         </button>
         <div class="h-5 w-px bg-gray-700"></div>
         <h1 class="text-lg font-black text-blue-400">{{ scenario.nom }}</h1>
-        
+
         <!-- Badge Multijoueur -->
         @if (roomCode) {
           <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1">
@@ -30,13 +30,13 @@
 
     <!-- CORPS PRINCIPAL -->
     <div class="flex-1 grid grid-cols-1 xl:grid-cols-4 gap-3 min-h-0 pb-2">
-      
+
       <!-- GAUCHE : GRAPHIQUES ET MUR DES ACTIONS -->
       <div class="xl:col-span-3 flex flex-col gap-2 min-h-0">
-        
+
         <div class="flex flex-wrap gap-2 shrink-0">
           @for (actif of scenario.actifs; track actif) {
-            <button (click)="toggleActif(actif)" 
+            <button (click)="toggleActif(actif)"
                     class="px-3 py-1 rounded-lg font-bold text-xs border transition-colors"
                     [class]="actifsAffiches.includes(actif) ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#131b26] border-gray-700 text-gray-400'">
               {{ actif }}
@@ -45,9 +45,9 @@
         </div>
 
         <!-- La grille de graphiques -->
-        <div class="flex-1 grid gap-2 auto-rows-fr overflow-hidden" 
+        <div class="flex-1 grid gap-2 auto-rows-fr overflow-hidden"
              [class]="actifsAffiches.length === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'">
-          
+
           @for (actif of actifsAffiches; track actif) {
             <div class="bg-[#131b26] rounded-xl border border-gray-800 p-2 flex flex-col relative h-full min-h-0">
               <div class="flex justify-between items-center mb-1 z-10">
@@ -57,8 +57,8 @@
                 </span>
               </div>
               <div class="flex-1 relative w-full min-h-0">
-                <app-game-line-chart 
-                  [candles]="getBougiesActives(actif)" 
+                <app-game-line-chart
+                  [candles]="getBougiesActives(actif)"
                   [color]="getCouleur(actif)">
                 </app-game-line-chart>
               </div>
@@ -88,16 +88,16 @@
 
       <!-- DROITE : FORMULAIRE + SOLDE -->
       <div class="xl:col-span-1 flex flex-col gap-2 overflow-y-auto">
-        
+
         <div class="bg-[#131b26] p-3 rounded-xl border border-gray-800">
           <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Passer un ordre</h3>
-          
+
           <select [(ngModel)]="actifSelectionne" class="w-full bg-[#0a0e17] p-1.5 rounded border border-gray-700 text-white mb-1.5 text-sm">
             @for (a of scenario.actifs; track a) { <option [value]="a">{{ a }}</option> }
           </select>
 
           <input type="number" [(ngModel)]="quantite" placeholder="Quantité" class="w-full bg-[#0a0e17] p-1.5 rounded border border-gray-700 text-white mb-1.5 font-mono text-sm">
-          
+
           <div class="grid grid-cols-2 gap-1.5 mb-2">
             <div>
               <label class="text-[9px] text-gray-500">Stop-Loss ($)</label>
@@ -183,19 +183,24 @@
   <!-- Modale de fin de jeu -->
   @if (state().jeuTermine) {
     <div class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100]">
-      <!-- 👇 LA RÉFÉRENCE #modaleResultat EST AJOUTÉE ICI POUR LE TÉLÉCHARGEMENT -->
-      <div #modaleResultat class="bg-[#131b26] border border-gray-700 rounded-2xl p-6 max-w-lg w-full text-center">
-        
-        @if (!profilFinal) { 
-          <div class="hidden">{{ analyserFinDeJeu() }}</div> 
+      <div class="bg-[#131b26] border border-gray-700 rounded-2xl p-6 max-w-lg w-full text-center">
+
+        @if (!profilFinal) {
+          <div class="hidden">{{ analyserFinDeJeu() }}</div>
         }
 
-        <h2 class="text-3xl font-black text-white mb-1">Séance Terminée !</h2>
-        
+        <!-- Message de fin (Déconnexion ou Fin normale) -->
+        @if (currentRoom()?.evenements && currentRoom()!.evenements.length > 0 && currentRoom()!.evenements[currentRoom()!.evenements.length - 1].includes('a quitté')) {
+          <h2 class="text-3xl font-black text-red-500 mb-1">Partie Terminée</h2>
+          <p class="text-red-400 mb-6 text-sm">Un joueur a quitté la partie. La session est annulée.</p>
+        } @else {
+          <h2 class="text-3xl font-black text-white mb-1">Séance Terminée !</h2>
+        }
+
         <!-- MODE MULTI : PODIUM -->
         @if (roomCode) {
           <p class="text-gray-400 mb-6 text-sm">Classement final de la salle :</p>
-          
+
           <div class="space-y-2 mb-6">
             @for (j of (currentRoom()?.joueurs || []); track j.pseudo) {
               <div class="flex justify-between items-center bg-[#0a0e17] p-3 rounded-xl border border-gray-800">
@@ -209,7 +214,7 @@
         } @else {
           <!-- MODE SOLO : SCORE + COACH -->
           <p class="text-gray-400 mb-6 text-sm">Voici votre bilan de la session.</p>
-          
+
           <div class="grid grid-cols-2 gap-3 mb-6 text-left">
             <div class="bg-[#0a0e17] p-3 rounded-xl border border-gray-800">
               <p class="text-[10px] text-gray-500 uppercase">Score Final (P&L)</p>
@@ -233,20 +238,16 @@
           }
         }
 
-        <div class="flex flex-wrap justify-center gap-3">
+        <div class="flex justify-center gap-3">
           <button (click)="confirmerQuitter()" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition">
             Retour au Lobby
           </button>
-          
+
           @if (profilFinal && !roomCode) {
             <button (click)="allerAuCours()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg text-sm transition shadow-[0_0_15px_rgba(59,130,246,0.4)]">
-              Aller au cours →
+              Aller au cours recommandé →
             </button>
           }
-
-          <button (click)="telechargerResultat()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-lg text-sm transition shadow-[0_0_15px_rgba(168,85,247,0.4)]">
-            📸 Partager
-          </button>
         </div>
       </div>
     </div>

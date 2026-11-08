@@ -1,0 +1,55 @@
+<div class="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6">
+
+  <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-semibold text-crypto-text">Journal d’audit</h1>
+      <p class="mt-1 text-sm text-crypto-text-muted">Les opérations importantes : connexions, changements de comptes et de scénarios.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <label class="text-sm text-crypto-text-muted" for="limite">Afficher</label>
+      <select id="limite" [value]="limite()" (change)="choisirLimite($any($event.target).value)"
+        class="h-10 rounded-lg border border-crypto-border bg-crypto-bg px-3 text-sm text-crypto-text">
+        @for (l of limites; track l) { <option [value]="l">{{ l }} dernières</option> }
+      </select>
+      <button type="button" (click)="recharger()"
+        class="rounded-lg border border-crypto-border px-4 py-2.5 text-sm font-medium text-crypto-text hover:bg-crypto-card">Actualiser</button>
+    </div>
+  </div>
+
+  @if (erreur()) {
+    <div class="mb-4 rounded-lg border border-crypto-red/40 bg-crypto-red/10 px-4 py-3 text-sm text-crypto-red">{{ erreur() }}</div>
+  }
+
+  <div class="overflow-hidden rounded-2xl border border-crypto-border bg-crypto-card">
+    @if (chargement()) {
+      <p class="p-6 text-sm text-crypto-text-muted">Chargement…</p>
+    } @else if (lignes().length === 0) {
+      <p class="p-6 text-sm text-crypto-text-muted">Le journal est vide.</p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[760px] text-left text-sm">
+          <thead class="border-b border-crypto-border text-xs uppercase text-crypto-text-muted">
+            <tr>
+              <th class="px-4 py-3">Date</th>
+              <th class="px-4 py-3">Acteur</th>
+              <th class="px-4 py-3">Action</th>
+              <th class="px-4 py-3">Détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of lignes(); track l.id) {
+              <tr class="border-b border-crypto-border last:border-0">
+                <td class="whitespace-nowrap px-4 py-2.5 text-crypto-text-muted">{{ date(l.date) }}</td>
+                <td class="px-4 py-2.5 text-crypto-text">{{ l.acteur }}</td>
+                <td class="px-4 py-2.5">
+                  <span class="rounded px-2 py-0.5 text-xs font-medium" [class]="classe(l.action)">{{ l.action }}</span>
+                </td>
+                <td class="px-4 py-2.5 text-crypto-text">{{ l.details }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

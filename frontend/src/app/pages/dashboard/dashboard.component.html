@@ -80,25 +80,25 @@
       (click)="changeMarket('crypto')"
       [ngClass]="activeMarket === 'crypto' ? 'bg-crypto-green/10 text-crypto-green border-crypto-green' : 'bg-crypto-card text-crypto-text-muted border-crypto-border hover:text-crypto-text'"
       class="px-4 py-2 rounded-lg border transition font-medium text-sm">
-      🪙 Crypto
+      <app-market-icon type="crypto" />Crypto
     </button>
     <button
       (click)="changeMarket('stocks')"
       [ngClass]="activeMarket === 'stocks' ? 'bg-crypto-green/10 text-crypto-green border-crypto-green' : 'bg-crypto-card text-crypto-text-muted border-crypto-border hover:text-crypto-text'"
       class="px-4 py-2 rounded-lg border transition font-medium text-sm">
-      📈 Actions
+      <app-market-icon type="stocks" />Actions
     </button>
     <button
       (click)="changeMarket('forex')"
       [ngClass]="activeMarket === 'forex' ? 'bg-crypto-green/10 text-crypto-green border-crypto-green' : 'bg-crypto-card text-crypto-text-muted border-crypto-border hover:text-crypto-text'"
       class="px-4 py-2 rounded-lg border transition font-medium text-sm">
-      💱 Forex
+      <app-market-icon type="forex" />Forex
     </button>
     <button
       (click)="changeMarket('commodities')"
       [ngClass]="activeMarket === 'commodities' ? 'bg-crypto-green/10 text-crypto-green border-crypto-green' : 'bg-crypto-card text-crypto-text-muted border-crypto-border hover:text-crypto-text'"
       class="px-4 py-2 rounded-lg border transition font-medium text-sm">
-      🛢️ Matières premières
+      <app-market-icon type="commodities" />Matières premières
     </button>
   </div>
 

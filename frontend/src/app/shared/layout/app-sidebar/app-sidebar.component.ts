@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, QueryList, ViewChildren, ChangeDetectorRef, OnInit, OnDestroy } from '@angular/core';
+import { Component, ElementRef, QueryList, ViewChildren, ChangeDetectorRef, inject } from '@angular/core';
+import { AuthService } from '../../../core/services/auth.service'; // 👈 Import de Sarra
 import { SidebarService } from '../../services/sidebar.service';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { SafeHtmlPipe } from '../../pipe/safe-html.pipe';
@@ -24,7 +25,7 @@ type NavItem = {
   ],
   templateUrl: './app-sidebar.component.html',
 })
-export class AppSidebarComponent implements OnInit, OnDestroy {
+export class AppSidebarComponent {
 
   // ============================================================
   // MENU PRINCIPAL - TRADING
@@ -63,12 +64,9 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
       ],
     },
     {
-      name: "Salle de Marché (Jeu)",
+      name: "Salle de Marché (Défi)",
       icon: `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-      subItems: [
-        { name: "🎮 Jouer", path: "/game" },
-        { name: "⚔️ Défi Multijoueur", path: "/game/multiplayer" },
-      ],
+      path: "/game",
     },
     {
       name: "Analyse",
@@ -109,21 +107,21 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
       ],
     },
     {
-  name: "Actuariat",
-  icon: `...`,
-  subItems: [
-    { name: "Calcul de prime", path: "/actuariat" },
-    { name: "Assurance Paramétrique", path: "/assurance-parametrique" },
-    { name: "Mode Assureur (Jeu)", path: "/mode-assureur" },
-    { name: "Provisions (Triangle)", path: "/provisions" }, // 👈 Nouveau
-  ],
-},
+      name: "Actuariat",
+      icon: `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/><path d="M12 16V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+      subItems: [
+        { name: "Calcul de prime", path: "/actuariat" },
+        { name: "Assurance Paramétrique", path: "/assurance-parametrique" },
+        { name: "Mode Assureur (Jeu)", path: "/mode-assureur" },
+        { name: "Provisions (Triangle)", path: "/provisions" },
+      ],
+    },
   ];
 
   // ============================================================
   // MENU SECONDAIRE - COMPTE
   // ============================================================
-  othersItems: NavItem[] = [
+  private tousLesMenusCompte: NavItem[] = [
     {
       name: "Graphiques",
       icon: `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C11.5858 2 11.25 2.33579 11.25 2.75V12C11.25 12.4142 11.5858 12.75 12 12.75H21.25C21.6642 12.75 22 12.4142 22 12C22 6.47715 17.5228 2 12 2ZM12.75 11.25V3.53263C13.2645 3.57761 13.7659 3.66843 14.25 3.80098V3.80099C15.6929 4.19606 16.9827 4.96184 18.0104 5.98959C19.0382 7.01734 19.8039 8.30707 20.199 9.75C20.3316 10.2341 20.4224 10.7355 20.4674 11.25H12.75ZM2 12C2 7.25083 5.31065 3.27489 9.75 2.25415V3.80099C6.14748 4.78734 3.5 8.0845 3.5 12C3.5 16.6944 7.30558 20.5 12 20.5C15.9155 20.5 19.2127 17.8525 20.199 14.25H21.7459C20.7251 18.6894 16.7492 22 12 22C6.47715 22 2 17.5229 2 12Z" fill="currentColor"></path></svg>`,
@@ -151,13 +149,29 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
       name: "Administration",
       icon: `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.25 5.5C3.25 4.25736 4.25736 3.25 5.5 3.25H18.5C19.7426 3.25 20.75 4.25736 20.75 5.5V18.5C20.75 19.7426 19.7426 20.75 18.5 20.75H5.5C4.25736 20.75 3.25 19.7426 3.25 18.5V5.5ZM5.5 4.75C5.08579 4.75 4.75 5.08579 4.75 5.5V8.58325L19.25 8.58325V5.5C19.25 5.08579 18.9142 4.75 18.5 4.75H5.5ZM19.25 10.0833H15.416V13.9165H19.25V10.0833ZM13.916 10.0833L10.083 10.0833V13.9165L13.916 13.9165V10.0833ZM8.58301 10.0833H4.75V13.9165H8.58301V10.0833ZM4.75 18.5V15.4165H8.58301V19.25H5.5C5.08579 19.25 4.75 18.9142 4.75 18.5ZM10.083 19.25V15.4165L13.916 15.4165V19.25H10.083ZM15.416 19.25V15.4165H19.25V18.5C19.25 18.9142 18.9142 19.25 18.5 19.25H15.416Z" fill="currentColor"></path></svg>`,
       subItems: [
+        { name: "Tableau de bord", path: "/admin" },
         { name: "Utilisateurs", path: "/admin/users" },
+        { name: "Scénarios du jeu", path: "/admin/game-scenarios" },
         { name: "Modèles IA", path: "/admin/ai-models" },
         { name: "Scénarios Stress", path: "/admin/stress-scenarios" },
-        { name: "Statistiques", path: "/admin/stats" },
+        { name: "Journal d'audit", path: "/admin/journal" },
       ],
     },
   ];
+
+  private auth = inject(AuthService);
+
+  /** Menus visibles selon l'état de connexion. */
+  get othersItems(): NavItem[] {
+    const connecte = this.auth.estConnecte();
+    const admin = this.auth.estAdmin();
+    return this.tousLesMenusCompte.filter(m => {
+      if (m.name === 'Profil') return connecte;
+      if (m.name === 'Authentification') return !connecte;
+      if (m.name === 'Administration') return admin;
+      return true;
+    });
+  }
 
   // ============================================================
   // LOGIQUE TECHNIQUE (inchangée)
@@ -183,7 +197,6 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    // Subscribe to router events
     this.subscription.add(
       this.router.events.subscribe(event => {
         if (event instanceof NavigationEnd) {
@@ -192,7 +205,6 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
       })
     );
 
-    // Subscribe to combined observables to close submenus when all are false
     this.subscription.add(
       combineLatest([this.isExpanded$, this.isMobileOpen$, this.isHovered$]).subscribe(
         ([isExpanded, isMobileOpen, isHovered]) => {
@@ -205,7 +217,6 @@ export class AppSidebarComponent implements OnInit, OnDestroy {
       )
     );
 
-    // Initial load
     this.setActiveMenuFromRoute(this.router.url);
   }
 

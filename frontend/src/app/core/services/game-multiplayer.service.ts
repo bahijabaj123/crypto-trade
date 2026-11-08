@@ -6,22 +6,19 @@ import { toObservable } from '@angular/core/rxjs-interop';
 export interface Player {
   pseudo: string;
   pnl: number;
+  actif: boolean;    // false = a quitté ou s'est déconnecté (abandon)
+  termine: boolean;  // true = a fini sa séance et envoyé son score
 }
 
 export interface Room {
   code: string;
   scenarioId: string;
-  joueurs: Player[];
+  joueurs: Player[];            // le premier joueur est l'hôte
+  evenements: string[];
+  statut: 'EN_COURS' | 'TERMINE';
+  dureeMinutes: number;         // durée de la séance choisie par l'hôte
+  demarree: boolean;            // true quand l'hôte a lancé la partie
 }
-
- export interface Room {
-    code: string;
-    scenarioId: string;
-    joueurs: Player[];
-    evenements: string[]; // 👈 Nouveau
-    statut: 'EN_COURS' | 'TERMINE'; // 👈 Nouveau
-  }
-
 
 const API_URL = 'http://localhost:8081/api/game/rooms'; // 👈 Vérifie le port de ton backend
 
@@ -35,8 +32,13 @@ export class GameMultiplayerService {
 
   constructor(private http: HttpClient) {}
 
-  creerSalle(scenarioId: string, pseudo: string): Observable<Room> {
-    return this.http.post<Room>(API_URL, { pseudo, scenarioId });
+  creerSalle(scenarioId: string, pseudo: string, dureeMinutes = 15): Observable<Room> {
+    return this.http.post<Room>(API_URL, { pseudo, scenarioId, dureeMinutes });
+  }
+
+  // L'hôte lance la partie : tous les joueurs de la salle démarrent en même temps
+  demarrerPartie(code: string, pseudo: string): Observable<Room> {
+    return this.http.post<Room>(`${API_URL}/${code}/start`, { pseudo });
   }
 
   rejoindreSalle(code: string, pseudo: string): Observable<Room> {

@@ -17,34 +17,36 @@ import { VideosComponent } from './pages/ui-elements/videos/videos.component';
 import { SignInComponent } from './pages/auth-pages/sign-in/sign-in.component';
 import { SignUpComponent } from './pages/auth-pages/sign-up/sign-up.component';
 import { CalenderComponent } from './pages/calender/calender.component';
+import { ADMIN_ROUTES } from './app.routes.admin'; // 👈 Import de Sarra conservé
 
 export const routes: Routes = [
   {
     path: '',
     component: AppLayoutComponent,
     children: [
-      // ... (toutes les routes originales TailAdmin restent ici)
-{
-  path: 'actuariat',
-  loadComponent: () => import('./pages/actuariat/actuariat.component').then(m => m.ActuariatComponent),
-  title: 'Module Actuariat | Crypto Simulator',
-},
-{
-  path: 'provisions',
-  loadComponent: () => import('./pages/provisions/provisions.component').then(m => m.ProvisionsComponent),
-  title: 'Provisions de Sinistres | Crypto Simulator',
-},
-{
-  path: 'assurance-parametrique',
-  loadComponent: () => import('./pages/assurance-parametrique/assurance-parametrique.component').then(m => m.AssuranceParametriqueComponent),
-  title: 'Assurance Paramétrique | Crypto Simulator',
-},
+      
+      // ---------- ACTUARIAT (TES ROUTES) ----------
+      {
+        path: 'actuariat',
+        loadComponent: () => import('./pages/actuariat/actuariat.component').then(m => m.ActuariatComponent),
+        title: 'Module Actuariat | Crypto Simulator',
+      },
+      {
+        path: 'provisions',
+        loadComponent: () => import('./pages/provisions/provisions.component').then(m => m.ProvisionsComponent),
+        title: 'Provisions de Sinistres | Crypto Simulator',
+      },
+      {
+        path: 'assurance-parametrique',
+        loadComponent: () => import('./pages/assurance-parametrique/assurance-parametrique.component').then(m => m.AssuranceParametriqueComponent),
+        title: 'Assurance Paramétrique | Crypto Simulator',
+      },
+      {
+        path: 'mode-assureur',
+        loadComponent: () => import('./pages/mode-assureur/mode-assureur.component').then(m => m.ModeAssureurComponent),
+        title: 'Mode Assureur | Crypto Simulator',
+      },
 
-{
-  path: 'mode-assureur',
-  loadComponent: () => import('./pages/mode-assureur/mode-assureur.component').then(m => m.ModeAssureurComponent),
-  title: 'Mode Assureur | Crypto Simulator',
-},
       // ---------- DASHBOARD ----------
       {
         path: 'dashboard',
@@ -99,13 +101,11 @@ export const routes: Routes = [
       },
 
       // ---------- ANALYSE & BACKTESTING ----------
-      // 👇 La route /analysis pointe vers la page vide (pour Ramii)
       {
         path: 'analysis',
         loadComponent: () => import('./pages/analysis/analysis.component').then(m => m.AnalysisComponent),
         title: 'Analyse Technique | Crypto Simulator',
       },
-      // 👇 La route /analysis/portfolio pointe vers TON composant
       {
         path: 'analysis/portfolio',
         loadComponent: () => import('./pages/analysis-technical/analysis-technical.component').then(m => m.AnalysisTechnicalComponent),
@@ -121,7 +121,6 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/backtesting/backtesting.component').then(m => m.BacktestingComponent),
         title: 'Backtesting | Crypto Simulator',
       },
-      // 👇 Routes de Ramii (à ajouter si pas déjà là)
       {
         path: 'stress-testing',
         loadComponent: () => import('./pages/stress-testing/stress-testing.component').then(m => m.StressTestingComponent),
@@ -142,7 +141,7 @@ export const routes: Routes = [
       {
         path: 'game',
         loadComponent: () => import('./pages/game/game-lobby/game-lobby.component').then(m => m.GameLobbyComponent),
-        title: 'Salle de Marché - Choix du Scénario | Crypto Simulator',
+        title: 'Salle de Marché - Défi Multijoueur | Crypto Simulator',
       },
       {
         path: 'game/play/:scenarioId',
@@ -156,8 +155,8 @@ export const routes: Routes = [
       },
       {
         path: 'game/multiplayer',
-        loadComponent: () => import('./pages/game/game-multiplayer/game-multiplayer.component').then(m => m.GameMultiplayerComponent),
-        title: 'Défis Multijoueurs | Crypto Simulator',
+        redirectTo: 'game',
+        pathMatch: 'full',
       },
 
       // ---------- IA & XAI ----------
@@ -207,17 +206,15 @@ export const routes: Routes = [
       { path: 'charts/candles', loadComponent: () => import('./pages/charts-candles/charts-candles.component').then(m => m.ChartsCandlesComponent), title: 'Chandeliers | Crypto Simulator' },
       { path: 'charts/indicators', loadComponent: () => import('./pages/charts-indicators/charts-indicators.component').then(m => m.ChartsIndicatorsComponent), title: 'Indicateurs | Crypto Simulator' },
 
-      // ---------- ADMINISTRATION ----------
-      { path: 'admin/users', loadComponent: () => import('./pages/admin-users/admin-users.component').then(m => m.AdminUsersComponent), title: 'Gestion Utilisateurs | Crypto Simulator' },
-      { path: 'admin/ai-models', loadComponent: () => import('./pages/admin-ai-models/admin-ai-models.component').then(m => m.AdminAiModelsComponent), title: 'Modèles IA | Crypto Simulator' },
-      { path: 'admin/stress-scenarios', loadComponent: () => import('./pages/admin-stress-scenarios/admin-stress-scenarios.component').then(m => m.AdminStressScenariosComponent), title: 'Scénarios Stress | Crypto Simulator' },
-      { path: 'admin/stats', loadComponent: () => import('./pages/admin-stats/admin-stats.component').then(m => m.AdminStatsComponent), title: 'Statistiques | Crypto Simulator' },
+      // ---------- ADMINISTRATION (PROTÉGÉE PAR SARRA) ----------
+      ...ADMIN_ROUTES,
     ]
   },
 
   // ---------- AUTHENTIFICATION ----------
   { path: 'signin', component: SignInComponent, title: 'Connexion | Crypto Simulator' },
   { path: 'signup', component: SignUpComponent, title: 'Inscription | Crypto Simulator' },
+{ path: 'profile', component: ProfileComponent, title: 'Mon Profil | Crypto Simulator' },
 
   // ---------- 404 ----------
   { path: '**', component: NotFoundComponent, title: 'Page introuvable | Crypto Simulator' },

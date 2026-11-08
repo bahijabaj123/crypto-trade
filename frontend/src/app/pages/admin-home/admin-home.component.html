@@ -1,0 +1,84 @@
+<div class="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6">
+
+  <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-semibold text-crypto-text">Tableau de bord Administrateur</h1>
+      <p class="mt-1 text-sm text-crypto-text-muted">
+        Connecté en tant que <span class="text-crypto-text">{{ auth.utilisateur()?.nom }}</span>
+        ({{ auth.utilisateur()?.email }}).
+      </p>
+    </div>
+    <div class="flex gap-3">
+      <button type="button" (click)="recharger()"
+        class="rounded-lg border border-crypto-border px-4 py-2.5 text-sm font-medium text-crypto-text hover:bg-crypto-card">Actualiser</button>
+      <button type="button" (click)="deconnecter()"
+        class="rounded-lg border border-crypto-red/40 px-4 py-2.5 text-sm font-medium text-crypto-red hover:bg-crypto-red/10">Se déconnecter</button>
+    </div>
+  </div>
+
+  @if (erreur()) {
+    <div class="mb-4 flex items-center justify-between gap-3 rounded-lg border border-crypto-red/40 bg-crypto-red/10 px-4 py-3 text-sm text-crypto-red">
+      <span>{{ erreur() }}</span>
+      <button type="button" (click)="recharger()" class="font-medium underline">Réessayer</button>
+    </div>
+  }
+
+  @if (stats(); as s) {
+    <h2 class="mb-3 text-sm font-medium uppercase tracking-wide text-crypto-text-muted">Chiffres de la plateforme</h2>
+    <div class="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+      <div class="rounded-2xl border border-crypto-border bg-crypto-card p-5">
+        <p class="text-sm text-crypto-text-muted">Utilisateurs</p>
+        <p class="mt-1 text-3xl font-semibold text-crypto-text">{{ nombre(s.utilisateursTotal) }}</p>
+        <p class="mt-2 text-xs text-crypto-text-muted">
+          {{ s.joueurs }} joueur(s) · {{ s.administrateurs }} admin(s) · {{ s.comptesBloques }} bloqué(s)
+        </p>
+      </div>
+
+      <div class="rounded-2xl border border-crypto-border bg-crypto-card p-5">
+        <p class="text-sm text-crypto-text-muted">Ordres passés</p>
+        <p class="mt-1 text-3xl font-semibold text-crypto-text">{{ nombre(s.ordresTotal) }}</p>
+        <p class="mt-2 text-xs text-crypto-text-muted">
+          {{ s.ordresExecutes }} exécuté(s) · {{ s.ordresEnAttente }} en attente · {{ s.ordresAnnules }} annulé(s)
+        </p>
+      </div>
+
+      <div class="rounded-2xl border border-crypto-border bg-crypto-card p-5">
+        <p class="text-sm text-crypto-text-muted">Volume exécuté</p>
+        <p class="mt-1 text-3xl font-semibold text-crypto-green">{{ nombre(s.volumeExecute, 2) }}</p>
+        <p class="mt-2 text-xs text-crypto-text-muted">USDT, somme des ordres exécutés</p>
+      </div>
+
+      <div class="rounded-2xl border border-crypto-border bg-crypto-card p-5">
+        <p class="text-sm text-crypto-text-muted">Portefeuilles</p>
+        <p class="mt-1 text-3xl font-semibold text-crypto-text">{{ nombre(s.portefeuilles) }}</p>
+        <p class="mt-2 text-xs text-crypto-text-muted">{{ nombre(s.transactions) }} transaction(s) enregistrée(s)</p>
+      </div>
+
+      <div class="rounded-2xl border border-crypto-border bg-crypto-card p-5">
+        <p class="text-sm text-crypto-text-muted">Scénarios du jeu</p>
+        <p class="mt-1 text-3xl font-semibold text-crypto-text">{{ s.scenariosActifs }} <span class="text-lg text-crypto-text-muted">/ {{ s.scenariosTotal }}</span></p>
+        <p class="mt-2 text-xs text-crypto-text-muted">visibles par les joueurs / au total</p>
+      </div>
+
+      <div class="rounded-2xl border border-crypto-border bg-crypto-card p-5">
+        <p class="text-sm text-crypto-text-muted">Journal d’audit</p>
+        <p class="mt-1 text-3xl font-semibold text-crypto-text">{{ nombre(s.evenementsJournal) }}</p>
+        <p class="mt-2 text-xs text-crypto-text-muted">opérations enregistrées</p>
+      </div>
+    </div>
+  } @else if (chargement()) {
+    <p class="mb-8 text-sm text-crypto-text-muted">Chargement…</p>
+  }
+
+  <h2 class="mb-3 text-sm font-medium uppercase tracking-wide text-crypto-text-muted">Gestion</h2>
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    @for (r of raccourcis; track r.chemin) {
+      <a [routerLink]="r.chemin"
+        class="block rounded-2xl border border-crypto-border bg-crypto-card p-5 transition hover:border-crypto-green">
+        <p class="font-medium text-crypto-text">{{ r.titre }}</p>
+        <p class="mt-1 text-sm text-crypto-text-muted">{{ r.texte }}</p>
+      </a>
+    }
+  </div>
+</div>

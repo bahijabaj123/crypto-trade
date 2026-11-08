@@ -1,1 +1,81 @@
-<p>admin-users works!</p>
+<div class="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6">
+
+  <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-semibold text-crypto-text">Utilisateurs et autorisations</h1>
+      <p class="mt-1 text-sm text-crypto-text-muted">
+        {{ utilisateurs().length }} compte(s). Un compte bloqué ne peut plus se connecter.
+      </p>
+    </div>
+    <button type="button" (click)="recharger()"
+      class="rounded-lg border border-crypto-border px-4 py-2.5 text-sm font-medium text-crypto-text hover:bg-crypto-card">Actualiser</button>
+  </div>
+
+  @if (message()) {
+    <div class="mb-4 rounded-lg border border-crypto-green/40 bg-crypto-green/10 px-4 py-3 text-sm text-crypto-green">{{ message() }}</div>
+  }
+  @if (erreur()) {
+    <div class="mb-4 rounded-lg border border-crypto-red/40 bg-crypto-red/10 px-4 py-3 text-sm text-crypto-red">{{ erreur() }}</div>
+  }
+
+  <div class="overflow-hidden rounded-2xl border border-crypto-border bg-crypto-card">
+    @if (chargement()) {
+      <p class="p-6 text-sm text-crypto-text-muted">Chargement…</p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[820px] text-left text-sm">
+          <thead class="border-b border-crypto-border text-xs uppercase text-crypto-text-muted">
+            <tr>
+              <th class="px-4 py-3">Nom</th>
+              <th class="px-4 py-3">Email</th>
+              <th class="px-4 py-3">Rôle</th>
+              <th class="px-4 py-3">Statut</th>
+              <th class="px-4 py-3">Dernière connexion</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of utilisateurs(); track u.id) {
+              <tr class="border-b border-crypto-border last:border-0" [class.opacity-60]="!u.actif">
+                <td class="px-4 py-3 font-medium text-crypto-text">
+                  {{ u.nom }} @if (estMoi(u)) { <span class="ml-1 text-xs font-normal text-crypto-text-muted">(vous)</span> }
+                </td>
+                <td class="px-4 py-3 text-crypto-text">{{ u.email }}</td>
+                <td class="px-4 py-3">
+                  <span class="rounded px-2 py-0.5 text-xs font-medium"
+                    [class]="u.role === 'ADMIN' ? 'bg-crypto-yellow/15 text-crypto-yellow' : 'bg-crypto-bg text-crypto-text'">
+                    {{ u.role === 'ADMIN' ? 'Administrateur' : 'Joueur' }}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="text-xs font-medium" [class]="u.actif ? 'text-crypto-green' : 'text-crypto-red'">
+                    {{ u.actif ? 'Actif' : 'Bloqué' }}
+                  </span>
+                </td>
+                <td class="whitespace-nowrap px-4 py-3 text-crypto-text-muted">{{ date(u.derniereConnexion) }}</td>
+                <td class="whitespace-nowrap px-4 py-3 text-right">
+                  @if (estMoi(u)) {
+                    <span class="text-xs text-crypto-text-muted">—</span>
+                  } @else {
+                    <button type="button" (click)="changerRole(u)" class="mr-4 text-sm font-medium text-crypto-green hover:underline">
+                      {{ u.role === 'ADMIN' ? 'Rendre joueur' : 'Rendre admin' }}
+                    </button>
+                    <button type="button" (click)="basculerActif(u)"
+                      class="text-sm font-medium hover:underline" [class]="u.actif ? 'text-crypto-red' : 'text-crypto-green'">
+                      {{ u.actif ? 'Bloquer' : 'Débloquer' }}
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <p class="mt-3 text-xs text-crypto-text-muted">
+    Vous ne pouvez ni bloquer votre propre compte, ni changer votre propre rôle, et il doit toujours rester un administrateur actif.
+    Chaque changement est inscrit au journal d’audit.
+  </p>
+</div>

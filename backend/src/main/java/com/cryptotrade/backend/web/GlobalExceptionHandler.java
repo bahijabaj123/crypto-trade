@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
@@ -46,6 +47,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErreurApi> parametreInvalide(MethodArgumentTypeMismatchException e) {
         return reponse(HttpStatus.BAD_REQUEST, "Parametre invalide : " + e.getName());
+    }
+
+    /** Erreurs avec un code precis (401 connexion, 403 acces refuse, 404 introuvable) : meme format JSON que les autres. */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErreurApi> statut(ResponseStatusException e) {
+        HttpStatus statut = HttpStatus.resolve(e.getStatusCode().value());
+        return reponse(statut != null ? statut : HttpStatus.INTERNAL_SERVER_ERROR,
+                e.getReason() != null ? e.getReason() : "Erreur.");
     }
 
     private ResponseEntity<ErreurApi> reponse(HttpStatus statut, String message) {

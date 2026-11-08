@@ -1,3 +1,4 @@
+import { MarketIconComponent } from '../../shared/components/market-icon/market-icon.component';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -25,7 +26,7 @@ interface CryptoChoix { code: string; nom: string; }
 
 @Component({
   selector: 'app-trading',
-  imports: [
+  imports: [MarketIconComponent, 
     DatePipe, DecimalPipe,UpperCasePipe, FormsModule, RouterLink,
     BadgeComponent, PageBreadcrumbComponent,
     SarraCandleChart,      // Pour la Crypto

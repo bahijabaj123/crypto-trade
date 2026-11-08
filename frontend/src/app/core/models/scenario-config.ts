@@ -32,56 +32,86 @@ export const SCENARIOS_CONFIG: ScenarioConfig[] = [
   },
 
   // ============================================================
-  // SCÉNARIO 2 : ACTIONS (Subprimes 2008)
+  // Tous les scénarios ci-dessous utilisent l'API Binance (sans clé, intervalle 1h).
+  // Binance n'a pas d'historique avant août 2017.
   // ============================================================
   {
-    id: 'subprimes-actions',
-    nom: 'Le Krach des Subprimes (Actions)',
-    description: 'Septembre 2008. La faillite de Lehman Brothers entraîne une crise boursière mondiale.',
+    id: 'ukraine-2022',
+    nom: 'La Guerre en Ukraine (Crypto, 2022)',
+    description: 'Février 2022. La Russie envahit l’Ukraine. Sanctions, panique sur les marchés : comment réagissent le Bitcoin et les cryptos ?',
+    difficulte: 'Difficile',
+    icone: '🪖',
+    couleur: 'from-blue-600 to-yellow-500',
+    marche: 'Crypto',
+    requetes: [
+      { source: 'binance', symbol: 'BTCUSDT', startDate: '2022-02-10', endDate: '2022-03-10', interval: '1h' },
+      { source: 'binance', symbol: 'ETHUSDT', startDate: '2022-02-10', endDate: '2022-03-10', interval: '1h' },
+      { source: 'binance', symbol: 'BNBUSDT', startDate: '2022-02-10', endDate: '2022-03-10', interval: '1h' },
+      { source: 'binance', symbol: 'XRPUSDT', startDate: '2022-02-10', endDate: '2022-03-10', interval: '1h' }
+    ]
+  },
+
+  {
+    id: 'bulle-2017-2018',
+    nom: 'L’Éclatement de la Bulle Crypto (2017-2018)',
+    description: 'Décembre 2017. Le Bitcoin frôle 20 000 $ puis s’effondre de plus de 50 % en quelques semaines. Saurez-vous vendre au sommet ?',
+    difficulte: 'Difficile',
+    icone: '🫧',
+    couleur: 'from-yellow-500 to-red-600',
+    marche: 'Crypto',
+    requetes: [
+      { source: 'binance', symbol: 'BTCUSDT', startDate: '2017-12-20', endDate: '2018-02-10', interval: '1h' },
+      { source: 'binance', symbol: 'ETHUSDT', startDate: '2017-12-20', endDate: '2018-02-10', interval: '1h' },
+      { source: 'binance', symbol: 'BNBUSDT', startDate: '2017-12-20', endDate: '2018-02-10', interval: '1h' },
+      { source: 'binance', symbol: 'LTCUSDT', startDate: '2017-12-20', endDate: '2018-02-10', interval: '1h' }
+    ]
+  },
+
+  {
+    id: 'chine-2021',
+    nom: 'L’Interdiction du Minage en Chine (2021)',
+    description: 'Mai 2021. Les tweets d’Elon Musk, puis la Chine qui interdit le minage : les cryptos perdent plus de 40 % en quelques jours.',
+    difficulte: 'Difficile',
+    icone: '⛏️',
+    couleur: 'from-red-600 to-rose-800',
+    marche: 'Crypto',
+    requetes: [
+      { source: 'binance', symbol: 'BTCUSDT', startDate: '2021-05-05', endDate: '2021-05-30', interval: '1h' },
+      { source: 'binance', symbol: 'ETHUSDT', startDate: '2021-05-05', endDate: '2021-05-30', interval: '1h' },
+      { source: 'binance', symbol: 'BNBUSDT', startDate: '2021-05-05', endDate: '2021-05-30', interval: '1h' },
+      { source: 'binance', symbol: 'DOGEUSDT', startDate: '2021-05-05', endDate: '2021-05-30', interval: '1h' }
+    ]
+  },
+
+  {
+    id: 'luna-2022',
+    nom: 'L’Effondrement de Terra Luna (2022)',
+    description: 'Mai 2022. Le stablecoin UST perd sa parité avec le dollar et Luna s’effondre : la panique gagne tout le marché crypto.',
+    difficulte: 'Extrême',
+    icone: '🌙',
+    couleur: 'from-indigo-600 to-purple-800',
+    marche: 'Crypto',
+    requetes: [
+      { source: 'binance', symbol: 'BTCUSDT', startDate: '2022-05-01', endDate: '2022-05-20', interval: '1h' },
+      { source: 'binance', symbol: 'ETHUSDT', startDate: '2022-05-01', endDate: '2022-05-20', interval: '1h' },
+      { source: 'binance', symbol: 'BNBUSDT', startDate: '2022-05-01', endDate: '2022-05-20', interval: '1h' },
+      { source: 'binance', symbol: 'XRPUSDT', startDate: '2022-05-01', endDate: '2022-05-20', interval: '1h' }
+    ]
+  },
+
+  {
+    id: 'ftx-2022',
+    nom: 'La Faillite de FTX (2022)',
+    description: 'Novembre 2022. La deuxième plateforme crypto du monde s’effondre en quelques jours. La confiance disparaît, comme lors de Mt. Gox.',
     difficulte: 'Extrême',
     icone: '🏦',
-    couleur: 'from-red-700 to-red-900',
-    marche: 'Actions',
+    couleur: 'from-slate-600 to-blue-900',
+    marche: 'Crypto',
     requetes: [
-      { source: 'twelvedata', symbol: 'AAPL', startDate: '2008-09-01', endDate: '2008-10-15', interval: '1day' },
-      { source: 'twelvedata', symbol: 'MSFT', startDate: '2008-09-01', endDate: '2008-10-15', interval: '1day' },
-      { source: 'twelvedata', symbol: 'JPM', startDate: '2008-09-01', endDate: '2008-10-15', interval: '1day' }
-    ]
-  },
-
-  // ============================================================
-  // SCÉNARIO 3 : FOREX (Flash Crash 2010)
-  // ============================================================
-  {
-    id: 'flash-crash-forex',
-    nom: 'Le Flash Crash du Forex (2010)',
-    description: 'Mai 2010. En quelques minutes, le Dow Jones perd 1000 points et l\'EUR/USD s\'effondre.',
-    difficulte: 'Difficile',
-    icone: '💱',
-    couleur: 'from-blue-600 to-cyan-500',
-    marche: 'Forex',
-    requetes: [
-      { source: 'twelvedata', symbol: 'EUR/USD', startDate: '2010-05-01', endDate: '2010-05-15', interval: '1h' },
-      { source: 'twelvedata', symbol: 'GBP/USD', startDate: '2010-05-01', endDate: '2010-05-15', interval: '1h' },
-      { source: 'twelvedata', symbol: 'USD/JPY', startDate: '2010-05-01', endDate: '2010-05-15', interval: '1h' }
-    ]
-  },
-
-  // ============================================================
-  // SCÉNARIO 4 : MATIÈRES PREMIÈRES (Krach Pétrole 2020)
-  // ============================================================
-  {
-    id: 'oil-crash-2020',
-    nom: 'Le Krach du Pétrole (Matières premières)',
-    description: 'Avril 2020. La demande s\'effondre à cause du Covid. Le prix du pétrole devient négatif.',
-    difficulte: 'Extrême',
-    icone: '🛢️',
-    couleur: 'from-yellow-600 to-orange-700',
-    marche: 'Matières premières',
-    requetes: [
-      // Les symboles dépendent de Twelve Data : WTI et BRENT pour le pétrole
-      { source: 'twelvedata', symbol: 'WTI', startDate: '2020-03-15', endDate: '2020-04-25', interval: '1day' },
-      { source: 'twelvedata', symbol: 'BRENT', startDate: '2020-03-15', endDate: '2020-04-25', interval: '1day' }
+      { source: 'binance', symbol: 'BTCUSDT', startDate: '2022-11-01', endDate: '2022-11-20', interval: '1h' },
+      { source: 'binance', symbol: 'ETHUSDT', startDate: '2022-11-01', endDate: '2022-11-20', interval: '1h' },
+      { source: 'binance', symbol: 'BNBUSDT', startDate: '2022-11-01', endDate: '2022-11-20', interval: '1h' },
+      { source: 'binance', symbol: 'SOLUSDT', startDate: '2022-11-01', endDate: '2022-11-20', interval: '1h' }
     ]
   }
 ];

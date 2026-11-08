@@ -1,3 +1,4 @@
+import { MarketIconComponent } from '../../shared/components/market-icon/market-icon.component';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -19,7 +20,7 @@ const CRYPTOS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT
 
 @Component({
   selector: 'app-orderbook',
-  imports: [DatePipe, DecimalPipe, RouterLink, BadgeComponent, PageBreadcrumbComponent],
+  imports: [MarketIconComponent, DatePipe, DecimalPipe, RouterLink, BadgeComponent, PageBreadcrumbComponent],
   styleUrl: './orderbook.component.css',
   templateUrl: './orderbook.component.html',
 })

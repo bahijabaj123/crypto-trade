@@ -1,0 +1,237 @@
+<div class="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6">
+
+  <!-- En-tête -->
+  <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-semibold text-crypto-text">Scénarios de la Salle de Marché</h1>
+      <p class="mt-1 text-sm text-crypto-text-muted">
+        Les scénarios que les joueurs peuvent choisir dans le jeu multijoueur.
+        {{ nbActifs() }} actif(s) sur {{ scenarios().length }}.
+      </p>
+    </div>
+    <button type="button" (click)="nouveau()"
+      class="rounded-lg bg-crypto-green px-4 py-2.5 text-sm font-semibold text-crypto-bg transition hover:bg-crypto-green-dark">
+      + Nouveau scénario
+    </button>
+  </div>
+
+  @if (message()) {
+    <div class="mb-4 rounded-lg border border-crypto-green/40 bg-crypto-green/10 px-4 py-3 text-sm text-crypto-green">
+      {{ message() }}
+    </div>
+  }
+  @if (erreur()) {
+    <div class="mb-4 flex items-center justify-between gap-3 rounded-lg border border-crypto-red/40 bg-crypto-red/10 px-4 py-3 text-sm text-crypto-red">
+      <span>{{ erreur() }}</span>
+      <button type="button" (click)="recharger()" class="font-medium underline">Réessayer</button>
+    </div>
+  }
+
+  <!-- Liste -->
+  <div class="overflow-hidden rounded-2xl border border-crypto-border bg-crypto-card">
+    @if (chargement()) {
+      <p class="p-6 text-sm text-crypto-text-muted">Chargement…</p>
+    } @else if (scenarios().length === 0 && !erreur()) {
+      <p class="p-6 text-sm text-crypto-text-muted">Aucun scénario. Cliquez sur « Nouveau scénario ».</p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[820px] text-left text-sm">
+          <thead class="border-b border-crypto-border text-xs uppercase text-crypto-text-muted">
+            <tr>
+              <th class="px-4 py-3">#</th>
+              <th class="px-4 py-3">Scénario</th>
+              <th class="px-4 py-3">Difficulté</th>
+              <th class="px-4 py-3">Actifs</th>
+              <th class="px-4 py-3">Période</th>
+              <th class="px-4 py-3">Visible</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of scenarios(); track s.id) {
+              <tr class="border-b border-crypto-border last:border-0" [class.opacity-60]="!s.actif">
+                <td class="px-4 py-3 text-crypto-text-muted">{{ s.ordre }}</td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-3">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br text-xl" [ngClass]="s.couleur">{{ s.icone }}</span>
+                    <div>
+                      <div class="font-medium text-crypto-text">{{ s.nom }}</div>
+                      <div class="text-xs text-crypto-text-muted">{{ s.id }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-crypto-text">{{ s.difficulte }}</td>
+                <td class="px-4 py-3">
+                  <div class="flex flex-wrap gap-1">
+                    @for (r of s.requetes; track r.symbol) {
+                      <span class="rounded bg-crypto-bg px-1.5 py-0.5 text-xs text-crypto-text">{{ r.symbol }}</span>
+                    }
+                  </div>
+                </td>
+                <td class="whitespace-nowrap px-4 py-3 text-crypto-text">{{ periode(s) }}</td>
+                <td class="px-4 py-3">
+                  <button type="button" (click)="basculerActif(s)" role="switch" [attr.aria-checked]="s.actif"
+                    [attr.aria-label]="'Afficher ' + s.nom + ' dans le jeu'"
+                    class="relative h-6 w-11 rounded-full transition"
+                    [ngClass]="s.actif ? 'bg-crypto-green' : 'bg-crypto-border'">
+                    <span class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
+                      [class.translate-x-5]="s.actif"></span>
+                  </button>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  @if (idASupprimer() === s.id) {
+                    <span class="mr-2 text-xs text-crypto-text-muted">Supprimer ?</span>
+                    <button type="button" (click)="confirmerSuppression(s)" class="mr-2 text-xs font-medium text-crypto-red">Oui</button>
+                    <button type="button" (click)="annulerSuppression()" class="text-xs font-medium text-crypto-text-muted">Non</button>
+                  } @else {
+                    <button type="button" (click)="modifier(s)" class="mr-3 text-sm font-medium text-crypto-green hover:underline">Modifier</button>
+                    <button type="button" (click)="demanderSuppression(s.id)" class="text-sm font-medium text-crypto-red hover:underline">Supprimer</button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <p class="mt-3 text-xs text-crypto-text-muted">
+    Les données viennent de l’API Binance (bougies d’1 heure ou d’1 jour, historique depuis août 2017).
+    Un scénario masqué ou supprimé disparaît du lobby du jeu ; les parties en cours ne sont pas touchées.
+  </p>
+</div>
+
+<!-- Formulaire (création / modification) -->
+@if (formulaire(); as f) {
+  <div class="fixed inset-0 z-[100000] flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm"
+    (click)="fermer()">
+    <form class="my-8 w-full max-w-2xl rounded-2xl border border-crypto-border bg-crypto-card p-6"
+      (click)="$event.stopPropagation()" (ngSubmit)="enregistrer()" #form="ngForm">
+
+      <h2 class="mb-5 text-lg font-semibold text-crypto-text">
+        {{ enEdition() ? 'Modifier le scénario' : 'Nouveau scénario' }}
+      </h2>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <label class="block sm:col-span-2">
+          <span class="mb-1 block text-sm font-medium text-crypto-text">Nom</span>
+          <input name="nom" [(ngModel)]="f.nom" required maxlength="150" placeholder="Ex. Le Flash Crash du 10 octobre"
+            class="h-11 w-full rounded-lg border border-crypto-border bg-crypto-bg px-4 text-sm text-crypto-text" />
+        </label>
+
+        <label class="block">
+          <span class="mb-1 block text-sm font-medium text-crypto-text">Identifiant</span>
+          <input name="id" [(ngModel)]="f.id" [disabled]="enEdition()" required maxlength="60" placeholder="flash-crash-2025"
+            class="h-11 w-full rounded-lg border border-crypto-border bg-crypto-bg px-4 text-sm text-crypto-text disabled:opacity-60" />
+          <span class="mt-1 block text-xs text-crypto-text-muted">Minuscules, chiffres et tirets. Non modifiable ensuite.</span>
+        </label>
+
+        <div class="grid grid-cols-2 gap-4">
+          <label class="block">
+            <span class="mb-1 block text-sm font-medium text-crypto-text">Icône</span>
+            <input name="icone" [(ngModel)]="f.icone" required maxlength="20"
+              class="h-11 w-full rounded-lg border border-crypto-border bg-crypto-bg px-4 text-center text-xl " />
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-sm font-medium text-crypto-text">Position</span>
+            <input name="ordre" type="number" min="1" [(ngModel)]="f.ordre"
+              class="h-11 w-full rounded-lg border border-crypto-border bg-crypto-bg px-4 text-sm text-crypto-text" />
+          </label>
+        </div>
+
+        <label class="block sm:col-span-2">
+          <span class="mb-1 block text-sm font-medium text-crypto-text">Description</span>
+          <textarea name="description" [(ngModel)]="f.description" required maxlength="1000" rows="3"
+            placeholder="Le contexte historique, en deux phrases."
+            class="w-full rounded-lg border border-crypto-border bg-crypto-bg px-4 py-2.5 text-sm text-crypto-text"></textarea>
+        </label>
+
+        <label class="block">
+          <span class="mb-1 block text-sm font-medium text-crypto-text">Difficulté</span>
+          <select name="difficulte" [(ngModel)]="f.difficulte"
+            class="h-11 w-full rounded-lg border border-crypto-border bg-crypto-bg px-3 text-sm text-crypto-text">
+            @for (d of difficultes; track d) { <option [value]="d">{{ d }}</option> }
+          </select>
+        </label>
+
+        <label class="block">
+          <span class="mb-1 block text-sm font-medium text-crypto-text">Couleur de la carte</span>
+          <select name="couleur" [(ngModel)]="f.couleur"
+            class="h-11 w-full rounded-lg border border-crypto-border bg-crypto-bg px-3 text-sm text-crypto-text">
+            @for (c of couleurs; track c.classes) { <option [value]="c.classes">{{ c.nom }}</option> }
+          </select>
+          <span class="mt-2 block h-2 rounded-full bg-gradient-to-r" [ngClass]="f.couleur"></span>
+        </label>
+
+        <label class="block">
+          <span class="mb-1 block text-sm font-medium text-crypto-text">Début de la période</span>
+          <input name="debut" type="date" style="color-scheme:dark" [(ngModel)]="f.debut" required
+            class="h-11 w-full rounded-lg border border-crypto-border bg-crypto-bg px-4 text-sm text-crypto-text" />
+        </label>
+        <label class="block">
+          <span class="mb-1 block text-sm font-medium text-crypto-text">Fin de la période</span>
+          <input name="fin" type="date" style="color-scheme:dark" [(ngModel)]="f.fin" required
+            class="h-11 w-full rounded-lg border border-crypto-border bg-crypto-bg px-4 text-sm text-crypto-text" />
+        </label>
+
+        <label class="block">
+          <span class="mb-1 block text-sm font-medium text-crypto-text">Intervalle des bougies</span>
+          <select name="intervalle" [(ngModel)]="f.intervalle"
+            class="h-11 w-full rounded-lg border border-crypto-border bg-crypto-bg px-3 text-sm text-crypto-text">
+            <option value="1h">1 heure (41 jours maximum)</option>
+            <option value="1day">1 jour</option>
+          </select>
+        </label>
+        <div class="flex items-end">
+          <p class="text-xs" [class.text-crypto-red]="nbBougies > 1000" [class.text-crypto-text-muted]="nbBougies <= 1000">
+            @if (nbBougies > 0) { {{ nbBougies }} bougies par actif (maximum 1000). } @else { Choisissez la période. }
+          </p>
+        </div>
+
+        <fieldset class="sm:col-span-2">
+          <legend class="mb-1 text-sm font-medium text-crypto-text">
+            Actifs (paires Binance en USDT, {{ f.symboles.length }}/{{ symbolesMax }})
+          </legend>
+          <div class="grid gap-2 sm:grid-cols-2">
+            @for (sym of f.symboles; track $index; let i = $index) {
+              <div class="flex gap-2">
+                <input [name]="'sym' + i" [(ngModel)]="f.symboles[i]" (blur)="nettoyerSymbole(i)" list="symboles-binance"
+                  maxlength="20" placeholder="BTCUSDT"
+                  class="h-10 w-full rounded-lg border border-crypto-border bg-crypto-bg px-3 text-sm text-crypto-text" />
+                <button type="button" (click)="retirerSymbole(i)" aria-label="Retirer cet actif"
+                  class="rounded-lg border border-crypto-border px-3 text-crypto-text-muted hover:text-crypto-red ">✕</button>
+              </div>
+            }
+          </div>
+          <datalist id="symboles-binance">
+            @for (s of symbolesCourants; track s) { <option [value]="s"></option> }
+          </datalist>
+          @if (f.symboles.length < symbolesMax) {
+            <button type="button" (click)="ajouterSymbole()" class="mt-2 text-sm font-medium text-crypto-green hover:underline">+ Ajouter un actif</button>
+          }
+        </fieldset>
+
+        <label class="flex items-center gap-2 sm:col-span-2">
+          <input name="actif" type="checkbox" [(ngModel)]="f.actif" class="h-4 w-4" />
+          <span class="text-sm text-crypto-text">Visible dans le jeu</span>
+        </label>
+      </div>
+
+      @if (erreurFormulaire()) {
+        <p class="mt-4 rounded-lg border border-crypto-red/40 bg-crypto-red/10 px-4 py-2.5 text-sm text-crypto-red">
+          {{ erreurFormulaire() }}
+        </p>
+      }
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button type="button" (click)="fermer()"
+          class="rounded-lg border border-crypto-border px-4 py-2.5 text-sm font-medium text-crypto-text">Annuler</button>
+        <button type="submit" [disabled]="enregistrement() || form.invalid"
+          class="rounded-lg bg-crypto-green px-4 py-2.5 text-sm font-semibold text-crypto-bg transition hover:bg-crypto-green-dark disabled:opacity-50">
+          {{ enregistrement() ? 'Enregistrement…' : 'Enregistrer' }}
+        </button>
+      </div>
+    </form>
+  </div>
+}

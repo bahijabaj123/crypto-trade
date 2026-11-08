@@ -18,6 +18,7 @@ import { VideosComponent } from './pages/ui-elements/videos/videos.component';
 import { SignInComponent } from './pages/auth-pages/sign-in/sign-in.component';
 import { SignUpComponent } from './pages/auth-pages/sign-up/sign-up.component';
 import { CalenderComponent } from './pages/calender/calender.component';
+import { ADMIN_ROUTES } from './app.routes.admin';
 
 export const routes: Routes = [
   {
@@ -131,7 +132,7 @@ export const routes: Routes = [
       {
         path: 'game',
         loadComponent: () => import('./pages/game/game-lobby/game-lobby.component').then(m => m.GameLobbyComponent),
-        title: 'Salle de Marché - Choix du Scénario | Crypto Simulator',
+        title: 'Salle de Marché - Défi Multijoueur | Crypto Simulator',
       },
       {
         path: 'game/play/:scenarioId',
@@ -144,9 +145,10 @@ export const routes: Routes = [
         title: 'Résultats de la Simulation | Crypto Simulator',
       },
       {
+        // Le jeu est désormais uniquement multijoueur : l'ancienne adresse redirige vers le lobby
         path: 'game/multiplayer',
-        loadComponent: () => import('./pages/game/game-multiplayer/game-multiplayer.component').then(m => m.GameMultiplayerComponent),
-        title: 'Défis Multijoueurs | Crypto Simulator',
+        redirectTo: 'game',
+        pathMatch: 'full',
       },
 
       // ---------- INTELLIGENCE ARTIFICIELLE ----------
@@ -217,27 +219,8 @@ export const routes: Routes = [
         title: 'Indicateurs | Crypto Simulator',
       },
 
-      // ---------- ADMINISTRATION ----------
-      {
-        path: 'admin/users',
-        loadComponent: () => import('./pages/admin-users/admin-users.component').then(m => m.AdminUsersComponent),
-        title: 'Gestion Utilisateurs | Crypto Simulator',
-      },
-      {
-        path: 'admin/ai-models',
-        loadComponent: () => import('./pages/admin-ai-models/admin-ai-models.component').then(m => m.AdminAiModelsComponent),
-        title: 'Modèles IA | Crypto Simulator',
-      },
-      {
-        path: 'admin/stress-scenarios',
-        loadComponent: () => import('./pages/admin-stress-scenarios/admin-stress-scenarios.component').then(m => m.AdminStressScenariosComponent),
-        title: 'Scénarios Stress | Crypto Simulator',
-      },
-      {
-        path: 'admin/stats',
-        loadComponent: () => import('./pages/admin-stats/admin-stats.component').then(m => m.AdminStatsComponent),
-        title: 'Statistiques | Crypto Simulator',
-      },
+      // ---------- ADMINISTRATION (protégée, voir app.routes.admin.ts) ----------
+      ...ADMIN_ROUTES,
     ]
   },
 

@@ -1,3 +1,4 @@
+import { MarketIconComponent } from '../../shared/components/market-icon/market-icon.component';
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -12,7 +13,7 @@ import { CandleChartComponent } from './components/candle-chart/candle-chart.com
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule,  CandleChartComponent],
+  imports: [MarketIconComponent, CommonModule,  CandleChartComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })

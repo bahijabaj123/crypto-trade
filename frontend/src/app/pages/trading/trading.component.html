@@ -17,19 +17,19 @@
       <div class="flex gap-1 mb-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
         <button type="button" (click)="changerMarche('crypto')" 
           [class]="marketService.activeMarket === 'crypto' ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-500' : 'text-gray-500'"
-          class="flex-1 py-1.5 text-xs font-medium rounded-md transition">🪙 Crypto</button>
+          class="flex-1 py-1.5 text-xs font-medium rounded-md transition"><app-market-icon type="crypto" />Crypto</button>
         
         <button type="button" (click)="changerMarche('stocks')" 
           [class]="marketService.activeMarket === 'stocks' ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-500' : 'text-gray-500'"
-          class="flex-1 py-1.5 text-xs font-medium rounded-md transition">📈 Actions</button>
+          class="flex-1 py-1.5 text-xs font-medium rounded-md transition"><app-market-icon type="stocks" />Actions</button>
         
         <button type="button" (click)="changerMarche('forex')" 
           [class]="marketService.activeMarket === 'forex' ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-500' : 'text-gray-500'"
-          class="flex-1 py-1.5 text-xs font-medium rounded-md transition">💱 Forex</button>
+          class="flex-1 py-1.5 text-xs font-medium rounded-md transition"><app-market-icon type="forex" />Forex</button>
         
         <button type="button" (click)="changerMarche('commodities')" 
           [class]="marketService.activeMarket === 'commodities' ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-500' : 'text-gray-500'"
-          class="flex-1 py-1.5 text-xs font-medium rounded-md transition">🛢️ Mat.</button>
+          class="flex-1 py-1.5 text-xs font-medium rounded-md transition"><app-market-icon type="commodities" />Mat.</button>
       </div>
 
       <!-- Choix de l'actif -->

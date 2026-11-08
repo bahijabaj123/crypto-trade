@@ -4,93 +4,226 @@
   <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none"></div>
   <div class="absolute inset-0 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20 pointer-events-none"></div>
 
-  <div class="max-w-6xl mx-auto w-full relative z-10 px-4 py-10 flex-1 flex flex-col justify-center">
-    
+  <div class="max-w-6xl mx-auto w-full relative z-10 px-4 py-10 flex-1 flex flex-col">
+
     <!-- En-tête -->
-    <div class="text-center mb-10">
-      <div class="inline-block px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-bold tracking-widest uppercase mb-4 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-        Simulation Historique
+    <div class="text-center mb-8">
+      <div class="inline-block px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-bold tracking-widest uppercase mb-4 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+        ⚔️ Défi multijoueur
       </div>
       <h1 class="text-5xl md:text-6xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-[length:200%_auto] animate-gradient">
         Salle de Marché
       </h1>
       <p class="text-lg text-gray-400 max-w-2xl mx-auto">
-        Revivez les plus grands krachs de l'histoire. Choisissez votre scénario, testez vos stratégies et affrontez le marché.
+        Affrontez vos amis sur les plus grands krachs de l'histoire. Créez une salle ou rejoignez-en une avec un code : le meilleur P&amp;L gagne.
       </p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      
-      <!-- Colonne de gauche : Choix du scénario -->
-      <div class="lg:col-span-2 space-y-4">
-        <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-blue-500"></span> 1. Choisir le scénario
-        </h2>
-        
-        @for (s of scenarios; track s.id) {
-          <div (click)="scenarioSelectionne = s.id"
-            class="cursor-pointer bg-[#0d121c] border rounded-2xl p-5 transition-all duration-300 relative overflow-hidden group"
-            [class]="scenarioSelectionne === s.id ? 'border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.2)] scale-[1.02]' : 'border-gray-800 hover:border-gray-600 hover:scale-[1.01]'">
-            
-            <!-- Lueur de fond au survol -->
-            <div class="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+    @if (messageErreur) {
+      <div class="max-w-2xl mx-auto w-full bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 rounded-xl mb-6 text-sm">
+        {{ messageErreur }}
+      </div>
+    }
 
-            <div class="flex items-start gap-4 relative z-10">
-              <div class="text-5xl drop-shadow-lg">{{ s.icone }}</div>
-              <div class="flex-1">
-                <div class="flex justify-between items-start">
-                  <div>
-                    <span class="inline-block mb-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-800 text-gray-300 border border-gray-700">
-                      {{ s.marche }}
-                    </span>
-                    <h3 class="text-xl font-bold text-white">{{ s.nom }}</h3>
-                  </div>
-                  <span class="px-3 py-1 text-xs font-bold rounded bg-gradient-to-r text-white shadow-lg" [class]="s.couleur">
-                    {{ s.difficulte }}
-                  </span>
-                </div>
-                <p class="text-gray-400 text-sm mt-2">{{ s.description }}</p>
-              </div>
+    @if (salle; as room) {
+
+      <!-- ================= SALLE D'ATTENTE ================= -->
+      <div class="max-w-2xl mx-auto w-full bg-[#0d121c] border border-gray-800 rounded-3xl p-8 shadow-2xl">
+
+        <div class="text-center mb-6">
+          <p class="text-sm text-gray-400 mb-1">Code de la salle</p>
+          <p class="text-5xl font-mono font-black text-blue-400 tracking-widest mb-3 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">{{ room.code }}</p>
+          <button (click)="copierCode()"
+                  class="px-4 py-1.5 rounded-full border border-gray-700 text-xs font-bold text-gray-300 hover:border-blue-500 hover:text-blue-300 transition">
+            {{ codeCopie ? '✓ Code copié' : 'Copier le code' }}
+          </button>
+          <p class="text-xs text-gray-500 mt-2">Partagez ce code avec vos amis.</p>
+        </div>
+
+        <!-- Invitation : lien à copier, email, WhatsApp -->
+        <div class="mb-5">
+          <app-invitation-salle [code]="room.code" [scenario]="scenarioDeLaSalle?.nom" [hote]="pseudo" />
+        </div>
+
+        <!-- Résumé du scénario -->
+        @if (scenarioDeLaSalle; as sc) {
+          <div class="flex items-center gap-4 bg-[#05080f] border border-gray-800 rounded-2xl p-4 mb-5">
+            <div class="text-4xl">{{ sc.icone }}</div>
+            <div class="flex-1">
+              <p class="font-bold text-white">{{ sc.nom }}</p>
+              <p class="text-xs text-gray-400">{{ sc.marche }} · {{ sc.difficulte }}</p>
             </div>
-
-            <!-- Indicateur de sélection -->
-            @if (scenarioSelectionne === s.id) {
-              <div class="absolute right-4 bottom-4 text-blue-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              </div>
-            }
+            <div class="text-right">
+              <p class="font-black text-xl text-blue-400">{{ room.dureeMinutes }} min</p>
+              <p class="text-[10px] uppercase tracking-wider text-gray-500">Durée</p>
+            </div>
           </div>
         }
-      </div>
 
-      <!-- Colonne de droite : Durée + Bouton Lancer -->
-      <div class="lg:col-span-1">
-        <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-purple-500"></span> 2. Paramètres
-        </h2>
-        
-        <div class="bg-[#0d121c] border border-gray-800 rounded-2xl p-5">
-          <p class="text-gray-400 text-sm mb-4">Durée de la session (temps réel) :</p>
-          
-          <div class="grid grid-cols-2 gap-2 mb-6">
-            @for (d of [5, 15, 30, 60]; track d) {
-              <button (click)="dureeChoisie = d"
-                class="flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200"
-                [class]="dureeChoisie === d ? 'bg-blue-500/20 border-blue-500 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-[#05080f] border-gray-800 text-gray-400 hover:border-gray-600'">
-                <span class="font-black text-xl">{{ d }}m</span>
-                <span class="text-[10px] uppercase tracking-wider">{{ d === 5 ? '⚡ Extrême' : d === 15 ? '🚀 Rapide' : d === 30 ? '⚖️ Normal' : '🧘 Détente' }}</span>
-              </button>
+        <!-- Joueurs -->
+        <div class="bg-[#05080f] border border-gray-800 rounded-2xl p-4 mb-6">
+          <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex justify-between">
+            Joueurs dans la salle
+            <span class="text-blue-400">{{ room.joueurs.length }}</span>
+          </h3>
+          <div class="space-y-2">
+            @for (j of room.joueurs; track j.pseudo; let i = $index) {
+              <div class="flex justify-between items-center bg-[#0d121c] p-3 rounded-xl border border-gray-800">
+                <div class="flex items-center gap-2">
+                  <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                  <span class="font-bold">{{ j.pseudo }}{{ j.pseudo === pseudo.trim() ? ' (vous)' : '' }}</span>
+                </div>
+                @if (i === 0) {
+                  <span class="px-2 py-0.5 rounded-full bg-amber-400/15 border border-amber-400/40 text-amber-300 text-[10px] font-black uppercase tracking-wider">Hôte</span>
+                } @else {
+                  <span class="text-xs text-gray-500">Prêt</span>
+                }
+              </div>
             }
           </div>
+        </div>
 
-          <button (click)="lancerJeu()" 
-            class="group relative w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black text-lg py-4 rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] transition-all duration-300 active:scale-95 overflow-hidden">
-            <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-            <span class="relative z-10">LANCER LA MISSION</span>
+        @if (estHote) {
+          @if (joueursManquants > 0) {
+            <p class="text-center text-sm text-amber-300 mb-3">
+              En attente de {{ joueursManquants }} joueur{{ joueursManquants > 1 ? 's' : '' }} de plus (minimum {{ joueursMin }}).
+            </p>
+          }
+          <button (click)="lancerPartie()" [disabled]="!peutLancer"
+                  class="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 py-4 rounded-xl font-black text-lg shadow-[0_0_20px_rgba(34,197,94,0.4)] transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none">
+            LANCER LA MISSION
+          </button>
+        } @else {
+          <div class="flex items-center justify-center gap-3 py-4 rounded-xl bg-[#05080f] border border-gray-800 text-gray-300">
+            <div class="w-5 h-5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
+            <span class="text-sm">En attente du lancement par l'hôte...</span>
+          </div>
+        }
+
+        <button (click)="quitterSalle()" class="w-full mt-4 text-sm text-gray-500 hover:text-white transition">
+          Quitter la salle
+        </button>
+      </div>
+
+    } @else {
+
+      <!-- ================= PSEUDO ================= -->
+      <div class="max-w-md mx-auto w-full mb-6">
+        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Votre pseudo</label>
+        <input type="text" [(ngModel)]="pseudo" maxlength="20" placeholder="Ex : TraderPro"
+               class="w-full bg-[#0d121c] p-3 rounded-xl border border-gray-700 text-white text-sm focus:border-blue-500 outline-none">
+      </div>
+
+      <!-- ================= ONGLETS ================= -->
+      <div class="flex justify-center mb-8">
+        <div class="inline-flex p-1 rounded-xl bg-[#0d121c] border border-gray-800">
+          <button (click)="onglet = 'creer'; messageErreur = ''"
+                  class="px-6 py-2 rounded-lg text-sm font-bold transition"
+                  [class]="onglet === 'creer' ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'text-gray-400 hover:text-white'">
+            Créer une salle
+          </button>
+          <button (click)="onglet = 'rejoindre'; messageErreur = ''"
+                  class="px-6 py-2 rounded-lg text-sm font-bold transition"
+                  [class]="onglet === 'rejoindre' ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]' : 'text-gray-400 hover:text-white'">
+            Rejoindre une salle
           </button>
         </div>
       </div>
 
-    </div>
+      @if (onglet === 'creer') {
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          <!-- Choix du scénario -->
+          <div class="lg:col-span-2 space-y-4">
+            <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span> 1. Choisir le scénario
+            </h2>
+
+            @for (s of scenarios; track s.id) {
+              <div (click)="scenarioSelectionne = s.id"
+                class="cursor-pointer bg-[#0d121c] border rounded-2xl p-5 transition-all duration-300 relative overflow-hidden group"
+                [class]="scenarioSelectionne === s.id ? 'border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.2)] scale-[1.02]' : 'border-gray-800 hover:border-gray-600 hover:scale-[1.01]'">
+
+                <div class="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+
+                <div class="flex items-start gap-4 relative z-10">
+                  <div class="text-5xl drop-shadow-lg">{{ s.icone }}</div>
+                  <div class="flex-1">
+                    <div class="flex justify-between items-start">
+                      <div>
+                        <span class="inline-block mb-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-800 text-gray-300 border border-gray-700">
+                          {{ s.marche }}
+                        </span>
+                        <h3 class="text-xl font-bold text-white">{{ s.nom }}</h3>
+                      </div>
+                      <span class="px-3 py-1 text-xs font-bold rounded bg-gradient-to-r text-white shadow-lg" [class]="s.couleur">
+                        {{ s.difficulte }}
+                      </span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">{{ s.description }}</p>
+                  </div>
+                </div>
+
+                @if (scenarioSelectionne === s.id) {
+                  <div class="absolute right-4 bottom-4 text-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Durée + création -->
+          <div class="lg:col-span-1">
+            <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-purple-500"></span> 2. Paramètres
+            </h2>
+
+            <div class="bg-[#0d121c] border border-gray-800 rounded-2xl p-5">
+              <p class="text-gray-400 text-sm mb-4">Durée de la session (temps réel) :</p>
+
+              <div class="grid grid-cols-2 gap-2 mb-6">
+                @for (d of durees; track d) {
+                  <button (click)="dureeChoisie = d"
+                    class="flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200"
+                    [class]="dureeChoisie === d ? 'bg-blue-500/20 border-blue-500 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-[#05080f] border-gray-800 text-gray-400 hover:border-gray-600'">
+                    <span class="font-black text-xl">{{ d }}m</span>
+                    <span class="text-[10px] uppercase tracking-wider">{{ d === 5 ? '⚡ Extrême' : d === 15 ? '🚀 Rapide' : d === 30 ? '⚖️ Normal' : '🧘 Détente' }}</span>
+                  </button>
+                }
+              </div>
+
+              <button (click)="creerSalle()" [disabled]="enCours"
+                class="group relative w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black text-lg py-4 rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] transition-all duration-300 active:scale-95 overflow-hidden disabled:opacity-50">
+                <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                <span class="relative z-10">CRÉER LA SALLE</span>
+              </button>
+              <p class="text-xs text-gray-500 mt-3 text-center">Un code à partager sera généré. Minimum {{ joueursMin }} joueurs pour lancer.</p>
+            </div>
+          </div>
+        </div>
+
+      } @else {
+
+        <!-- Rejoindre -->
+        <div class="max-w-md mx-auto w-full bg-[#0d121c] border border-gray-800 rounded-2xl p-6">
+          <h2 class="font-bold text-lg mb-4 text-purple-300">Rejoindre une salle</h2>
+          @if (invitationRecue) {
+            <p class="mb-4 rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 py-2 text-sm text-purple-200">
+              Vous avez été invité : le code est déjà rempli. Vérifiez votre pseudo, puis cliquez sur « Rejoindre le défi ».
+            </p>
+          }
+          <input type="text" [(ngModel)]="codeSaisi" placeholder="Code (ex : DEFI-8A3F)"
+                 (keyup.enter)="rejoindreSalle()"
+                 class="w-full bg-[#05080f] p-3 rounded-xl border border-gray-700 text-white mb-4 text-sm font-mono uppercase focus:border-purple-500 outline-none">
+          <button (click)="rejoindreSalle()" [disabled]="enCours"
+                  class="w-full bg-purple-600 hover:bg-purple-500 py-3 rounded-xl font-black transition shadow-[0_0_15px_rgba(168,85,247,0.3)] disabled:opacity-50">
+            REJOINDRE LE DÉFI
+          </button>
+        </div>
+
+      }
+    }
   </div>
 </div>

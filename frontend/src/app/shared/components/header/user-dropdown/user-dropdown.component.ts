@@ -1,6 +1,7 @@
-import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../../../core/services/auth.service';
 
 export interface Language {
   id: string;
@@ -17,6 +18,16 @@ export interface Language {
   imports: [CommonModule, RouterModule]
 })
 export class UserDropdownComponent implements OnInit {
+  readonly auth = inject(AuthService);
+
+  /** Initiales du nom connecté (« Sarra Laabidi » -> « SL »), « ? » si personne n'est connecté. */
+  readonly initiales = computed(() => {
+    const nom = this.auth.utilisateur()?.nom?.trim();
+    if (!nom) return '?';
+    const mots = nom.split(/\s+/).filter(m => m.length > 0);
+    return (mots.length > 1 ? mots[0][0] + mots[1][0] : nom.slice(0, 2)).toUpperCase();
+  });
+
   isOpen = false;
   subDropdownOpen = false;
   currentLocale = 'en';
@@ -72,6 +83,11 @@ export class UserDropdownComponent implements OnInit {
     if (!this.isOpen) {
       this.subDropdownOpen = false;
     }
+  }
+
+  seDeconnecter(): void {
+    this.closeDropdown();
+    this.auth.deconnecter();
   }
 
   closeDropdown(): void {

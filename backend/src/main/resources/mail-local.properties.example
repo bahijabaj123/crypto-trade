@@ -1,0 +1,33 @@
+# ============================================================
+# Envoi des invitations par email (SMTP)
+#
+# 1) Copiez ce fichier sous le nom :  mail-local.properties  (dans le meme dossier)
+# 2) Remplacez les valeurs VOTRE_... par celles de votre compte SMTP
+# 3) NE JAMAIS publier mail-local.properties sur GitHub (il est dans .gitignore)
+# 4) Redemarrez le backend
+# ============================================================
+
+app.mail.actif=true
+app.mail.expediteur=no-reply@cryptotrade.local
+
+# --- Option 1 : Mailtrap (boite de test : les emails ne partent pas vraiment) ---
+spring.mail.host=sandbox.smtp.mailtrap.io
+spring.mail.port=2525
+spring.mail.username=VOTRE_UTILISATEUR_MAILTRAP
+spring.mail.password=VOTRE_MOT_DE_PASSE_MAILTRAP
+
+# --- Option 2 : Gmail (les emails partent vraiment) ---
+# Il faut la validation en 2 etapes + un "mot de passe d'application" (PAS votre mot de passe Gmail).
+# Remplacez le bloc Mailtrap ci-dessus par :
+# spring.mail.host=smtp.gmail.com
+# spring.mail.port=587
+# spring.mail.username=votre.adresse@gmail.com
+# spring.mail.password=MOT_DE_PASSE_APPLICATION_16_CARACTERES
+# app.mail.expediteur=votre.adresse@gmail.com
+
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+# Delais maximum (ms) : evite que la requete reste bloquee si le reseau coupe le SMTP
+spring.mail.properties.mail.smtp.connectiontimeout=5000
+spring.mail.properties.mail.smtp.timeout=5000
+spring.mail.properties.mail.smtp.writetimeout=5000

@@ -1,0 +1,64 @@
+{
+  "training_id": "BTCUSDT-1h-v1-protocole-1",
+  "description": "Comparaison de deux baselines, d'une régression logistique et d'une Random Forest. Ajustement sur train 2020-2024, sélection sur validation 2025 uniquement ; test 2026 réservé à une évaluation finale unique.",
+  "dataset": {
+    "dataset_id": "BTCUSDT-1h-v1",
+    "dir": "datasets/BTCUSDT-1h-v1"
+  },
+  "features": [
+    "ret_1h",
+    "ret_1h_lag1",
+    "ret_1h_lag2",
+    "ret_6h",
+    "ret_24h",
+    "volatility_6h",
+    "volatility_24h",
+    "hl_range",
+    "rsi_14",
+    "macd_hist_rel",
+    "dist_sma_24",
+    "dist_sma_72",
+    "quote_volume_rel_24h",
+    "trades_rel_24h",
+    "taker_buy_ratio",
+    "hour_sin",
+    "hour_cos"
+  ],
+  "target": "target_up_1h",
+  "evaluation_only_column": "fwd_return_1h",
+  "seed": 42,
+  "primary_metric": "log_loss",
+  "baselines": {
+    "constant_train_rate": {},
+    "previous_hour_direction": {"feature": "ret_1h"}
+  },
+  "models": {
+    "logistic_regression": {
+      "fixed": {"solver": "lbfgs", "max_iter": 2000},
+      "grid": {"C": [0.001, 0.01, 0.1, 1.0, 10.0]}
+    },
+    "random_forest": {
+      "fixed": {"n_estimators": 300, "max_features": "sqrt", "n_jobs": -1},
+      "grid": {"max_depth": [4, 6, 8], "min_samples_leaf": [50, 200]}
+    }
+  },
+  "selection": {
+    "rule": "Un modèle n'est éligible que si sa log loss de validation est inférieure à celle de chaque baseline et que la borne haute de l'intervalle bootstrap de la différence avec la meilleure baseline est négative. Parmi les éligibles, la log loss la plus basse est retenue ; si un modèle plus simple (ordre simplicity_order) ne s'en distingue pas (intervalle bootstrap de la différence contenant 0), le plus simple est retenu.",
+    "require_significant_improvement": true,
+    "simplicity_order": ["logistic_regression", "random_forest"],
+    "bootstrap": {"block_hours": 168, "n_resamples": 1000, "confidence": 0.95, "seed": 42}
+  },
+  "calibration": {
+    "n_bins": 10,
+    "rule": "Calibration jugée insuffisante si l'ECE de validation dépasse le quantile `confidence` des ECE obtenues par des cibles simulées à partir des propres probabilités du modèle (modèle parfaitement calibré).",
+    "n_simulations": 1000,
+    "confidence": 0.95,
+    "seed": 42
+  },
+  "decision": {
+    "states": ["HAUSSE", "BAISSE", "ATTENDRE"],
+    "coverage_grid": [1.0, 0.5, 0.25, 0.1],
+    "fee_per_side_assumption": 0.001,
+    "note": "Aucun seuil n'est fixé ici : la couverture sera choisie plus tard parmi coverage_grid, sur validation uniquement, puis figée dans selection.json. La marge correspondante est déduite des probabilités de validation. Une probabilité élevée ne garantit aucun profit."
+  }
+}

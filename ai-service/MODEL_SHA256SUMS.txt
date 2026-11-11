@@ -1,0 +1,8 @@
+# Empreintes SHA-256 du modèle figé BTCUSDT-1h-v1 (V1 AI Advisor).
+# Vérifiées avant copie, après extraction du ZIP, et au chargement par load_frozen_model.
+# L'archive n'est pas dans Git : la demander à l'équipe, puis comparer le SHA-256 du ZIP.
+fecc816490708152aba498d83d561fc783213f68ab5e624b12b3b38f10293765  models/BTCUSDT-1h-v1/selection.json
+5ba5d8231f9f02f0f7713cf56f7a4eb6200a2ac369af149ce9af6d5334769646  models/BTCUSDT-1h-v1/experiments/20261108T122920Z-c3c17310/experiment.json
+e7183535dc2dc6644372e6e3faffc6f22661ea00c7f316b43b604b4239e4c765  models/BTCUSDT-1h-v1/experiments/20261108T122920Z-c3c17310/trials/09/model.joblib
+c1fbba050f22ef3e6e14c028e076f60e2dc255b8c60f07338b5d9f5843d84a73  models/BTCUSDT-1h-v1/experiments/20261108T122920Z-c3c17310/trials/09/metadata.json
+ef10995c6bae973942d9cf9edf93a41f14605f3da94f75d81da2569d7e7f163b  CryptoTrade-BTCUSDT-1h-v1-frozen.zip

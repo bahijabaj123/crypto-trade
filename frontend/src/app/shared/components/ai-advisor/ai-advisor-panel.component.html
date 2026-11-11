@@ -1,0 +1,190 @@
+<div class="flex h-full min-h-0 flex-col bg-crypto-card text-crypto-text">
+  <header class="flex shrink-0 items-start justify-between gap-3 border-b border-crypto-border px-5 py-4">
+    <div>
+      <h2 id="ai-advisor-title" class="text-base font-semibold text-crypto-text">
+        AI Advisor
+      </h2>
+      <p class="mt-1 text-theme-xs font-medium text-crypto-green">
+        @if (payload(); as recu) {
+          {{ recu.symbol }} · {{ libelleIntervalle(recu.interval) }}
+        } @else {
+          BTCUSDT · 1 h
+        }
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="rounded-full border border-crypto-border bg-crypto-bg px-3 py-2 text-theme-xs font-medium text-crypto-text-muted transition hover:bg-crypto-card-hover hover:text-crypto-text focus:outline-hidden focus-visible:ring-2 focus-visible:ring-crypto-green/50 disabled:opacity-50"
+        (click)="charger()"
+        [disabled]="chargement()"
+      >
+        Actualiser
+      </button>
+      <button
+        type="button"
+        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-crypto-border bg-crypto-bg text-crypto-text-muted transition-colors hover:bg-crypto-card-hover hover:text-crypto-text focus:outline-hidden focus-visible:ring-2 focus-visible:ring-crypto-green/50"
+        (click)="fermer.emit()"
+        aria-label="Fermer l'AI Advisor"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M6.043 16.541a1.05 1.05 0 0 0 1.414 1.415L12 13.414l4.543 4.542a1.05 1.05 0 0 0 1.414-1.415L13.414 12l4.543-4.543a1.05 1.05 0 1 0-1.414-1.414L12 10.586 7.457 6.043A1.05 1.05 0 0 0 6.043 7.457L10.586 12 6.043 16.541Z"
+            fill="currentColor"
+          />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="corps-advisor min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+    @if (chargement() && !payload()) {
+      <p class="text-sm text-crypto-text-muted" aria-live="polite">Chargement de la prédiction BTCUSDT 1 h…</p>
+    }
+
+    @if (erreur(); as err) {
+      <div class="rounded-xl border border-crypto-red/40 bg-crypto-red/10 p-4" role="alert">
+        <p class="text-sm font-semibold text-crypto-red">{{ titreErreur(err) }}</p>
+        <p class="mt-2 text-sm leading-relaxed text-crypto-text">{{ err.message }}</p>
+      </div>
+    }
+
+    @if (payload(); as recu) {
+      @if (perimee()) {
+        <div class="mb-4 rounded-xl border border-crypto-yellow/40 bg-crypto-yellow/10 p-3" role="status">
+          <p class="text-sm font-semibold uppercase tracking-wide text-crypto-yellow">PÉRIMÉ</p>
+          <p class="mt-1 text-theme-xs text-crypto-text-muted">
+            La validité UTC est dépassée. Ce n'est plus un signal actuel. Actualisez pour une nouvelle heure close.
+          </p>
+        </div>
+      }
+
+      <div class="flex flex-wrap items-center gap-2">
+        @if (perimee()) {
+          <span class="inline-flex rounded-full border border-crypto-yellow/40 bg-crypto-yellow/15 px-3 py-1 text-sm font-semibold uppercase tracking-wide text-crypto-yellow">
+            PÉRIMÉ
+          </span>
+        } @else {
+          <span [class]="classeBadge(recu.prediction.state)">
+            {{ recu.prediction.state }}
+          </span>
+        }
+      </div>
+
+      @if (perimee()) {
+        <p class="mt-2 text-theme-xs text-crypto-text-muted">
+          Dernier état enregistré : {{ recu.prediction.state }} — ce n'est plus un signal actuel.
+        </p>
+      }
+
+      <p
+        class="mt-4 text-3xl font-semibold tabular-nums"
+        [class.text-crypto-text-muted]="perimee()"
+        [class.text-crypto-text]="!perimee()"
+      >
+        {{ formatPct(recu.prediction.probability_up) }} %
+        <span class="text-sm font-normal text-crypto-text-muted">
+          {{ perimee() ? 'de hausse au moment de la décision' : 'de hausse' }}
+        </span>
+      </p>
+
+      <div class="mt-3 space-y-1 text-theme-xs text-crypto-text-muted">
+        @if (recu.prediction.signal_authorized && recu.prediction.threshold_up !== null && recu.prediction.threshold_down !== null) {
+          <p>
+            Seuils figés : HAUSSE si p ≥ {{ formatPct(recu.prediction.threshold_up) }} %,
+            BAISSE si p ≤ {{ formatPct(recu.prediction.threshold_down) }} %.
+          </p>
+        } @else {
+          <p>Signal désactivé : les seuils sont nuls, l'état reste ATTENDRE.</p>
+        }
+      </div>
+
+      <dl class="mt-5 space-y-2 text-sm">
+        <div class="flex justify-between gap-3">
+          <dt class="text-crypto-text-muted">Valable jusqu'à</dt>
+          <dd
+            class="text-right tabular-nums"
+            [class.text-crypto-yellow]="perimee()"
+            [class.text-crypto-text]="!perimee()"
+          >
+            {{ formatUtc(recu.valid_until_utc) }}
+          </dd>
+        </div>
+        <div class="flex justify-between gap-3">
+          <dt class="text-crypto-text-muted">Bougie close</dt>
+          <dd class="text-right tabular-nums text-crypto-text">{{ formatUtc(recu.candle_open_time_utc) }}</dd>
+        </div>
+        <div class="flex justify-between gap-3">
+          <dt class="text-crypto-text-muted">Décision</dt>
+          <dd class="text-right tabular-nums text-crypto-text">{{ formatUtc(recu.decision_time_utc) }}</dd>
+        </div>
+      </dl>
+
+      @if (shapOk()) {
+        <section class="mt-6">
+          <h3 class="text-sm font-semibold text-crypto-text">Contributions TreeSHAP</h3>
+          <ul class="mt-4 space-y-3">
+            @for (ligne of topContributions(); track ligne.feature) {
+              <li>
+                <div class="flex items-start justify-between gap-2 text-sm">
+                  <span class="font-medium text-crypto-text">{{ ligne.label_fr }}</span>
+                  <span
+                    class="shrink-0 tabular-nums"
+                    [class.text-crypto-green]="ligne.contribution >= 0"
+                    [class.text-crypto-red]="ligne.contribution < 0"
+                  >
+                    {{ formatPoints(ligne.contribution) }}
+                  </span>
+                </div>
+                <p class="mt-0.5 text-theme-xs text-crypto-text-muted">{{ ligne.value_display }}</p>
+                <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-crypto-bg">
+                  <div
+                    class="h-full rounded-full"
+                    [class.bg-crypto-green]="ligne.contribution >= 0"
+                    [class.bg-crypto-red]="ligne.contribution < 0"
+                    [style.width.%]="largeurBarre(ligne.contribution)"
+                  ></div>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+
+        @if (recu.explication?.summary_fr; as resume) {
+          <details class="mt-6 rounded-xl border border-crypto-border bg-crypto-bg/60">
+            <summary
+              class="cursor-pointer list-none px-3 py-2.5 text-sm font-medium text-crypto-text marker:content-none focus:outline-hidden focus-visible:ring-2 focus-visible:ring-crypto-green/50"
+            >
+              Comprendre cette prédiction
+            </summary>
+            <p class="border-t border-crypto-border px-3 py-3 text-sm leading-relaxed text-crypto-text-muted">
+              {{ resume }}
+            </p>
+          </details>
+        }
+      } @else if (recu.explication) {
+        <p class="mt-6 text-sm text-crypto-yellow" role="status">
+          L'explication n'est pas affichée : elle n'est pas cohérente avec la prédiction.
+        </p>
+      }
+
+      @if (avertissements().length) {
+        <ul class="mt-6 space-y-2 border-t border-crypto-border pt-4">
+          @for (avis of avertissements(); track avis) {
+            <li class="text-theme-xs leading-relaxed text-crypto-text-muted">{{ avis }}</li>
+          }
+        </ul>
+      }
+    }
+
+    @if (chargement() && payload()) {
+      <p class="mt-4 text-theme-xs text-crypto-text-muted" aria-live="polite">Mise à jour…</p>
+    }
+
+    <p class="mt-6 text-theme-xs leading-relaxed text-crypto-text-muted">
+      Conseil pédagogique uniquement : aucun ordre n'est passé depuis ce panneau.
+    </p>
+  </div>
+</div>

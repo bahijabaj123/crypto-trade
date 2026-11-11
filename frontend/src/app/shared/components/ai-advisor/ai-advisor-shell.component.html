@@ -1,0 +1,37 @@
+@if (visible()) {
+  @if (!ouvert()) {
+    <button
+      #boutonAdvisor
+      type="button"
+      class="fixed z-[60] inline-flex items-center gap-2 rounded-full border border-crypto-border bg-crypto-card px-4 py-3 text-sm font-medium text-crypto-text shadow-theme-lg transition hover:bg-crypto-card-hover focus:outline-hidden focus-visible:ring-2 focus-visible:ring-crypto-green/50"
+      style="bottom: max(1.5rem, env(safe-area-inset-bottom)); inset-inline-end: max(1.5rem, env(safe-area-inset-right));"
+      (click)="ouvrir()"
+      [attr.aria-expanded]="false"
+      aria-controls="ai-advisor-drawer"
+      aria-haspopup="dialog"
+    >
+      <span class="h-2 w-2 rounded-full bg-crypto-green" aria-hidden="true"></span>
+      AI Advisor
+    </button>
+  }
+
+  @if (ouvert()) {
+    <div
+      class="fixed inset-0 z-[60] bg-black/55 max-lg:z-[99998]"
+      (click)="fermer()"
+      aria-hidden="true"
+    ></div>
+
+    <aside
+      id="ai-advisor-drawer"
+      class="fixed z-[70] flex min-h-0 flex-col overflow-hidden border-crypto-border bg-crypto-card text-crypto-text shadow-theme-lg max-lg:inset-0 max-lg:z-[99999] max-lg:h-dvh lg:top-[7rem] lg:end-0 lg:h-[calc(100dvh-7rem)] lg:w-[380px] lg:border-s"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="ai-advisor-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
+      <app-ai-advisor-panel class="flex min-h-0 flex-1 flex-col" (fermer)="fermer()" />
+    </aside>
+  }
+}

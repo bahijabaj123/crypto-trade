@@ -169,7 +169,7 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
 
-      // ---------- IA & XAI ----------
+       // ---------- INTELLIGENCE ARTIFICIELLE (Les routes de ton ami) ----------
       { path: 'ai', loadComponent: () => import('./pages/ai/ai.component').then(m => m.AiComponent), title: 'Prédictions IA | TradeLAB' },
       { path: 'ai/agent', loadComponent: () => import('./pages/ai-agent/ai-agent.component').then(m => m.AiAgentComponent), title: 'Agent de Trading IA | TradeLAB' },
       { path: 'ai/sentiment', loadComponent: () => import('./pages/ai-sentiment/ai-sentiment.component').then(m => m.AiSentimentComponent), title: 'Analyse de Sentiment | TradeLAB' },

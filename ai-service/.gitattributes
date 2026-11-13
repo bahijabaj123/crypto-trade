@@ -1,0 +1,3 @@
+# Les configurations JSON sont identifiées par leur SHA-256 octet par octet
+# (experiment.json, selection.json) : Git ne doit jamais convertir leurs fins de ligne.
+config/**/*.json -text

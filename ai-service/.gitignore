@@ -1,0 +1,29 @@
+# Fichiers ignorés uniquement pour le module ai-service
+# (le .gitignore global du dépôt n'est pas modifié).
+
+# Données locales : archives brutes Binance, CSV nettoyés, rapports qualité
+/data/
+
+# Environnement virtuel Python
+.venv/
+venv/
+
+# Artefacts Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Outils de test
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Secrets locaux (ne jamais versionner)
+.env
+.env.*
+secrets.json
+
+# Artefacts ML : modèles et données volumineuses, conservés hors Git
+/models/
+*.joblib
+*.parquet

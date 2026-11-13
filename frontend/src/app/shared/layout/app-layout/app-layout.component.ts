@@ -7,6 +7,7 @@ import { RouterModule } from '@angular/router';
 import { AppHeaderComponent } from '../app-header/app-header.component';
 import { CryptoTickerComponent } from '../../components/crypto-ticker/crypto-ticker.component';
 import { OrderToastsComponent } from '../../components/order-toasts/order-toasts.component';
+import { AiAdvisorShellComponent } from '../../components/ai-advisor/ai-advisor-shell.component';
 
 
 @Component({
@@ -18,7 +19,8 @@ import { OrderToastsComponent } from '../../components/order-toasts/order-toasts
     AppSidebarComponent,
      CryptoTickerComponent ,
     OrderToastsComponent,
-    BackdropComponent
+    AiAdvisorShellComponent,
+    BackdropComponent,
   ],
   templateUrl: './app-layout.component.html',
 })

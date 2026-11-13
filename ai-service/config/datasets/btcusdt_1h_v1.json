@@ -1,0 +1,60 @@
+{
+  "dataset_id": "BTCUSDT-1h-v1",
+  "description": "Classification binaire : probabilité que close(t+1h) > close(t), décidée à la clôture de la bougie t.",
+  "symbol": "BTCUSDT",
+  "interval": "1h",
+  "source": {
+    "csv": "processed/BTCUSDT-1h-2020-01_2026-09.csv",
+    "collection_report": "reports/BTCUSDT-1h-2020-01_2026-09.quality.json"
+  },
+  "output_dir": "datasets/BTCUSDT-1h-v1",
+  "target": {
+    "name": "target_up_1h",
+    "horizon_hours": 1,
+    "rule": "1 si close(t+1h) > close(t), 0 sinon (égalité = 0) ; t+1h cherché par horodatage exact",
+    "evaluation_only_column": "fwd_return_1h"
+  },
+  "features": [
+    "ret_1h",
+    "ret_1h_lag1",
+    "ret_1h_lag2",
+    "ret_6h",
+    "ret_24h",
+    "volatility_6h",
+    "volatility_24h",
+    "hl_range",
+    "rsi_14",
+    "macd_hist_rel",
+    "dist_sma_24",
+    "dist_sma_72",
+    "quote_volume_rel_24h",
+    "trades_rel_24h",
+    "taker_buy_ratio",
+    "hour_sin",
+    "hour_cos"
+  ],
+  "indicators": {
+    "rsi_period": 14,
+    "macd_fast": 12,
+    "macd_slow": 26,
+    "macd_signal": 9,
+    "sma_short": 24,
+    "sma_long": 72,
+    "volatility_short": 6,
+    "volatility_long": 24,
+    "volume_window": 24
+  },
+  "conventions": {
+    "ema_initialisation": "sma",
+    "rsi_smoothing": "wilder",
+    "volatility_ddof": 0,
+    "hour_reference": "open_time_utc"
+  },
+  "min_history_hours": 72,
+  "embargo_hours": 73,
+  "splits": {
+    "train": {"start": "2020-01-01T00:00:00Z", "end": "2025-01-01T00:00:00Z"},
+    "validation": {"start": "2025-01-01T00:00:00Z", "end": "2026-01-01T00:00:00Z"},
+    "test": {"start": "2026-01-01T00:00:00Z", "end": "2026-10-01T00:00:00Z"}
+  }
+}

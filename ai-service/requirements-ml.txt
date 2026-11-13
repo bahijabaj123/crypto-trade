@@ -1,0 +1,11 @@
+# Dépendances du module d'entraînement ML (Python 3.11). Le collecteur et le constructeur
+# de dataset n'en ont pas besoin : requirements.txt reste sans dépendance.
+# pandas n'est pas nécessaire : le dataset est lu avec le module csv de la bibliothèque standard.
+# scipy est installé automatiquement par scikit-learn.
+#
+# Tests synthétiques exécutés avec : scikit-learn 1.3.2, numpy 1.24.3, joblib 1.3.2, scipy 1.11.4.
+# Après installation, figer les versions exactes : python -m pip freeze > requirements-ml.lock.txt
+-r requirements-dev.txt
+scikit-learn>=1.3.2,<2
+numpy>=1.24.3,<3
+joblib>=1.3.2,<2

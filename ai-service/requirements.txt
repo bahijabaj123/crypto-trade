@@ -1,0 +1,2 @@
+# Le script de collecte utilise uniquement la bibliothèque standard de Python (>= 3.10).
+# Aucune dépendance externe n'est nécessaire pour télécharger, vérifier et nettoyer les données.

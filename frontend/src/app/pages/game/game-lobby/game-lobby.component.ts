@@ -12,8 +12,9 @@ const JOUEURS_MIN = 2;
 const CLE_PSEUDO = 'cryptotrade.pseudo';
 
 /**
- * Lobby unique de la Salle de Marché : le jeu est uniquement multijoueur.
- * 1) on choisit un pseudo, 2) on crée une salle (scénario + durée) ou on rejoint avec un code,
+ * Lobby de la Salle de Marché : mode SOLO (on joue seul, sans salle) ou MULTIJOUEUR.
+ * Solo : on choisit un scénario + une durée et on démarre directement.
+ * Multi : 1) on choisit un pseudo, 2) on crée une salle (scénario + durée) ou on rejoint avec un code,
  * 3) salle d'attente, 4) l'hôte lance la partie et tout le monde démarre en même temps.
  */
 @Component({
@@ -33,7 +34,7 @@ export class GameLobbyComponent implements OnDestroy {
   readonly durees = [5, 15, 30, 60];
   readonly joueursMin = JOUEURS_MIN;
 
-  onglet: 'creer' | 'rejoindre' = 'creer';
+  onglet: 'solo' | 'creer' | 'rejoindre' = 'solo';
   pseudo = '';
   codeSaisi = '';
   scenarioSelectionne = SCENARIOS_CONFIG[0].id;
@@ -95,6 +96,13 @@ export class GameLobbyComponent implements OnDestroy {
   }
 
   // ---------- Actions ----------
+
+  /** Mode solo : pas de salle, pas de pseudo ; la page de jeu démarre sans paramètres 'room' ni 'pseudo'. */
+  lancerSolo(): void {
+    this.router.navigate(['/game/play', this.scenarioSelectionne], {
+      queryParams: { duree: this.dureeChoisie }
+    });
+  }
 
   creerSalle(): void {
     if (!this.pseudoValide()) return;

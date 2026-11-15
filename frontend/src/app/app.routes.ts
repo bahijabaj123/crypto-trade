@@ -158,6 +158,16 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/game/game-dashboard/game-dashboard.component').then(m => m.GameDashboardComponent),
         title: 'Jeu de Trading Historique | TradeLAB',
       },
+        {
+        path: 'game/live',
+        loadComponent: () => import('./pages/game/game-live/game-live-lobby.component').then(m => m.GameLiveLobbyComponent), // 👈 Le NOUVEAU Lobby
+        title: 'Salle Vivante - Lobby | TradeLAB',
+      },
+      {
+        path: 'game/live/:scenarioId',
+        loadComponent: () => import('./pages/game/game-live/game-live.component').then(m => m.GameLiveComponent), // 👈 Ta salle avec Chat
+        title: 'Salle de Marché Vivante | TradeLAB',
+      },
       {
         path: 'game/results',
         loadComponent: () => import('./pages/game/game-results/game-results.component').then(m => m.GameResultsComponent),

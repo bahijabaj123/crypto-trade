@@ -66,10 +66,13 @@ export class AppSidebarComponent {
         { name: "Historique", path: "/history" },
       ],
     },
-    {
+        {
       name: "Salle de Marché (Défi)",
       icon: `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M6 11h4M8 9v4"/><path d="M15 12h.01M18 10h.01"/><path d="M17.3 5H6.7a4 4 0 0 0-3.9 3.1l-1.2 5.6a3.4 3.4 0 0 0 5.9 2.9L9 15h6l1.6 1.6a3.4 3.4 0 0 0 5.9-2.9l-1.2-5.6A4 4 0 0 0 17.3 5z"/></svg>`,
-      path: "/game",
+      subItems: [
+        { name: "Défi Classique", path: "/game" },
+        { name: "Salle Vivante (Live)", path: "/game/live" }, // 👈 Lien direct vers TON lobby
+      ],
     },
     {
       name: "Analyse",

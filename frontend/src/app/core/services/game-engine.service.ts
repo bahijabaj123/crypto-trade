@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { CandleData } from '../models/kline.model';
+import { OrdreJoueur } from '../models/news-scenarios';
 
 export interface GamePosition {
   symbole: string;
@@ -21,6 +22,20 @@ export interface GameState {
 
 const SOLDE_INITIAL = 10000;
 
+/**
+ * IMPACT DE MARCHÉ (mode solo) : un ordre déplace le prix.
+ *  - impact = COEF_IMPACT × (montant de l'ordre / capital initial), plafonné à IMPACT_MAX
+ *  - un achat pousse le prix vers le haut, une vente vers le bas
+ *  - l'effet s'estompe peu à peu : il est divisé par e tous les TAU_FRACTION × (durée du scénario)
+ * Valeurs choisies pour que l'effet soit bien VISIBLE sur la courbe (démonstration).
+ */
+const COEF_IMPACT = 0.4;      // ordre = 25 % du capital  ->  +10 % sur le prix
+const IMPACT_MAX = 0.25;      // plafond : jamais plus de 25 % pour un seul ordre
+const TAU_FRACTION = 0.06;    // durée de vie de l'effet = 6 % du scénario
+
+/** Un ordre passé par le joueur : à quelle bougie, de combien de %. */
+interface ImpactOrdre { index: number; delta: number; }
+
 @Injectable({ providedIn: 'root' })
 export class GameEngineService {
   readonly state = signal<GameState>({
@@ -36,14 +51,34 @@ export class GameEngineService {
   private actifs: string[] = [];
   private timerId: any = null;
 
-  demarrerJeu(donnees: { [symbol: string]: CandleData[] }, dureeMinutes: number, actifs: string[]): void {
+  // Impact de marché
+  /** Historique des ordres du joueur (sert à mesurer sa réaction aux actualités). */
+  ordres: OrdreJoueur[] = [];
+  /** Vitesse de la simulation : bougies qui défilent par seconde réelle. */
+  bougiesParSeconde = 1;
+
+  private impactActif = false;
+  private tau = 1;
+  private impacts: { [symbol: string]: ImpactOrdre[] } = {};
+  private versionImpact = 0;
+  private cacheBougies: { [symbol: string]: { cle: string; bougies: CandleData[] } } = {};
+
+  /** impact = true : les ordres du joueur déplacent la courbe (solo). En multijoueur on passe false. */
+  demarrerJeu(donnees: { [symbol: string]: CandleData[] }, dureeMinutes: number, actifs: string[], impact = false): void {
     this.arreterJeu();
+    this.impactActif = impact;
+    this.ordres = [];
+    this.impacts = {};
+    this.cacheBougies = {};
+    this.versionImpact++;
     this.toutesLesDonnees = donnees;
     this.actifs = actifs;
 
     const nbreBougies = donnees[actifs[0]].length;
+    this.tau = Math.max(1, nbreBougies * TAU_FRACTION);
     // Vitesse : combien de bougies passent par seconde ?
     const bougiesParSeconde = nbreBougies / (dureeMinutes * 60);
+    this.bougiesParSeconde = bougiesParSeconde;
     
     this.state.set({
       solde: SOLDE_INITIAL,
@@ -129,21 +164,65 @@ export class GameEngineService {
     this.state.update(s => ({ ...s, jeuEnCours: false, jeuTermine: true }));
   }
 
-   getPrixActuel(symbol: string): number | null {
+  /** Coefficient multiplicatif dû aux ordres du joueur à la bougie i (1 = aucun effet). */
+  private facteurImpact(symbol: string, i: number): number {
+    const liste = this.impacts[symbol];
+    if (!this.impactActif || !liste || liste.length === 0) return 1;
+    let somme = 0;
+    for (const o of liste) {
+      if (i >= o.index) somme += o.delta * Math.exp(-(i - o.index) / this.tau);
+    }
+    return Math.max(0.05, 1 + somme);
+  }
+
+  getPrixActuel(symbol: string): number | null {
     const data = this.toutesLesDonnees[symbol];
-    if (!data || data.length === 0) return null; // 👈 Vérification ajoutée
-    
+    if (!data || data.length === 0) return null;
+
     const index = Math.floor(this.state().tempsActuel);
     const safeIndex = Math.min(index, data.length - 1);
-    
-    if (!data[safeIndex]) return null; // 👈 Double sécurité
-    return data[safeIndex].close;
+
+    if (!data[safeIndex]) return null;
+    return data[safeIndex].close * this.facteurImpact(symbol, safeIndex);
+  }
+
+  /** Bougies affichées jusqu'à l'instant présent, AVEC l'effet des ordres du joueur. */
+  getBougiesAvecImpact(symbol: string): CandleData[] {
+    const data = this.toutesLesDonnees[symbol] || [];
+    const fin = Math.min(Math.floor(this.state().tempsActuel), data.length - 1);
+    if (fin < 0) return [];
+    if (!this.impactActif || !(this.impacts[symbol]?.length)) return data.slice(0, fin + 1);
+
+    // Cache : on ne recalcule que si la bougie courante ou les ordres ont changé
+    const cle = fin + '|' + this.versionImpact;
+    const c = this.cacheBougies[symbol];
+    if (c && c.cle === cle) return c.bougies;
+
+    const bougies = data.slice(0, fin + 1).map((b, i) => {
+      const f = this.facteurImpact(symbol, i);
+      return f === 1 ? b : { ...b, open: b.open * f, high: b.high * f, low: b.low * f, close: b.close * f };
+    });
+    this.cacheBougies[symbol] = { cle, bougies };
+    return bougies;
+  }
+
+  /** Enregistre l'effet d'un ordre sur le prix (sens = +1 achat, -1 vente). Renvoie le % appliqué. */
+  private appliquerImpact(symbol: string, montant: number, sens: 1 | -1): number {
+    if (!this.impactActif) return 0;
+    const delta = sens * Math.min(IMPACT_MAX, COEF_IMPACT * (montant / SOLDE_INITIAL));
+    const index = Math.floor(this.state().tempsActuel);
+    (this.impacts[symbol] ||= []).push({ index, delta });
+    this.versionImpact++;
+    return delta * 100;
   }
 
   acheter(quantite: number, symbol: string, sl?: number, tp?: number): { succes: boolean; message: string } {
     const prix = this.getPrixActuel(symbol);
     if (!prix) return { succes: false, message: 'Prix indisponible.' };
-    const montant = prix * quantite;
+    // L'ordre est exécuté au prix déjà déplacé par sa propre taille (glissement), pour éviter un gain gratuit
+    const impactPrevu = this.impactActif ? Math.min(IMPACT_MAX, COEF_IMPACT * (prix * quantite / SOLDE_INITIAL)) : 0;
+    const prixExec = prix * (1 + impactPrevu);
+    const montant = prixExec * quantite;
     if (this.state().solde < montant) return { succes: false, message: 'Fonds insuffisants.' };
 
     const positions = [...this.state().positions];
@@ -157,11 +236,13 @@ export class GameEngineService {
       if (sl) pos.stopLoss = sl;
       if (tp) pos.takeProfit = tp;
     } else {
-      positions.push({ symbole: symbol, quantite, prixMoyenAchat: prix, totalInvesti: montant, stopLoss: sl, takeProfit: tp });
+      positions.push({ symbole: symbol, quantite, prixMoyenAchat: prixExec, totalInvesti: montant, stopLoss: sl, takeProfit: tp });
     }
 
     this.state.update(s => ({ ...s, solde: s.solde - montant, positions }));
-    return { succes: true, message: `Achat de ${quantite} ${symbol} à ${prix.toFixed(2)} $.` };
+    this.ordres.push({ sens: 'ACHAT', symbole: symbol, index: Math.floor(this.state().tempsActuel) });
+    const pct = this.appliquerImpact(symbol, prix * quantite, 1);
+    return { succes: true, message: `Achat de ${quantite} ${symbol} à ${prixExec.toFixed(2)} $.` + (pct ? ` Impact marché : +${pct.toFixed(1)} %.` : '') };
   }
 
   vendre(quantite: number, symbol: string): { succes: boolean; message: string } {
@@ -169,12 +250,16 @@ export class GameEngineService {
     const pos = this.state().positions.find(p => p.symbole === symbol);
     if (!prix || !pos || pos.quantite < quantite) return { succes: false, message: 'Actif insuffisant.' };
     
-    const montant = prix * quantite;
+    const impactPrevu = this.impactActif ? Math.min(IMPACT_MAX, COEF_IMPACT * (prix * quantite / SOLDE_INITIAL)) : 0;
+    const prixExec = prix * (1 - impactPrevu);
+    const montant = prixExec * quantite;
     pos.quantite -= quantite;
     if (pos.quantite <= 0) this.state.update(s => ({ ...s, positions: s.positions.filter(p => p.symbole !== symbol) }));
 
     this.state.update(s => ({ ...s, solde: s.solde + montant }));
-    return { succes: true, message: `Vente de ${quantite} ${symbol} à ${prix.toFixed(2)} $.` };
+    this.ordres.push({ sens: 'VENTE', symbole: symbol, index: Math.floor(this.state().tempsActuel) });
+    const pct = this.appliquerImpact(symbol, prix * quantite, -1);
+    return { succes: true, message: `Vente de ${quantite} ${symbol} à ${prixExec.toFixed(2)} $.` + (pct ? ` Impact marché : ${pct.toFixed(1)} %.` : '') };
   }
 
   getValeurTotale(): number {

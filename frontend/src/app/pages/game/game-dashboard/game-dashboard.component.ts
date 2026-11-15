@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, interval } from 'rxjs';
 import html2canvas from 'html2canvas';
-
+import { NewsPanelComponent } from '../components/news-panel/news-panel.component';
+import { NEWS, NewsItem, ReactionNews, analyserReactions } from '../../../core/models/news-scenarios';
 // Services
 import { GameEngineService, GamePosition } from '../../../core/services/game-engine.service';
 import { GameAnalysisService, PlayerProfile } from '../../../core/services/game-analysis.service';
@@ -64,7 +65,7 @@ const EVENEMENTS: { [scenarioId: string]: { date: string; texte: string }[] } = 
 @Component({
   selector: 'app-game-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, GameLineChartComponent],
+  imports: [CommonModule, FormsModule, GameLineChartComponent, NewsPanelComponent],
   templateUrl: './game-dashboard.component.html',
   styleUrls: ['./game-dashboard.component.css']
 })
@@ -117,8 +118,8 @@ export class GameDashboardComponent implements OnInit, OnDestroy {
     this.roomCode = this.route.snapshot.queryParamMap.get('room');
     this.pseudo = this.route.snapshot.queryParamMap.get('pseudo');
 
-    // Le jeu est uniquement multijoueur : sans salle ni pseudo, retour au lobby
-    if (!this.roomCode || !this.pseudo) { this.router.navigate(['/game']); return; }
+    // Solo : ni salle ni pseudo. Multi : les deux sont obligatoires ensemble.
+    if (!!this.roomCode !== !!this.pseudo) { this.router.navigate(['/game']); return; }
 
     const id = this.route.snapshot.paramMap.get('scenarioId');
     const duree = Number(this.route.snapshot.queryParamMap.get('duree')) || 15;
@@ -225,8 +226,7 @@ export class GameDashboardComponent implements OnInit, OnDestroy {
 
         this.actifSelectionne = actifs[0];
         this.actifsAffiches = [actifs[0]]; 
-        
-        this.engine.demarrerJeu(donnees, dureeMinutes, actifs);
+        this.engine.demarrerJeu(donnees, dureeMinutes, actifs, !this.roomCode);
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -279,6 +279,27 @@ export class GameDashboardComponent implements OnInit, OnDestroy {
       }
     }
     return texte;
+  }
+
+  /** Actualités du scénario en cours. */
+  public get newsScenario(): NewsItem[] {
+    return NEWS[this.scenario?.id ?? ''] ?? [];
+  }
+
+  /** Pour chaque news vue : le joueur a-t-il réagi (ordre dans les 30 s) ? */
+  public get reactionsNews(): ReactionNews[] {
+    if (!this.scenario) return [];
+    const candles = this.scenario.donnees[this.scenario.actifs[0]] || [];
+    const indexActuel = this.state().jeuTermine ? candles.length - 1 : Math.floor(this.state().tempsActuel);
+    return analyserReactions(this.newsScenario, candles, this.engine.ordres, this.engine.bougiesParSeconde, indexActuel);
+  }
+
+  public get resumeReactions(): string {
+    const r = this.reactionsNews;
+    const reagi = r.filter(x => x.ordre).length;
+    const coherent = r.filter(x => x.coherent === true).length;
+    return `${reagi} actualité${reagi > 1 ? 's' : ''} sur ${r.length} suivie${reagi > 1 ? 's' : ''} d'un ordre dans les 30 secondes` +
+      (reagi ? `, dont ${coherent} dans le sens attendu.` : '.');
   }
 
   /** Avancement de la séance (0 à 100). */
@@ -454,10 +475,7 @@ export class GameDashboardComponent implements OnInit, OnDestroy {
   }
 
   public getBougiesActives(actif: string) {
-    if (!this.scenario) return [];
-    const data = this.scenario.donnees[actif] || [];
-    const index = Math.min(this.state().tempsActuel, data.length - 1);
-    return data.slice(0, index + 1);
+    return this.engine.getBougiesAvecImpact(actif);
   }
 
   public getCouleur(actif: string): string {

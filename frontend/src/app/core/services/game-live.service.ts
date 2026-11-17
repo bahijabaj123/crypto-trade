@@ -31,11 +31,14 @@ export class GameLiveService {
   envoyerAction(code: string, pseudo: string, action: string, quantite: number, symbole: string, prix: number, bot = false) {
     return this.http.post<any>(`${this.apiUrl}/${code}/action`, { pseudo, action, quantite, symbole, prix, bot });
   }
-  envoyerEvenementMJ(code: string, type: string, valeur: number, texte: string) {
-    return this.http.post<any>(`${this.apiUrl}/${code}/event`, { type, valeur, texte });
+  envoyerEvenementMJ(code: string, type: string, valeur: number, texte: string, symbole = 'TOUS') {
+    return this.http.post<any>(`${this.apiUrl}/${code}/event`, { type, valeur, texte, symbole });
   }
   envoyerMessage(code: string, pseudo: string, texte: string, bot = false) {
     return this.http.post<any>(`${this.apiUrl}/${code}/message`, { pseudo, texte, bot });
+  }
+  envoyerResultat(code: string, pseudo: string, r: { pnl: number; pnlPct: number; valeur: number; nbOrdres: number; stopLoss: boolean; drawdown: number; score: number }) {
+    return this.http.post<any>(`${this.apiUrl}/${code}/result`, { pseudo, ...r });
   }
   demarrerPartie(code: string, pseudo: string) {
     return this.http.post<any>(`${this.apiUrl}/${code}/start`, { pseudo });

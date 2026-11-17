@@ -58,7 +58,7 @@ public class GameLiveController {
       room.decay();
       double notionnel = req.quantite * (req.prix > 0 ? req.prix : 0);
       double delta = 100.0 * notionnel / LIQUIDITE * (req.action.contains("ACHET") ? 1 : -1);
-      room.ajouterImpact(delta);
+      room.ajouterImpact(req.symbole, delta);
       room.evenements.add((req.bot ? "🤖 " : "") + req.pseudo + " a " + req.action + " "
         + String.format(Locale.US, "%.4f", req.quantite) + " " + req.symbole
         + " → impact " + String.format(Locale.US, "%+.2f", delta) + "%");
@@ -73,14 +73,16 @@ public class GameLiveController {
     synchronized (room) {
       room.decay();
       String v = String.format(Locale.US, "%+.0f", req.valeur);
+      boolean tous = req.symbole == null || req.symbole.isBlank() || req.symbole.equals("TOUS");
+      String cible = tous ? "tout le marché" : req.symbole;
       String message = switch (req.type) {
-        case "CRASH" -> "📢 ÉVÉNEMENT : le marché s'effondre (" + v + "%) !";
-        case "PUMP" -> "🚀 ÉVÉNEMENT : le marché explose (" + v + "%) !";
-        case "NEWS" -> "📰 BREAKING NEWS : " + req.texte;
-        case "BOT_FORCE" -> "🤖 ÉVÉNEMENT : " + req.texte + " est forcé d'agir (" + v + "%).";
+        case "CRASH" -> "📢 ÉVÉNEMENT : " + cible + " s'effondre (" + v + "%) !";
+        case "PUMP" -> "🚀 ÉVÉNEMENT : " + cible + " explose (" + v + "%) !";
+        case "NEWS" -> "📰 BREAKING NEWS (" + cible + ", " + v + "%) : " + req.texte;
+        case "BOT_FORCE" -> "🤖 ÉVÉNEMENT : " + req.texte + " est forcé d'agir sur " + cible + " (" + v + "%).";
         default -> "Événement inconnu.";
       };
-      room.ajouterImpact(req.valeur);
+      room.ajouterImpact(tous ? null : req.symbole, req.valeur);
       room.evenements.add(message);
     }
     return room;
@@ -116,13 +118,31 @@ public class GameLiveController {
     return room;
   }
 
+  /** Résultat final d'un joueur (envoyé à la fin de sa séance). */
+  @PostMapping("/{code}/result")
+  public LiveRoom postResult(@PathVariable String code, @RequestBody ResultRequest req) {
+    LiveRoom room = trouver(code);
+    synchronized (room) {
+      for (LivePlayer p : room.joueurs) {
+        if (p.pseudo.equals(req.pseudo)) {
+          p.pnl = req.pnl; p.pnlPct = req.pnlPct; p.valeur = req.valeur;
+          p.nbOrdres = req.nbOrdres; p.stopLoss = req.stopLoss; p.drawdown = req.drawdown; p.score = req.score;
+          p.termine = true;
+        }
+      }
+    }
+    return room;
+  }
+
   @PostMapping("/{code}/leave")
   public void leaveRoom(@PathVariable String code, @RequestBody JoinLiveRoomRequest req) {
     LiveRoom room = liveRooms.get(code.toUpperCase());
-    if (room != null) {
-      room.joueurs.removeIf(j -> j.pseudo.equals(req.pseudo));
+    if (room == null) return;
+    synchronized (room) {
+      if (!room.demarree) room.joueurs.removeIf(j -> j.pseudo.equals(req.pseudo));          // avant le départ : on retire
+      else room.joueurs.stream().filter(j -> j.pseudo.equals(req.pseudo)).forEach(j -> j.actif = false);  // en partie : abandon (sauf s'il a fini)
       room.evenements.add(req.pseudo + " a quitté la salle.");
-      if (room.joueurs.isEmpty()) liveRooms.remove(code.toUpperCase());
+      if (room.joueurs.stream().noneMatch(j -> j.actif)) liveRooms.remove(code.toUpperCase());
     }
   }
 
@@ -139,7 +159,8 @@ public class GameLiveController {
     public String scenarioId;
     public int dureeMinutes;
     public long debutMs = System.currentTimeMillis();
-    public double impactPrix = 0;                       // en %, partagé par tous
+    public double impactGlobal = 0;                     // choc "tout le marché" (en %)
+    public Map<String, Double> impacts = new ConcurrentHashMap<>();   // choc par actif (en %)
     public List<LivePlayer> joueurs = new CopyOnWriteArrayList<>();
     public List<String> evenements = new CopyOnWriteArrayList<>();
     public List<ChatMsg> messages = new CopyOnWriteArrayList<>();
@@ -153,17 +174,24 @@ public class GameLiveController {
     }
     void decay() {
       long now = System.currentTimeMillis();
-      impactPrix *= Math.pow(0.5, (now - dernierMajMs) / DEMI_VIE_MS);
+      double f = Math.pow(0.5, (now - dernierMajMs) / DEMI_VIE_MS);
+      impactGlobal *= f;
+      impacts.replaceAll((k, v) -> v * f);
       dernierMajMs = now;
     }
-    void ajouterImpact(double d) {
-      impactPrix = Math.max(-IMPACT_MAX, Math.min(IMPACT_MAX, impactPrix + d));
+    /** symbole null = tout le marché. */
+    void ajouterImpact(String symbole, double d) {
+      if (symbole == null) impactGlobal = borne(impactGlobal + d);
+      else impacts.merge(symbole, borne(d), (x, y) -> borne(x + y));
     }
+    private static double borne(double v) { return Math.max(-IMPACT_MAX, Math.min(IMPACT_MAX, v)); }
   }
 
   public static class LivePlayer {
     public String pseudo;
-    public double pnl = 0;
+    public double pnl = 0, pnlPct = 0, valeur = 0, drawdown = 0;
+    public int nbOrdres = 0, score = 0;
+    public boolean stopLoss = false, termine = false, actif = true;
     public LivePlayer(String pseudo) { this.pseudo = pseudo; }
   }
 
@@ -178,6 +206,9 @@ public class GameLiveController {
     public String pseudo; public String action; public double quantite; public String symbole;
     public double prix; public boolean bot;
   }
-  public static class LiveEventRequest { public String type; public double valeur; public String texte; }
+  public static class LiveEventRequest { public String type; public double valeur; public String texte; public String symbole; }
+  public static class ResultRequest {
+    public String pseudo; public double pnl, pnlPct, valeur, drawdown; public int nbOrdres, score; public boolean stopLoss;
+  }
   public static class LiveMessageRequest { public String pseudo; public String texte; public boolean bot; }
 }

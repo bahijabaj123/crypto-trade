@@ -37,13 +37,13 @@
           <div class="h-8 w-px bg-gray-800 hidden sm:block"></div>
           <div>
             <p class="text-[9px] text-gray-500 uppercase tracking-widest">Valeur totale</p>
-            <p class="font-mono text-lg font-bold leading-tight whitespace-nowrap">{{ engine.getValeurTotale() | number: '1.2-2' }} $</p>
+            <p class="font-mono text-lg font-bold leading-tight whitespace-nowrap">{{ valeurImpactee | number: '1.2-2' }} $</p>
           </div>
           <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap"
-                [class]="engine.getPnl() >= 0 ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'">
+                [class]="pnlImpacte >= 0 ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'">
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"
-                 [class.rotate-180]="engine.getPnl() < 0"><path d="M12 5 3 19h18z"/></svg>
-            <span>{{ engine.getPnl() >= 0 ? '+' : '' }}{{ engine.getPnl() | number: '1.2-2' }} $</span>
+                 [class.rotate-180]="pnlImpacte < 0"><path d="M12 5 3 19h18z"/></svg>
+            <span>{{ pnlImpacte >= 0 ? '+' : '' }}{{ pnlImpacte | number: '1.2-2' }} $</span>
             <span class="opacity-80">({{ pnlPct >= 0 ? '+' : '' }}{{ pnlPct | number: '1.1-1' }} %)</span>
           </span>
           <div>
@@ -92,7 +92,7 @@
                   </span>
                 </div>
                 <div class="font-mono text-xs text-gray-400 mt-0.5">
-                  {{ (prixActuel(actif) * (1 + liveRoom.impactPrix()/100)) | number: '1.2-2' }} $
+                  {{ (prixActuel(actif) * (1 + impactDe(actif)/100)) | number: '1.2-2' }} $
                 </div>
               </button>
             }
@@ -106,10 +106,10 @@
                   <span class="font-bold text-sm text-gray-200">{{ actif }}</span>
                   <div class="flex items-center gap-2">
                     <span class="font-mono text-lg font-bold" [class]="variationPct(actif) >= 0 ? 'text-green-400' : 'text-red-400'">
-                      {{ (prixActuel(actif) * (1 + liveRoom.impactPrix()/100)) | number: '1.2-2' }} $
+                      {{ (prixActuel(actif) * (1 + impactDe(actif)/100)) | number: '1.2-2' }} $
                     </span>
-                    <span class="text-[10px] font-bold" [class]="liveRoom.impactPrix() >= 0 ? 'text-green-400' : 'text-red-400'">
-                      ({{ liveRoom.impactPrix() >= 0 ? '+' : '' }}{{ liveRoom.impactPrix() | number: '1.1-1' }}%)
+                    <span class="text-[10px] font-bold" [class]="impactDe(actif) >= 0 ? 'text-green-400' : 'text-red-400'">
+                      ({{ impactDe(actif) >= 0 ? '+' : '' }}{{ impactDe(actif) | number: '1.1-1' }}%)
                     </span>
                     <span class="px-2 py-0.5 rounded-full text-[11px] font-bold"
                           [class]="variationPct(actif) >= 0 ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'">
@@ -129,7 +129,7 @@
 
           <!-- 👇 LE FLUX ENRICHI -->
           @if (roomCode) {
-            <div class="h-32 bg-[#0a0e17] rounded-2xl border border-gray-800 p-3 flex flex-col">
+            <div class="h-56 bg-[#0a0e17] rounded-2xl border border-gray-800 p-3 flex flex-col">
               <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 flex justify-between shrink-0">
                 <span>Actions des joueurs & Impact</span>
                 <span class="text-purple-400 animate-pulse">● LIVE</span>
@@ -155,11 +155,11 @@
 
           <!-- 💬 CHAT GLOBAL -->
           @if (roomCode) {
-            <div class="h-64 bg-[#0d121c] rounded-2xl border border-gray-800 p-3 flex flex-col">
+            <div class="h-[26rem] bg-[#0d121c] rounded-2xl border border-gray-800 p-3 flex flex-col">
               <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 shrink-0">Chat de la salle</h3>
-              <div class="flex-1 min-h-0 overflow-y-auto space-y-1 text-xs pr-1 flex flex-col-reverse">
+              <div class="flex-1 min-h-0 overflow-y-auto space-y-1 text-sm pr-1 flex flex-col-reverse">
                 <div class="space-y-1">
-                  @for (m of messagesChat.slice(-30); track $index) {
+                  @for (m of messagesChat.slice(-60); track $index) {
                     <div>
                       <span class="font-bold" [class]="m.bot ? 'text-purple-400' : m.pseudo === pseudo ? 'text-blue-400' : 'text-amber-300'">{{ m.pseudo }}</span>
                       @if (m.bot) { <span class="ml-1 px-1 rounded bg-purple-500/20 text-purple-300 text-[9px] font-bold">BOT</span> }
@@ -259,29 +259,61 @@
               <p class="text-[11px] text-gray-400 mt-1">Vous ne tradez pas : vous pilotez le marché et les bots.</p>
             </div>
 
+            <!-- CIBLE -->
             <div class="bg-[#0d121c] rounded-2xl border border-gray-800 p-3">
-              <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Marché</h3>
-              <div class="grid grid-cols-2 gap-2">
-                <button (click)="declencherCrash(-20)" class="py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition">Chute -20 %</button>
-                <button (click)="declencherCrash(-40)" class="py-2 rounded-lg bg-red-700 hover:bg-red-600 text-white text-xs font-bold transition">Krach -40 %</button>
-                <button (click)="declencherCrash(20)" class="py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white text-xs font-bold transition">Hausse +20 %</button>
-                <button (click)="declencherCrash(50)" class="py-2 rounded-lg bg-green-700 hover:bg-green-600 text-white text-xs font-bold transition">Pump +50 %</button>
-              </div>
+              <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Cible</h3>
+              <select [(ngModel)]="cibleChoc"
+                      class="w-full bg-[#05080f] p-2 rounded-lg border border-gray-700 text-white text-sm focus:border-purple-500 outline-none">
+                <option value="TOUS">Tout le marché</option>
+                @for (a of scenario.actifs; track a) { <option [value]="a">{{ a }}</option> }
+              </select>
             </div>
 
+            <!-- CHOC DE MARCHÉ -->
             <div class="bg-[#0d121c] rounded-2xl border border-gray-800 p-3">
-              <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Bots</h3>
+              <div class="flex items-center justify-between mb-1">
+                <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Choc de marché</h3>
+                <span class="font-mono text-lg font-bold" [class]="intensiteChoc >= 0 ? 'text-green-400' : 'text-red-400'">
+                  {{ intensiteChoc > 0 ? '+' : '' }}{{ intensiteChoc }} %
+                </span>
+              </div>
+              <input type="range" min="-60" max="60" step="1" [(ngModel)]="intensiteChoc" class="w-full accent-purple-500">
+              <div class="flex justify-between text-[10px] text-gray-600 mb-2"><span>Krach -60 %</span><span>0</span><span>Pump +60 %</span></div>
+              <div class="grid grid-cols-4 gap-1 mb-2">
+                @for (p of [-40, -20, 20, 50]; track p) {
+                  <button (click)="intensiteChoc = p"
+                          class="py-1 rounded-md border border-gray-700 text-[11px] font-semibold text-gray-300 hover:border-gray-500 transition">
+                    {{ p > 0 ? '+' : '' }}{{ p }}
+                  </button>
+                }
+              </div>
+              <button (click)="appliquerChoc()" [disabled]="!intensiteChoc"
+                      class="w-full py-2 rounded-lg border text-xs font-semibold transition disabled:opacity-40"
+                      [class]="intensiteChoc >= 0 ? 'border-green-500/40 bg-green-500/10 text-green-300 hover:bg-green-500/20' : 'border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20'">
+                {{ intensiteChoc >= 0 ? 'Déclencher le pump' : 'Déclencher le krach' }} sur {{ cibleChoc === 'TOUS' ? 'tout le marché' : cibleChoc }}
+              </button>
+            </div>
+
+            <!-- BOTS -->
+            <div class="bg-[#0d121c] rounded-2xl border border-gray-800 p-3">
+              <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Forcer un bot (sur la cible)</h3>
               <div class="grid grid-cols-1 gap-2">
-                <button (click)="forcerBot('paniqueux', 'VENTE')" class="py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition">Le Paniqueux vend tout</button>
-                <button (click)="forcerBot('baleine', 'ACHAT')" class="py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition">La Baleine achète massivement</button>
+                <button (click)="forcerBot('paniqueux', 'VENTE')" class="py-2 rounded-lg border border-purple-500/40 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 text-xs font-semibold transition">Le Paniqueux vend tout</button>
+                <button (click)="forcerBot('baleine', 'ACHAT')" class="py-2 rounded-lg border border-purple-500/40 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 text-xs font-semibold transition">La Baleine achète massivement</button>
               </div>
             </div>
 
+            <!-- FAUSSE NEWS -->
             <div class="bg-[#0d121c] rounded-2xl border border-gray-800 p-3">
               <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Fausse news</h3>
               <input type="text" [(ngModel)]="newsInput" (keyup.enter)="injecterNews()" placeholder="Ex : La SEC attaque Binance"
                      class="w-full bg-[#05080f] border border-gray-700 rounded-lg px-3 py-2 text-xs text-white mb-2 focus:border-blue-500 outline-none">
-              <button (click)="injecterNews()" class="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">Diffuser la news</button>
+              <div class="flex items-center justify-between text-[11px] text-gray-400 mb-1">
+                <span>Effet sur le prix</span>
+                <span class="font-mono font-bold" [class]="intensiteNews >= 0 ? 'text-green-400' : 'text-red-400'">{{ intensiteNews > 0 ? '+' : '' }}{{ intensiteNews }} %</span>
+              </div>
+              <input type="range" min="-30" max="30" step="1" [(ngModel)]="intensiteNews" class="w-full accent-blue-500 mb-2">
+              <button (click)="injecterNews()" class="w-full py-2 rounded-lg border border-blue-500/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 text-xs font-semibold transition">Diffuser la news</button>
             </div>
           </div>
         }
@@ -312,9 +344,9 @@
                   <td class="px-2 py-2 font-mono">{{ pos.quantite }}</td>
                   <td class="px-2 py-2 font-mono text-gray-400">{{ pos.prixMoyenAchat | number: '1.2-2' }} $</td>
                   <td class="px-2 py-2 font-mono">
-                    {{ (prixActuel(pos.symbole) * (1 + liveRoom.impactPrix()/100)) | number: '1.2-2' }} $
+                    {{ (prixActuel(pos.symbole) * (1 + impactDe(pos.symbole)/100)) | number: '1.2-2' }} $
                   </td>
-                  <td class="px-2 py-2 font-mono">{{ (prixActuel(pos.symbole) * (1 + liveRoom.impactPrix()/100)) * pos.quantite | number: '1.2-2' }} $</td>
+                  <td class="px-2 py-2 font-mono">{{ (prixActuel(pos.symbole) * (1 + impactDe(pos.symbole)/100)) * pos.quantite | number: '1.2-2' }} $</td>
                   <td class="px-2 py-2 font-mono font-bold" [class]="pnlPosition(pos) >= 0 ? 'text-green-400' : 'text-red-400'">
                     {{ pnlPosition(pos) >= 0 ? '+' : '' }}{{ pnlPosition(pos) | number: '1.2-2' }} $
                   </td>
@@ -363,70 +395,138 @@
   <!-- ============================================================ -->
 
   @if (state().jeuTermine) {
-    <div class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-4 overflow-y-auto">
-      <div #modaleResultat class="bg-[#0d121c] border border-gray-700 rounded-3xl p-6 max-w-lg w-full text-center shadow-2xl my-auto">
-        @if (!profilFinal) {
-          <div class="hidden">{{ analyserFinDeJeu() }}</div>
+    <div class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-start justify-center z-[100] p-4 overflow-y-auto">
+      <style>
+        @keyframes chute { 0% { transform: translateY(-20px) rotate(0); opacity: 1; } 100% { transform: translateY(420px) rotate(540deg); opacity: 0; } }
+        .confetti { position: absolute; top: 0; width: 8px; height: 14px; border-radius: 2px; animation: chute 3.2s ease-in infinite; }
+      </style>
+      <div #modaleResultat class="relative bg-[#0d121c] border border-gray-700 rounded-3xl p-6 max-w-2xl w-full shadow-2xl my-6 overflow-hidden">
+        @if (!profilFinal && !isAdmin) { <div class="hidden">{{ analyserFinDeJeu() }}</div> }
+
+        @if (jeSuisPremier) {
+          <div class="pointer-events-none absolute inset-x-0 top-0 h-full overflow-hidden" aria-hidden="true">
+            @for (c of [4,12,20,28,36,44,52,60,68,76,84,92]; track c) {
+              <span class="confetti" [style.left.%]="c" [style.animation-delay.s]="(c % 7) * 0.35"
+                    [style.background]="['#f59e0b','#22c55e','#3b82f6','#a855f7','#ef4444'][c % 5]"></span>
+            }
+          </div>
         }
-        <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-1">Séance terminée !</h2>
-        <p class="text-gray-400 mb-4 text-sm">Classement final de la salle :</p>
-        <div class="space-y-2 mb-5">
-          @for (j of classement; track j.pseudo; let i = $index) {
-            <div class="flex justify-between items-center p-3 rounded-xl border"
-                 [class]="j.pseudo === pseudo ? 'bg-blue-500/10 border-blue-500/40' : 'bg-[#05080f] border-gray-800'">
-              <div class="flex items-center gap-3">
-                <span class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black"
-                      [class]="i === 0 ? 'bg-amber-400 text-[#1a1100]' : i === 1 ? 'bg-gray-300 text-[#111]' : i === 2 ? 'bg-orange-700 text-white' : 'bg-gray-700 text-gray-200'">
-                  {{ i + 1 }}
-                </span>
-                <span class="font-bold text-sm text-white">{{ j.pseudo }}{{ j.pseudo === pseudo ? ' (vous)' : '' }}</span>
-              </div>
-              @if (!j.actif && !j.termine) {
-                <span class="text-xs text-red-400 italic">abandon</span>
-              } @else if (!j.termine && j.pseudo !== pseudo) {
-                <span class="text-xs text-gray-500 italic">en cours...</span>
-              } @else {
-                <span class="font-mono font-bold text-base" [class]="j.pnl >= 0 ? 'text-green-400' : 'text-red-400'">
-                  {{ j.pnl >= 0 ? '+' : '' }}{{ j.pnl | number: '1.2-2' }} $
-                </span>
+
+        <div class="relative text-center">
+          <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-1">Séance terminée !</h2>
+          <p class="text-gray-400 mb-5 text-sm">Classement final de la salle (en % de rendement)</p>
+        </div>
+
+        <!-- PODIUM -->
+        @if (podium.length) {
+          <div class="relative flex items-end justify-center gap-3 mb-5 px-4">
+            @for (j of [podium[1], podium[0], podium[2]]; track $index) {
+              @if (j) {
+                <div class="flex-1 max-w-[9.5rem] text-center">
+                  <p class="text-xs font-bold text-white truncate" [title]="j.pseudo">{{ j.pseudo }}{{ j.pseudo === pseudo ? ' (vous)' : '' }}</p>
+                  <p class="font-mono text-sm font-bold mb-1" [class]="j.pnlPct >= 0 ? 'text-green-400' : 'text-red-400'">{{ j.pnlPct >= 0 ? '+' : '' }}{{ j.pnlPct | number: '1.1-1' }} %</p>
+                  <div class="rounded-t-xl flex items-start justify-center pt-2 font-black text-2xl"
+                       [class]="j === podium[0] ? 'h-24 bg-amber-400/90 text-[#1a1100]' : j === podium[1] ? 'h-16 bg-gray-300/90 text-[#111]' : 'h-12 bg-orange-700/90 text-white'">
+                    {{ j === podium[0] ? 1 : j === podium[1] ? 2 : 3 }}
+                  </div>
+                </div>
               }
+            }
+          </div>
+        } @else {
+          <p class="text-center text-sm text-gray-500 mb-5 animate-pulse">En attente des résultats des autres joueurs…</p>
+        }
+
+        <!-- AUTRES JOUEURS -->
+        @if (autresJoueurs.length) {
+          <div class="space-y-1.5 mb-4">
+            @for (j of autresJoueurs; track j.pseudo) {
+              <div class="flex justify-between items-center px-3 py-2 rounded-xl border text-sm"
+                   [class]="j.pseudo === pseudo ? 'bg-blue-500/10 border-blue-500/40' : 'bg-[#05080f] border-gray-800'">
+                <span class="font-bold text-white">{{ j.pseudo }}{{ j.pseudo === pseudo ? ' (vous)' : '' }}</span>
+                @if (j.statut === 'abandon') { <span class="text-xs text-red-400 italic">abandon</span> }
+                @else if (j.statut === 'encours') { <span class="text-xs text-gray-500 italic animate-pulse">en cours…</span> }
+                @else { <span class="font-mono font-bold" [class]="j.pnlPct >= 0 ? 'text-green-400' : 'text-red-400'">{{ j.pnlPct >= 0 ? '+' : '' }}{{ j.pnlPct | number: '1.1-1' }} %</span> }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- PRIX DU COMPORTEMENT -->
+        @if (prixComportement.length) {
+          <div class="flex flex-wrap justify-center gap-2 mb-5">
+            @for (p of prixComportement; track p.titre) {
+              <span class="px-3 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-[11px] text-purple-200">
+                <b>{{ p.titre }}</b> · {{ p.pseudo }} <span class="text-purple-300/70">({{ p.detail }})</span>
+              </span>
+            }
+          </div>
+        }
+
+        @if (isAdmin) {
+          <p class="text-center text-xs text-gray-500 mb-4">Vous étiez Meneur de jeu : vous ne figurez pas au classement.</p>
+        } @else {
+          <!-- MON RÉSULTAT -->
+          <div class="grid grid-cols-2 gap-3 mb-4 text-left">
+            <div class="bg-[#05080f] p-3 rounded-xl border border-gray-800">
+              <p class="text-[10px] text-gray-500 uppercase">Mon score (P&amp;L)</p>
+              <p class="text-2xl font-mono font-bold" [class]="pnlImpacte >= 0 ? 'text-green-400' : 'text-red-400'">{{ pnlImpacte >= 0 ? '+' : '' }}{{ pnlImpacte | number: '1.2-2' }} $</p>
+              <p class="text-xs font-bold" [class]="pnlPct >= 0 ? 'text-green-400' : 'text-red-400'">{{ pnlPct >= 0 ? '+' : '' }}{{ pnlPct | number: '1.1-1' }} %</p>
+            </div>
+            <div class="bg-[#05080f] p-3 rounded-xl border border-gray-800">
+              <p class="text-[10px] text-gray-500 uppercase">Valeur totale</p>
+              <p class="text-2xl font-mono font-bold text-white">{{ valeurImpactee | number: '1.2-2' }} $</p>
+            </div>
+          </div>
+
+          <!-- MA COURBE -->
+          <div class="bg-[#05080f] p-3 rounded-xl border border-gray-800 mb-4">
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Ma courbe de portefeuille</p>
+            <app-portfolio-curve [points]="courbe" [ordres]="marques" [base]="valeurInitiale"></app-portfolio-curve>
+          </div>
+
+          <!-- SCORE COMPORTEMENT -->
+          @if (score) {
+            <div class="bg-[#05080f] p-3 rounded-xl border border-gray-800 mb-4">
+              <div class="flex justify-between items-baseline mb-2">
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Mon profil de trader</p>
+                <p class="font-mono font-black text-xl" [class]="score.total >= 70 ? 'text-green-400' : score.total >= 40 ? 'text-amber-400' : 'text-red-400'">
+                  {{ score.aucunTrade ? '—' : score.total + ' / 100' }}
+                </p>
+              </div>
+              @if (!score.aucunTrade) {
+                @for (b of [{n:'Gestion du risque (stop-loss)', v:score.risque}, {n:'Diversification', v:score.diversification}, {n:'Discipline (nombre d\'ordres)', v:score.discipline}, {n:'Sang-froid (baisse maximale)', v:score.sangFroid}]; track b.n) {
+                  <div class="mb-1.5">
+                    <div class="flex justify-between text-[11px] text-gray-400"><span>{{ b.n }}</span><span class="font-mono">{{ b.v }}/25</span></div>
+                    <div class="h-1.5 rounded-full bg-gray-800 overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500" [style.width.%]="b.v * 4"></div></div>
+                  </div>
+                }
+              } @else { <p class="text-xs text-gray-500">Aucun ordre passé : pas de score.</p> }
             </div>
           }
-        </div>
-        <div class="grid grid-cols-2 gap-3 mb-5 text-left">
-          <div class="bg-[#05080f] p-3 rounded-xl border border-gray-800">
-            <p class="text-[10px] text-gray-500 uppercase">Mon score (P&amp;L)</p>
-            <p class="text-2xl font-mono font-bold" [class]="engine.getPnl() >= 0 ? 'text-green-400' : 'text-red-400'">
-              {{ engine.getPnl() >= 0 ? '+' : '' }}{{ engine.getPnl() | number: '1.2-2' }} $
-            </p>
-            <p class="text-xs font-bold" [class]="pnlPct >= 0 ? 'text-green-400' : 'text-red-400'">
-              {{ pnlPct >= 0 ? '+' : '' }}{{ pnlPct | number: '1.1-1' }} %
-            </p>
-          </div>
-          <div class="bg-[#05080f] p-3 rounded-xl border border-gray-800">
-            <p class="text-[10px] text-gray-500 uppercase">Valeur totale</p>
-            <p class="text-2xl font-mono font-bold text-white">{{ engine.getValeurTotale() | number: '1.2-2' }} $</p>
-          </div>
-        </div>
-        @if (profilFinal) {
-          <div class="bg-blue-500/10 border border-blue-500/30 p-3 rounded-xl text-left mb-5">
-            <h3 class="font-bold text-blue-400 mb-1 flex items-center gap-2 text-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
-              Analyse du coach IA ({{ profilFinal.niveau }})
-            </h3>
-            <p class="text-xs text-gray-300">{{ profilFinal.recommandation }}</p>
-          </div>
-        }
-        <div class="flex flex-wrap justify-center gap-3">
-          <button (click)="confirmerQuitter()" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-xl text-sm transition">
-            Retour au lobby
-          </button>
-          @if (profilFinal) {
-            <button (click)="allerAuCours()" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white font-bold py-2 px-4 rounded-xl text-sm transition shadow-[0_0_15px_rgba(59,130,246,0.4)]">
-              Aller au cours recommandé →
-            </button>
+
+          <!-- DÉBRIEF DU COACH -->
+          @if (debrief) {
+            <div class="bg-blue-500/10 border border-blue-500/30 p-3 rounded-xl text-left mb-4 text-xs text-gray-200 space-y-1.5">
+              <h3 class="font-bold text-blue-400 text-sm flex items-center gap-2">
+                Débrief du coach
+                @if (debriefIA) { <span class="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[9px] font-bold">IA</span> }
+              </h3>
+              <p><b class="text-green-400">Meilleure décision :</b> {{ debrief.meilleure }}</p>
+              <p><b class="text-red-400">Pire décision :</b> {{ debrief.pire }}</p>
+              <p><b class="text-amber-300">Risque :</b> {{ debrief.risque }}</p>
+              <p><b class="text-blue-300">À travailler :</b> {{ debrief.cours }}</p>
+              @if (debriefIA) { <p class="pt-1.5 border-t border-blue-500/20 whitespace-pre-line">{{ debriefIA }}</p> }
+            </div>
           }
-          <button (click)="telechargerResultat()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-xl text-sm transition shadow-[0_0_15px_rgba(168,85,247,0.4)] flex items-center gap-2">
+        }
+
+        <div class="flex flex-wrap justify-center gap-3">
+          <button (click)="confirmerQuitter()" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-xl text-sm transition">Retour au lobby</button>
+          @if (profilFinal && !isAdmin) {
+            <button (click)="allerAuCours()" class="px-4 py-2 rounded-xl text-sm font-semibold border border-blue-500/50 bg-blue-500/15 text-blue-300 hover:bg-blue-500/25 transition">Aller au cours recommandé →</button>
+          }
+          <button (click)="telechargerResultat()" class="px-4 py-2 rounded-xl text-sm font-semibold border border-purple-500/50 bg-purple-500/15 text-purple-300 hover:bg-purple-500/25 transition flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg>
             Partager
           </button>
@@ -457,42 +557,59 @@
     </div>
   }
 
-  <!-- 👇 CHATBOT COACH IA -->
+  <!-- 👇 COACH IA -->
   @if (!isAdmin) {
   <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-    <button (click)="toggleChatbot()" 
-            class="bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90 text-white rounded-full p-4 shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-transform hover:scale-105 flex items-center gap-2">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
-      <span class="font-bold">Coach IA</span>
-    </button>
+
+    <!-- Bulle d'alerte proactive -->
+    @if (bulleCoach && !chatbotOuvert) {
+      <button (click)="toggleChatbot()"
+              class="mb-3 max-w-xs text-left text-xs leading-snug rounded-2xl px-4 py-3 shadow-2xl border backdrop-blur"
+              [class]="bulleCoach.niveau === 'danger' ? 'bg-red-950/90 border-red-500/50 text-red-100' : bulleCoach.niveau === 'attention' ? 'bg-amber-950/90 border-amber-500/50 text-amber-100' : 'bg-[#0d121c]/95 border-blue-500/40 text-gray-200'">
+        <span class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">Coach</span>
+        {{ bulleCoach.texte }}
+      </button>
+    }
 
     @if (chatbotOuvert) {
-      <div class="mt-3 w-80 bg-[#0d121c] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col" style="height: 400px;">
+      <div class="mb-3 w-96 bg-[#0d121c] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col" style="height: 520px;">
         <div class="bg-[#05080f] px-4 py-3 border-b border-gray-800 flex justify-between items-center">
           <span class="font-bold text-sm text-white flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            Coach IA
+            Coach · analyse en direct
+            @if (sourceCoach === 'llm') { <span class="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[9px] font-bold">IA</span> }
           </span>
-          <button (click)="toggleChatbot()" class="text-gray-400 hover:text-white">&times;</button>
+          <button (click)="toggleChatbot()" class="text-gray-400 hover:text-white text-lg leading-none">&times;</button>
         </div>
 
-        <div class="flex-1 p-3 overflow-y-auto space-y-3 text-xs">
+        <div #zoneCoach class="flex-1 p-3 overflow-y-auto space-y-3 text-xs">
           @for (msg of chatBotMessages; track $index) {
             <div class="flex" [class]="msg.role === 'user' ? 'justify-end' : 'justify-start'">
-              <div class="max-w-[80%] rounded-xl p-2.5 whitespace-pre-line"
-                   [class]="msg.role === 'user' ? 'bg-brand-500 text-white' : 'bg-gray-800 text-gray-200'">
+              <div class="max-w-[88%] rounded-xl p-2.5 whitespace-pre-line leading-relaxed"
+                   [class]="msg.role === 'user' ? 'bg-brand-500/90 text-white' : 'bg-gray-800 text-gray-200'">
                 {{ msg.texte }}
               </div>
             </div>
           }
+          @if (coachReflechit) {
+            <div class="flex justify-start"><div class="rounded-xl p-2.5 bg-gray-800 text-gray-400 animate-pulse">Le coach réfléchit…</div></div>
+          }
         </div>
 
-        <div class="p-3 border-t border-gray-800">
+        <div class="px-3 pt-2 flex flex-wrap gap-1.5 border-t border-gray-800">
+          @for (s of suggestionsCoach; track s) {
+            <button (click)="poserQuestion(s)"
+                    class="px-2.5 py-1 rounded-full border border-gray-700 text-[11px] text-gray-300 hover:border-brand-500 hover:text-white transition">
+              {{ s }}
+            </button>
+          }
+        </div>
+        <div class="p-3">
           <div class="flex gap-2">
-            <input type="text" [(ngModel)]="questionChatbot" (keyup.enter)="envoyerQuestionChatbot()" 
-                   placeholder="Posez une question..." 
+            <input type="text" [(ngModel)]="questionChatbot" (keyup.enter)="envoyerQuestionChatbot()"
+                   placeholder="Pose une question (ex : c'est quoi un stop-loss ?)"
                    class="flex-1 bg-[#05080f] border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:border-brand-500 outline-none">
-            <button (click)="envoyerQuestionChatbot()" 
+            <button (click)="envoyerQuestionChatbot()"
                     class="bg-brand-500 hover:bg-brand-600 text-white px-3 py-2 rounded-lg text-xs font-bold transition">
               Envoyer
             </button>
@@ -500,6 +617,13 @@
         </div>
       </div>
     }
+
+    <button (click)="toggleChatbot()"
+            class="relative bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90 text-white rounded-full p-4 shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-transform hover:scale-105 flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+      <span class="font-bold">Coach</span>
+      @if (alerteNonLue) { <span class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 border-2 border-[#05080f] animate-pulse"></span> }
+    </button>
   </div>
   }
 

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef, HostListener, ViewChild, ElementRef, effect } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef, HostListener, ViewChild, ElementRef, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -15,9 +15,12 @@ import { CandleData } from '../../../core/models/kline.model';
 import { LiveRoomService } from '../../../core/services/live-room.service';
 import { Subscription } from 'rxjs';
 import { LiveBotsService } from '../../../core/services/bots/live-bots.service';
+import { CoachService, CtxCoach, Debrief, ScoreComportement, FinPartie } from '../../../core/services/coach.service';
+import { CoachApiService } from '../../../core/services/coach-api.service';
 import { GameLiveService } from '../../../core/services/game-live.service';
 
 // Composants
+import { PortfolioCurveComponent, PointCourbe, MarqueOrdre } from '../components/portfolio-curve/portfolio-curve.component';
 import { GameLineChartComponent } from '../components/game-line-chart/game-line-chart.component';
 
 const EVENEMENTS: { [scenarioId: string]: { date: string; texte: string }[] } = {
@@ -65,7 +68,7 @@ const EVENEMENTS: { [scenarioId: string]: { date: string; texte: string }[] } = 
 @Component({
   selector: 'app-game-live',
   standalone: true,
-  imports: [CommonModule, FormsModule, GameLineChartComponent],
+  imports: [CommonModule, FormsModule, GameLineChartComponent, PortfolioCurveComponent],
   templateUrl: './game-live.component.html',
   styleUrls: ['./game-live.component.css']
 })
@@ -81,7 +84,10 @@ export class GameLiveComponent implements OnInit, OnDestroy {
   public readonly liveRoom = inject(LiveRoomService);
   public readonly liveBots = inject(LiveBotsService);
   public readonly liveService = inject(GameLiveService);
+  private readonly coach = inject(CoachService);
+  private readonly coachApi = inject(CoachApiService);
 
+  @ViewChild('zoneCoach') zoneCoach?: ElementRef<HTMLDivElement>;
   @ViewChild('modaleResultat') modaleResultat!: ElementRef<HTMLDivElement>;
 
   public scenarioConfig: ScenarioConfig | null = null;
@@ -102,6 +108,13 @@ export class GameLiveComponent implements OnInit, OnDestroy {
   public chatBotMessages: { role: 'user' | 'bot', texte: string }[] = [];
   public questionChatbot = '';
   public chatbotOuvert = false;
+  public readonly suggestionsCoach = this.coach.suggestions;
+  public bulleCoach: { texte: string; niveau: string } | null = null;
+  public alerteNonLue = false;
+  public coachReflechit = false;
+  public sourceCoach: 'llm' | 'local' | null = null;
+  private timerCoach: any = null;
+  private timerBulle: any = null;
 
   public panneauMJouvert = false;
   public newsInput = '';
@@ -116,14 +129,30 @@ export class GameLiveComponent implements OnInit, OnDestroy {
 
   private subsBots: Subscription[] = [];
 
+  // ---- Fin de partie : courbe, score, débrief ----
+  public courbe: PointCourbe[] = [];
+  public marques: MarqueOrdre[] = [];
+  public score: ScoreComportement | null = null;
+  public debrief: Debrief | null = null;
+  public debriefIA: string | null = null;
+  private maxConcentration = 0;
+  private stopLossUtilise = false;
+  private finTraitee = false;
+  private timerCourbe: any = null;
+
   constructor() {
+    effect(() => {
+      if (this.state().jeuTermine && !this.finTraitee) {
+        this.finTraitee = true;
+        untracked(() => this.cloturer());
+      }
+    });
     // Synchronise l'état partagé du backend : prix impacté + flux d'événements
     effect(() => {
       const room = this.liveService.currentRoom();
       if (!room) return;
-      this.liveRoom.impactPrix.set(room.impactPrix ?? 0);
       const raw: string[] = room.evenements ? room.evenements.slice(-10) : [];
-      this.evenementsEnrichis = raw.map(ev => {
+      this.evenementsEnrichis = raw.slice().reverse().map(ev => {
         const m = ev.match(/impact ([+-][\d.]+)%/);
         const v = m ? parseFloat(m[1]) : null;
         return { texte: ev, impact: m ? `${v! >= 0 ? '+' : ''}${m[1].replace(/^\+/, '')}%` : null, isPositif: v === null ? true : v >= 0 };
@@ -150,10 +179,20 @@ export class GameLiveComponent implements OnInit, OnDestroy {
     if (this.roomCode) {
       this.liveService.demarrerPolling(this.roomCode);
     }
+
+    // Enregistrement de la courbe du portefeuille (1 point / seconde, joueurs seulement)
+    if (!this.isAdmin) this.timerCourbe = setInterval(() => this.echantillonner(), 1000);
+
+    // Coach proactif (joueurs seulement) : vérifie la situation toutes les 3 s
+    this.coach.reinitialiser();
+    if (!this.isAdmin) this.timerCoach = setInterval(() => this.verifierAlertesCoach(), 3000);
   }
 
   ngOnDestroy(): void {
     this.engine.arreterJeu();
+    if (this.timerCoach) clearInterval(this.timerCoach);
+    if (this.timerCourbe) clearInterval(this.timerCourbe);
+    if (this.timerBulle) clearTimeout(this.timerBulle);
     this.liveBots.arreter();
     this.subsBots.forEach(s => s.unsubscribe());
     this.liveService.arreterPolling();
@@ -171,18 +210,30 @@ export class GameLiveComponent implements OnInit, OnDestroy {
     this.panneauMJouvert = !this.panneauMJouvert;
   }
 
-  public declencherCrash(pourcentage: number) {
-    if (this.roomCode) this.liveService.envoyerEvenementMJ(this.roomCode, pourcentage > 0 ? 'PUMP' : 'CRASH', pourcentage, '').subscribe();
+  // ---- Contrôle MJ dynamique ----
+  public cibleChoc = 'TOUS';          // 'TOUS' ou un symbole
+  public intensiteChoc = -20;         // % signé, choisi au curseur
+  public intensiteNews = -10;
+
+  /** Choc cumulé affiché pour un actif (global + spécifique), en %. */
+  public impactDe(actif: string): number {
+    const r = this.currentRoom();
+    return (r?.impactGlobal ?? 0) + (r?.impacts?.[actif] ?? 0);
+  }
+
+  public appliquerChoc() {
+    if (!this.roomCode || !this.intensiteChoc) return;
+    this.liveService.envoyerEvenementMJ(this.roomCode, this.intensiteChoc > 0 ? 'PUMP' : 'CRASH', this.intensiteChoc, '', this.cibleChoc).subscribe();
   }
 
   public forcerBot(personnalite: string, sens: string) {
     const nomBot = personnalite === 'paniqueux' ? 'Kira_Trade' : 'Orca';
-    if (this.roomCode) this.liveService.envoyerEvenementMJ(this.roomCode, 'BOT_FORCE', sens === 'VENTE' ? -8 : 8, nomBot).subscribe();
+    if (this.roomCode) this.liveService.envoyerEvenementMJ(this.roomCode, 'BOT_FORCE', sens === 'VENTE' ? -8 : 8, nomBot, this.cibleChoc).subscribe();
   }
 
   public injecterNews() {
     if (!this.newsInput.trim() || !this.roomCode) return;
-    this.liveService.envoyerEvenementMJ(this.roomCode, 'NEWS', -10, this.newsInput).subscribe();
+    this.liveService.envoyerEvenementMJ(this.roomCode, 'NEWS', this.intensiteNews, this.newsInput, this.cibleChoc).subscribe();
     this.newsInput = '';
   }
 
@@ -260,7 +311,7 @@ export class GameLiveComponent implements OnInit, OnDestroy {
               if (!prix) return null;
               this.liveService.envoyerAction(this.roomCode!, bot.nom,
                 ordre.sens === 'ACHAT' ? 'ACHETÉ' : 'VENDU', ordre.quantite, sym, prix, true).subscribe();
-              return prix * (1 + this.liveRoom.impactPrix() / 100);
+              return prix * (1 + this.impactDe(sym) / 100);
             }
           });
           this.subsBots.push(this.liveBots.messages$.subscribe(m =>
@@ -279,36 +330,131 @@ export class GameLiveComponent implements OnInit, OnDestroy {
 
   public acheter(): void {
     if (!this.scenario) return;
-    this.message = this.engine.acheter(this.quantite, this.actifSelectionne, this.stopLoss || undefined, this.takeProfit || undefined).message;
-
-    if (this.roomCode && this.pseudo) {
-      // On envoie au backend, le polling le renverra à tout le monde
-      this.liveService.envoyerAction(this.roomCode, this.pseudo, 'ACHETÉ', this.quantite, this.actifSelectionne, this.prixActuel(this.actifSelectionne)).subscribe();
+    const r = this.engine.acheter(this.quantite, this.actifSelectionne, this.stopLoss || undefined, this.takeProfit || undefined);
+    this.message = r.message;
+    if (r.succes) {
+      if (this.stopLoss) this.stopLossUtilise = true;
+      this.marquerOrdre('ACHAT', this.actifSelectionne);
+      this.signalerOrdre('ACHETÉ', this.quantite, this.actifSelectionne);
     }
-
     setTimeout(() => { this.message = ''; }, 3000);
   }
 
   public vendre(): void {
     if (!this.scenario) return;
-    this.message = this.engine.vendre(this.quantite, this.actifSelectionne).message;
-
-    if (this.roomCode && this.pseudo) {
-      this.liveService.envoyerAction(this.roomCode, this.pseudo, 'VENDU', this.quantite, this.actifSelectionne, this.prixActuel(this.actifSelectionne)).subscribe();
+    const r = this.engine.vendre(this.quantite, this.actifSelectionne);
+    this.message = r.message;
+    if (r.succes) {
+      this.marquerOrdre('VENTE', this.actifSelectionne);
+      this.signalerOrdre('VENDU', this.quantite, this.actifSelectionne);
     }
-
     setTimeout(() => { this.message = ''; }, 3000);
   }
 
   public fermerPosition(pos: GamePosition): void {
     if (!this.scenario) return;
-    this.message = this.engine.vendre(pos.quantite, pos.symbole).message;
-
-    if (this.roomCode && this.pseudo) {
-      this.liveService.envoyerAction(this.roomCode, this.pseudo, 'VENDU', pos.quantite, pos.symbole, this.prixActuel(pos.symbole)).subscribe();
-    }
-
+    const q = pos.quantite, s = pos.symbole;
+    const r = this.engine.vendre(q, s);
+    this.message = r.message;
+    if (r.succes) { this.marquerOrdre('VENTE', s); this.signalerOrdre('VENDU', q, s); }
     setTimeout(() => { this.message = ''; }, 3000);
+  }
+
+  private signalerOrdre(action: string, quantite: number, symbole: string): void {
+    if (this.roomCode && this.pseudo)
+      this.liveService.envoyerAction(this.roomCode, this.pseudo, action, quantite, symbole, this.prixActuel(symbole)).subscribe();
+  }
+
+  private marquerOrdre(sens: 'ACHAT' | 'VENTE', symbole: string): void {
+    this.marques.push({ t: this.dureeTotaleSecondes - this.state().tempsRestantSecondes, sens, symbole });
+  }
+
+  // ================= FIN DE PARTIE =================
+
+  /** Un point par seconde : valeur du portefeuille + marché (acheter et garder le 1er actif). */
+  private echantillonner(): void {
+    if (!this.scenario || !this.state().jeuEnCours) return;
+    const t = this.dureeTotaleSecondes - this.state().tempsRestantSecondes;
+    const a0 = this.scenario.actifs[0];
+    const d = this.scenario.donnees[a0] ?? [];
+    const i = Math.min(Math.floor(this.state().tempsActuel), d.length - 1);
+    const m = d.length && d[0].close ? this.valeurInitiale * d[Math.max(0, i)].close / d[0].close : undefined;
+    this.courbe.push({ t, v: this.valeurImpactee, m });
+    const v = this.valeurImpactee;
+    for (const p of this.state().positions) {
+      const part = v ? (this.prixActuel(p.symbole) * (1 + this.impactDe(p.symbole) / 100) * p.quantite) / v : 0;
+      if (part > this.maxConcentration) this.maxConcentration = part;
+    }
+  }
+
+  private drawdownMax(): number {
+    let pic = this.valeurInitiale, dd = 0;
+    for (const p of this.courbe) { pic = Math.max(pic, p.v); dd = Math.max(dd, (pic - p.v) / pic * 100); }
+    return dd;
+  }
+
+  private construireFin(): FinPartie {
+    const ctx = this.construireCtxCoach();
+    const dernier = this.courbe[this.courbe.length - 1];
+    const marchePct = dernier?.m ? (dernier.m / this.valeurInitiale - 1) * 100 : 0;
+    return {
+      pnl: this.pnlImpacte, pnlPct: this.pnlPct, valeur: this.valeurImpactee, ordres: ctx.ordres,
+      drawdownMax: this.drawdownMax(), concentrationMax: this.maxConcentration,
+      stopLossUtilise: this.stopLossUtilise || ctx.positions.some(p => !!p.stopLoss),
+      nbOrdres: this.engine.ordres.length, marchePct
+    };
+  }
+
+  private cloturer(): void {
+    if (this.timerCourbe) { clearInterval(this.timerCourbe); this.timerCourbe = null; }
+    if (this.isAdmin || !this.scenario) return;
+    this.echantillonner();
+    // dernier point à t = durée totale (la boucle du moteur s'arrête avant)
+    const f = this.construireFin();
+    this.score = this.coach.scoreComportement(f);
+    this.debrief = this.coach.debrief(f);
+
+    if (this.roomCode && this.pseudo)
+      this.liveService.envoyerResultat(this.roomCode, this.pseudo, {
+        pnl: f.pnl, pnlPct: f.pnlPct, valeur: f.valeur, nbOrdres: f.nbOrdres,
+        stopLoss: f.stopLossUtilise, drawdown: f.drawdownMax, score: this.score.total
+      }).subscribe();
+
+    // Commentaire du coach IA (facultatif, s'ajoute si le LLM répond)
+    const faits = `Débrief : meilleure décision : ${this.debrief.meilleure}. Pire : ${this.debrief.pire}. ${this.debrief.risque} Score comportement : ${this.score.total}/100.`;
+    this.coachApi.demander(this.pseudo ?? 'anon',
+      'Fais mon débrief de fin de partie en 3 phrases : ce que j\'ai bien fait, mon erreur principale, ce que je dois travailler.',
+      { fin: { pnlPct: +f.pnlPct.toFixed(1), marchePct: +f.marchePct.toFixed(1), drawdownMax: +f.drawdownMax.toFixed(1), concentrationMaxPct: Math.round(f.concentrationMax * 100), stopLoss: f.stopLossUtilise, nbOrdres: f.nbOrdres, score: this.score.total } },
+      faits, []).subscribe(r => { if (r.source === 'llm' && r.reponse) this.debriefIA = r.reponse; });
+  }
+
+  // ---- classement, podium, prix ----
+  public get joueursClasses(): any[] {
+    const tous: any[] = this.currentRoom()?.joueurs ?? [];
+    const joueurs = tous.slice(1);   // le 1er est l'hôte (MJ) : il ne joue pas
+    const rang = (j: any) => (j.termine ? 0 : j.actif ? 1 : 2);
+    return joueurs
+      .map(j => ({ ...j, statut: j.termine ? 'fini' : j.actif ? 'encours' : 'abandon' }))
+      .sort((a, b) => rang(a) - rang(b) || b.pnlPct - a.pnlPct);
+  }
+  public get podium(): any[] { return this.joueursClasses.filter(j => j.statut === 'fini').slice(0, 3); }
+  public get autresJoueurs(): any[] {
+    const p = this.podium.map(j => j.pseudo);
+    return this.joueursClasses.filter(j => !p.includes(j.pseudo));
+  }
+  public get jeSuisPremier(): boolean { return this.podium[0]?.pseudo === this.pseudo; }
+  public get prixComportement(): { titre: string; pseudo: string; detail: string }[] {
+    const f = this.joueursClasses.filter(j => j.statut === 'fini' && j.nbOrdres > 0);
+    if (f.length < 2) return [];
+    const out: { titre: string; pseudo: string; detail: string }[] = [];
+    const meilleur = (cmp: (a: any, b: any) => number) => [...f].sort(cmp)[0];
+    const d = f.filter(j => j.stopLoss);
+    if (d.length) { const j = [...d].sort((a, b) => b.score - a.score)[0]; out.push({ titre: 'Le plus discipliné', pseudo: j.pseudo, detail: `score ${j.score}/100` }); }
+    const s = meilleur((a, b) => a.drawdown - b.drawdown);
+    out.push({ titre: 'Le plus solide', pseudo: s.pseudo, detail: `baisse max ${s.drawdown.toFixed(1)} %` });
+    const act = meilleur((a, b) => b.nbOrdres - a.nbOrdres);
+    out.push({ titre: 'Le plus actif', pseudo: act.pseudo, detail: `${act.nbOrdres} ordres` });
+    return out;
   }
 
   public confirmerQuitter(): void { 
@@ -370,14 +516,21 @@ export class GameLiveComponent implements OnInit, OnDestroy {
     const data = this.scenario?.donnees[actif];
     const prix = this.engine.getPrixActuel(actif);
     if (!data || data.length === 0 || !prix || !data[0].close) return 0;
-    const prixImpacte = prix * (1 + this.liveRoom.impactPrix() / 100);
+    const prixImpacte = prix * (1 + this.impactDe(actif) / 100);
     return (prixImpacte / data[0].close - 1) * 100;
   }
 
-  public get pnlPct(): number {
-    const initial = this.engine.getValeurTotale() - this.engine.getPnl();
-    return initial ? (this.engine.getPnl() / initial) * 100 : 0;
+  public readonly valeurInitiale = 10000;
+
+  /** Valeur du portefeuille avec les prix impactés par la salle (cohérent avec le tableau des positions). */
+  public get valeurImpactee(): number {
+    let total = this.state().solde;
+    for (const p of this.state().positions)
+      total += this.prixActuel(p.symbole) * (1 + this.impactDe(p.symbole) / 100) * p.quantite;
+    return total;
   }
+  public get pnlImpacte(): number { return this.valeurImpactee - this.valeurInitiale; }
+  public get pnlPct(): number { return (this.pnlImpacte / this.valeurInitiale) * 100; }
 
   public getPosition(actif: string): GamePosition | undefined {
     return this.state().positions.find(p => p.symbole === actif);
@@ -388,12 +541,12 @@ export class GameLiveComponent implements OnInit, OnDestroy {
   }
 
   public pnlPosition(pos: GamePosition): number {
-    const prixImpacte = this.prixActuel(pos.symbole) * (1 + this.liveRoom.impactPrix() / 100);
+    const prixImpacte = this.prixActuel(pos.symbole) * (1 + this.impactDe(pos.symbole) / 100);
     return (prixImpacte - pos.prixMoyenAchat) * pos.quantite;
   }
 
   public pnlPctPosition(pos: GamePosition): number {
-    const prixImpacte = this.prixActuel(pos.symbole) * (1 + this.liveRoom.impactPrix() / 100);
+    const prixImpacte = this.prixActuel(pos.symbole) * (1 + this.impactDe(pos.symbole) / 100);
     return pos.prixMoyenAchat ? (prixImpacte / pos.prixMoyenAchat - 1) * 100 : 0;
   }
 
@@ -403,10 +556,6 @@ export class GameLiveComponent implements OnInit, OnDestroy {
 
   public get messageErreur(): boolean {
     return /insuffisant|indisponible/i.test(this.message);
-  }
-
-  public get classement(): any[] {
-    return [...(this.currentRoom()?.joueurs ?? [])].sort((a, b) => b.pnl - a.pnl);
   }
 
   public selectionnerOnglet(actif: string): void {
@@ -434,7 +583,7 @@ export class GameLiveComponent implements OnInit, OnDestroy {
   public analyserFinDeJeu(): void {
     if (!this.profilFinal) {
       const aUtiliseStopLoss = this.state().positions.some(p => p.stopLoss || p.takeProfit);
-      this.profilFinal = this.analysis.analyserPerformance(this.engine.getPnl(), this.state().positions, !!aUtiliseStopLoss);
+      this.profilFinal = this.analysis.analyserPerformance(this.pnlImpacte, this.state().positions, !!aUtiliseStopLoss);
     }
   }
 
@@ -475,53 +624,112 @@ export class GameLiveComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ================= COACH IA (contextuel) =================
+
+  /** Photographie de la partie, donnée au coach. */
+  private construireCtxCoach(): CtxCoach {
+    const sc = this.scenario!;
+    const prixImp = (s: string) => this.prixActuel(s) * (1 + this.impactDe(s) / 100);
+    const positions = this.state().positions;
+    const valeurs = positions.map(p => prixImp(p.symbole) * p.quantite);
+    const valeurTotale = this.state().solde + valeurs.reduce((a, b) => a + b, 0);
+
+    const variation: Record<string, number> = {}, choc: Record<string, number> = {}, recente: Record<string, number> = {};
+    const i = Math.floor(this.state().tempsActuel);
+    for (const a of sc.actifs) {
+      variation[a] = this.variationPct(a);
+      choc[a] = this.impactDe(a);
+      const d = sc.donnees[a] ?? [];
+      const ref = d[Math.max(0, i - 10)]?.close, now = d[Math.min(i, d.length - 1)]?.close;
+      recente[a] = ref && now ? (now / ref - 1) * 100 : 0;
+    }
+    return {
+      valeurTotale, solde: this.state().solde, pnl: this.pnlImpacte, pnlPct: this.pnlPct,
+      positions: positions.map((p, k) => ({
+        symbole: p.symbole, quantite: p.quantite, prixMoyen: p.prixMoyenAchat, prixActuel: prixImp(p.symbole),
+        valeur: valeurs[k], pnlPct: this.pnlPctPosition(p), stopLoss: p.stopLoss,
+        partPortefeuille: valeurTotale ? valeurs[k] / valeurTotale : 0
+      })),
+      actifCourant: this.actifSelectionne,
+      variation, choc, variationRecente: recente,
+      evenementContexte: this.evenementActuel,
+      flux: this.evenementsEnrichis.map(e => e.texte),
+      ordres: this.engine.ordres.map(o => ({
+        sens: o.sens as 'ACHAT' | 'VENTE', symbole: o.symbole, index: o.index,
+        prixAlors: sc.donnees[o.symbole]?.[Math.min(o.index, (sc.donnees[o.symbole]?.length ?? 1) - 1)]?.close ?? 0,
+        prixActuel: prixImp(o.symbole)
+      }))
+    };
+  }
+
+  private verifierAlertesCoach(): void {
+    if (!this.scenario || !this.state().jeuEnCours) return;
+    const alertes = this.coach.alertes(this.construireCtxCoach());
+    for (const a of alertes) {
+      this.chatBotMessages.push({ role: 'bot', texte: (a.niveau === 'danger' ? '⚠️ ' : a.niveau === 'attention' ? '💡 ' : 'ℹ️ ') + a.texte });
+      if (!this.chatbotOuvert) {
+        this.alerteNonLue = true;
+        this.bulleCoach = { texte: a.texte, niveau: a.niveau };
+        if (this.timerBulle) clearTimeout(this.timerBulle);
+        this.timerBulle = setTimeout(() => this.bulleCoach = null, 9000);
+      }
+    }
+    if (alertes.length) this.defilerCoach();
+  }
+
+  private defilerCoach(): void {
+    setTimeout(() => { const el = this.zoneCoach?.nativeElement; if (el) el.scrollTop = el.scrollHeight; }, 50);
+  }
+
   public toggleChatbot() {
     this.chatbotOuvert = !this.chatbotOuvert;
+    if (this.chatbotOuvert) { this.alerteNonLue = false; this.bulleCoach = null; }
     if (this.chatbotOuvert && this.chatBotMessages.length === 0) {
       this.chatBotMessages.push({
         role: 'bot',
-        texte: 'Bonjour ! Je suis votre Coach IA. Posez-moi une question sur votre performance (ex: "Pourquoi j\'ai perdu ?", "Quelle était ma pire décision ?", "Quel est mon score ?").'
+        texte: 'Bonjour ! Je suis ton Coach. Je surveille ton portefeuille et je te préviens des risques. Pose-moi une question ou utilise les raccourcis ci-dessous.'
       });
     }
+    if (this.chatbotOuvert) this.defilerCoach();
   }
 
+  public poserQuestion(q: string) { this.questionChatbot = q; this.envoyerQuestionChatbot(); }
+
   public envoyerQuestionChatbot() {
-    const question = this.questionChatbot.trim().toLowerCase();
-    if (!question) return;
+    const question = this.questionChatbot.trim();
+    if (!question || this.coachReflechit) return;
+    const historique = this.chatBotMessages.filter(m => !m.texte.startsWith('⚠️') && !m.texte.startsWith('💡') && !m.texte.startsWith('ℹ️'));
+    this.chatBotMessages.push({ role: 'user', texte: question });
+    this.questionChatbot = '';
+    this.defilerCoach();
 
-    this.chatBotMessages.push({ role: 'user', texte: this.questionChatbot });
+    if (!this.scenario) {
+      this.chatBotMessages.push({ role: 'bot', texte: "La partie n'est pas encore chargée." });
+      return;
+    }
+    const ctx = this.construireCtxCoach();
+    const faits = this.coach.repondre(question, ctx);          // calcul local fiable (sert de repli ET de faits au LLM)
 
-    setTimeout(() => {
-      let reponse = "Je n'ai pas compris. Essayez : 'Pourquoi j\'ai perdu ?', 'Quelle est ma pire décision ?' ou 'Quel est mon score ?'.";
+    this.coachReflechit = true;
+    this.coachApi.demander(this.pseudo ?? 'anon', question, this.ctxCompact(ctx), faits, historique).subscribe(r => {
+      this.coachReflechit = false;
+      this.sourceCoach = r.source;
+      this.chatBotMessages.push({ role: 'bot', texte: r.source === 'llm' && r.reponse ? r.reponse : faits });
+      this.defilerCoach();
+    });
+  }
 
-      if (question.includes('score') || question.includes('pnl') || question.includes('combien')) {
-        const pnl = this.engine.getPnl();
-        reponse = `Votre score final est de ${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)} $ (soit ${this.pnlPct.toFixed(1)}%). `;
-        if (pnl > 0) reponse += "Félicitations, vous avez été rentable !";
-        else reponse += "Malheureusement, vous avez subi une perte. Ne vous inquiétez pas, c'est en forgeant qu'on devient forgeron.";
-      } 
-      else if (question.includes('perdu') || question.includes('perte') || question.includes('pourquoi')) {
-        if (this.engine.getPnl() < 0) {
-          const positions = this.state().positions;
-          const aUtiliseSL = positions.some(p => p.stopLoss);
-          
-          reponse = "Analyse de votre perte :\n";
-          if (!aUtiliseSL) reponse += "⚠️ Vous n'avez pas utilisé de Stop-Loss. C'est la principale cause de grosses pertes.\n";
-          if (positions.length > 1) reponse += "⚠️ Vous avez diversifié, mais peut-être trop.\n";
-          if (reponse === "Analyse de votre perte :\n") reponse += "Le marché a été plus fort que vous cette fois-ci.";
-        } else {
-          reponse = "Vous n'avez pas perdu d'argent, vous êtes même en positif ! Continuez comme ça.";
-        }
-      }
-      else if (question.includes('pire') || question.includes('décision') || question.includes('erreur')) {
-        reponse = "Si je devais pointer une erreur, ce serait le manque de gestion du risque. Pensez à toujours définir un Stop-Loss et un Take-Profit avant d'entrer dans un trade.";
-      }
-      else if (question.includes('formation') || question.includes('cours') || question.includes('apprendre')) {
-        reponse = "Je vous recommande de suivre le module 'Gestion des Risques' dans la section Formation.";
-      }
-
-      this.chatBotMessages.push({ role: 'bot', texte: reponse });
-      this.questionChatbot = '';
-    }, 500);
+  /** Version allégée du contexte envoyée au LLM (pas de données inutiles). */
+  private ctxCompact(c: CtxCoach) {
+    return {
+      valeurTotale: Math.round(c.valeurTotale), cash: Math.round(c.solde), pnl: Math.round(c.pnl), pnlPct: +c.pnlPct.toFixed(1),
+      actifCourant: c.actifCourant,
+      positions: c.positions.map(p => ({ actif: p.symbole, partPct: Math.round(p.partPortefeuille * 100), pnlPct: +p.pnlPct.toFixed(1), stopLoss: !!p.stopLoss })),
+      variationSeancePct: Object.fromEntries(Object.entries(c.variation).map(([k, v]) => [k, +v.toFixed(1)])),
+      chocsSallePct: Object.fromEntries(Object.entries(c.choc).map(([k, v]) => [k, +v.toFixed(1)])),
+      evenementContexte: c.evenementContexte,
+      derniersEvenementsSalle: c.flux.slice(0, 4),
+      nbOrdres: c.ordres.length
+    };
   }
 }

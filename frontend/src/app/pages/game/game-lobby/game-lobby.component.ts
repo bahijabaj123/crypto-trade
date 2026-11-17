@@ -11,12 +11,15 @@ import { InvitationSalleComponent } from '../../../shared/components/invitation-
 const JOUEURS_MIN = 2;
 const CLE_PSEUDO = 'cryptotrade.pseudo';
 
+
 /**
  * Lobby de la Salle de Marché : mode SOLO (on joue seul, sans salle) ou MULTIJOUEUR.
  * Solo : on choisit un scénario + une durée et on démarre directement.
  * Multi : 1) on choisit un pseudo, 2) on crée une salle (scénario + durée) ou on rejoint avec un code,
  * 3) salle d'attente, 4) l'hôte lance la partie et tout le monde démarre en même temps.
  */
+
+
 @Component({
   selector: 'app-game-lobby',
   standalone: true,
@@ -42,22 +45,25 @@ export class GameLobbyComponent implements OnDestroy {
   messageErreur = '';
   enCours = false;
   codeCopie = false;
-  /** Vrai si on est arrivé par un lien d'invitation (/game?salle=CODE). */
   invitationRecue = false;
 
+  // 👇 NOUVEAU : Mode Live ou Classique
+  isLiveMode = false;
   private navigue = false;
 
   constructor() {
-    // Le service est partagé : on repart toujours d'un lobby propre (pas de salle d'une ancienne partie)
     this.mp.arreterPolling();
     this.mp.currentRoom.set(null);
 
     try { this.pseudo = localStorage.getItem(CLE_PSEUDO) ?? ''; } catch { /* stockage indisponible */ }
-    // Si le joueur est connecté et n'a pas encore de pseudo, on propose son nom
     const nom = this.auth.utilisateur()?.nom;
     if (!this.pseudo && nom) this.pseudo = nom.slice(0, 20);
 
-    // Lien d'invitation : /game?salle=DEFI-AB12 -> onglet « Rejoindre » avec le code déjà rempli
+    // 👇 Lecture du paramètre ?mode=live
+    this.route.queryParams.subscribe(params => {
+      this.isLiveMode = params['mode'] === 'live';
+    });
+
     const codeInvite = (this.route.snapshot.queryParamMap.get('salle') ?? '').trim().toUpperCase();
     if (/^[A-Z0-9-]{3,20}$/.test(codeInvite)) {
       this.codeSaisi = codeInvite;
@@ -65,7 +71,6 @@ export class GameLobbyComponent implements OnDestroy {
       this.invitationRecue = true;
     }
 
-    // Dès que l'hôte lance la partie, tous les joueurs de la salle entrent dans le jeu
     effect(() => {
       const room = this.mp.currentRoom();
       if (room?.demarree && !this.navigue) this.entrerDansLaPartie(room);
@@ -143,7 +148,7 @@ export class GameLobbyComponent implements OnDestroy {
     this.mp.demarrerPartie(room.code, this.pseudo.trim()).subscribe({
       next: (r) => {
         this.enCours = false;
-        this.mp.currentRoom.set(r); // l'effet du constructeur lance la navigation
+        this.mp.currentRoom.set(r);
       },
       error: () => {
         this.enCours = false;
@@ -153,7 +158,6 @@ export class GameLobbyComponent implements OnDestroy {
   }
 
   quitterSalle(): void {
-    // On sort de la liste des joueurs (avant le début, la salle continue pour les autres)
     const room = this.salle;
     if (room) this.mp.quitterSalleApi(room.code, this.pseudo.trim()).subscribe({ error: () => { /* ignoré */ } });
     this.mp.arreterPolling();
@@ -172,7 +176,6 @@ export class GameLobbyComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Si on part vers la partie, c'est le dashboard qui reprend le polling
     if (!this.navigue) this.mp.arreterPolling();
   }
 
@@ -185,10 +188,19 @@ export class GameLobbyComponent implements OnDestroy {
     try { localStorage.setItem(CLE_PSEUDO, this.pseudo.trim()); } catch { /* ignoré */ }
   }
 
+  // 👇 LA MÉTHODE MODIFIÉE POUR LE MODE LIVE
   private entrerDansLaPartie(room: Room): void {
     this.navigue = true;
-    this.router.navigate(['/game/play', room.scenarioId], {
-      queryParams: { duree: room.dureeMinutes || 15, room: room.code, pseudo: this.pseudo.trim() }
+    
+    // On choisit la route selon le mode
+    const baseRoute = this.isLiveMode ? '/game/live' : '/game/play';
+    
+    this.router.navigate([baseRoute, room.scenarioId], {
+      queryParams: { 
+        duree: room.dureeMinutes || 15, 
+        room: room.code, 
+        pseudo: this.pseudo.trim() 
+      }
     });
   }
 

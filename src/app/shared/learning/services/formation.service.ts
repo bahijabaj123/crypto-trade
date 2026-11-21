@@ -211,7 +211,25 @@ export class FormationService {
   getTotalXp(): number {
     const lessonXp = this.state.completedLessonIds.length * LESSON_XP;
     const quizXp = this.state.quizAttempts.reduce((s, a) => s + a.xpEarned, 0);
-    return lessonXp + quizXp;
+    return lessonXp + quizXp + (this.state.labXp ?? 0);
+  }
+
+  getLabRuns(): number {
+    return this.state.labRuns ?? 0;
+  }
+
+  awardLabXp(title: string, subtitle: string, xp: number): void {
+    this.state.labXp = (this.state.labXp ?? 0) + xp;
+    this.state.labRuns = (this.state.labRuns ?? 0) + 1;
+    this.state.activityLog.unshift({
+      id: `lab-${Date.now()}`,
+      dateLabel: "Aujourd'hui",
+      title: `${title} · +${xp} XP`,
+      subtitle,
+      xpDelta: xp,
+      kind: 'lab',
+    });
+    this.persist();
   }
 
   getLevelProgressPercent(): number {
@@ -480,6 +498,14 @@ export class FormationService {
         unlocked: this.state.completedLessonIds.includes('trading-basics-l2'),
         progress: this.state.completedLessonIds.includes('trading-basics-l2') ? 100 : 0,
         icon: 'trade',
+      },
+      {
+        id: 'lab-survivor',
+        title: 'Survivant du Lab IA',
+        description: 'Terminer 3 simulations générées',
+        unlocked: this.getLabRuns() >= 3,
+        progress: Math.min(100, Math.round((this.getLabRuns() / 3) * 100)),
+        icon: 'ai',
       },
     ];
   }

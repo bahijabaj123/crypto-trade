@@ -1,0 +1,56 @@
+<app-page-breadcrumb pageTitle="Lab IA" />
+
+<section class="formation-hero mb-8 p-6 sm:p-8">
+  <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+    <div class="max-w-2xl">
+      <p class="text-sm font-medium text-crypto-green">Généré pour vous · {{ briefing.greeting }}</p>
+      <h1 class="mt-2 text-2xl font-bold text-crypto-text sm:text-3xl">Labo d’entraînement IA</h1>
+      <p class="mt-3 text-sm leading-relaxed text-crypto-text-muted sm:text-base">
+        Pas de QCM. Pas de slides. Des crises, des pièges sociaux et un mentor qui refuse de vous donner la réponse.
+        Chaque run est unique.
+      </p>
+      <p class="mt-4 text-sm text-crypto-text">
+        Simulations terminées :
+        <span class="font-semibold text-crypto-green">{{ labRuns }}</span>
+      </p>
+    </div>
+    <button type="button" class="formation-btn-outline shrink-0" (click)="regenerate()">Régénérer le briefing</button>
+  </div>
+</section>
+
+<section class="formation-card mb-8 border-crypto-green/25 bg-crypto-green/5 p-6">
+  <p class="text-xs font-medium uppercase tracking-wide text-crypto-green">Briefing adaptatif</p>
+  <h2 class="mt-2 text-lg font-semibold text-crypto-text">Focus : {{ briefing.focusSkill }}</h2>
+  <p class="mt-2 text-sm text-crypto-text-muted">{{ briefing.diagnosis }}</p>
+  <p class="mt-4 text-sm text-crypto-text"><span class="font-medium">Drill du moment :</span> {{ briefing.drill }}</p>
+  <blockquote class="mt-4 border-s-2 border-crypto-green/50 ps-4 text-sm italic text-crypto-text-muted">
+    {{ briefing.quote }}
+  </blockquote>
+</section>
+
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+  <article class="formation-card flex h-full flex-col p-6">
+    <p class="text-xs text-crypto-yellow">Temps réel</p>
+    <h3 class="mt-1 text-xl font-semibold text-crypto-text">Théâtre de crise</h3>
+    <p class="mt-3 flex-1 text-sm text-crypto-text-muted">
+      Un krach généré tick par tick. Liquidations, headlines, levier. Vous décidez. Le compte juge.
+    </p>
+    <a routerLink="/learning/lab/crise" class="formation-btn-primary mt-6">Lancer une crise</a>
+  </article>
+  <article class="formation-card flex h-full flex-col p-6">
+    <p class="text-xs text-crypto-yellow">Psychologie</p>
+    <h3 class="mt-1 text-xl font-semibold text-crypto-text">Arène des biais</h3>
+    <p class="mt-3 flex-1 text-sm text-crypto-text-muted">
+      Fil Twitter / Telegram / news synthétisé pour vous piéger. Nommez le biais, refusez le trade toxique.
+    </p>
+    <a routerLink="/learning/lab/biais" class="formation-btn-primary mt-6">Entrer dans le fil</a>
+  </article>
+  <article class="formation-card flex h-full flex-col p-6">
+    <p class="text-xs text-crypto-yellow">Dialogue</p>
+    <h3 class="mt-1 text-xl font-semibold text-crypto-text">Mentor socratique</h3>
+    <p class="mt-3 flex-1 text-sm text-crypto-text-muted">
+      L’IA pose, vous justifiez en texte libre. Pas de bonnes cases à cocher : des concepts à prouver.
+    </p>
+    <a routerLink="/learning/lab/mentor" class="formation-btn-primary mt-6">Parler au mentor</a>
+  </article>
+</div>

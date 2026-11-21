@@ -1,0 +1,73 @@
+<app-page-breadcrumb pageTitle="Mentor socratique" />
+
+<div class="mb-4">
+  <a routerLink="/learning/lab" class="text-sm text-crypto-text-muted hover:text-crypto-green">← Lab IA</a>
+</div>
+
+@if (!kase()) {
+  <section class="formation-hero p-8">
+    <h1 class="text-2xl font-bold text-crypto-text">Mentor socratique</h1>
+    <p class="mt-3 max-w-xl text-sm text-crypto-text-muted">
+      Un cas de trading est généré. Le mentor n’énonce pas la leçon : il vous force à la construire. Répondez en
+      phrases, pas en mots-clés.
+    </p>
+    <button type="button" class="formation-btn-primary mt-6" (click)="start()">Nouveau cas</button>
+  </section>
+} @else {
+  @let k = kase()!;
+  <header class="mb-6 flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <p class="text-xs text-crypto-green">Cas {{ k.id }}</p>
+      <h1 class="text-2xl font-bold text-crypto-text">{{ k.title }}</h1>
+    </div>
+    <button type="button" class="formation-btn-outline" (click)="start()">Autre cas</button>
+  </header>
+
+  <div class="grid grid-cols-1 gap-6 xl:grid-cols-12">
+    <div class="xl:col-span-4">
+      <div class="formation-card p-4">
+        <p class="text-xs text-crypto-text-muted">Contexte prix</p>
+        <app-sparkline [values]="k.candles" />
+        @if (k.relatedCourseId) {
+          <a [routerLink]="['/learning/course', k.relatedCourseId]" class="mt-3 inline-block text-sm text-crypto-green hover:underline">
+            Module lié →
+          </a>
+        }
+      </div>
+    </div>
+    <div class="xl:col-span-8">
+      <div class="formation-card flex min-h-[420px] flex-col p-5">
+        <ul class="flex-1 space-y-3 overflow-y-auto">
+          @for (msg of messages(); track $index) {
+            <li
+              class="max-w-[90%] rounded-xl px-3 py-2 text-sm"
+              [class]="
+                msg.role === 'you'
+                  ? 'ml-auto bg-crypto-green/15 text-crypto-text'
+                  : msg.role === 'system'
+                    ? 'border border-crypto-border text-crypto-text-muted'
+                    : 'bg-crypto-bg text-crypto-text'
+              "
+            >
+              <p class="text-[10px] uppercase tracking-wide text-crypto-yellow">{{ msg.role }}</p>
+              <p class="mt-1 whitespace-pre-wrap">{{ msg.text }}</p>
+            </li>
+          }
+        </ul>
+        @if (!done()) {
+          <div class="mt-4 flex gap-2">
+            <input
+              class="flex-1 rounded-lg border border-crypto-border bg-crypto-bg px-3 py-2 text-sm text-crypto-text"
+              [(ngModel)]="draft"
+              (keyup.enter)="send()"
+              placeholder="Justifiez. Ex. : « invalidation sous le cluster de liquidité, taille 0,5R »"
+            />
+            <button type="button" class="formation-btn-primary" (click)="send()">Envoyer</button>
+          </div>
+        } @else {
+          <p class="mt-4 text-sm text-crypto-green">Session close · +{{ xp }} XP</p>
+        }
+      </div>
+    </div>
+  </div>
+}

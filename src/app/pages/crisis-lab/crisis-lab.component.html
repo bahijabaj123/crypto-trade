@@ -1,0 +1,91 @@
+<app-page-breadcrumb pageTitle="Théâtre de crise" />
+
+<div class="mb-4">
+  <a routerLink="/learning/lab" class="text-sm text-crypto-text-muted hover:text-crypto-green">← Lab IA</a>
+</div>
+
+@if (!scenario()) {
+  <section class="formation-hero p-8">
+    <h1 class="text-2xl font-bold text-crypto-text">Théâtre de crise</h1>
+    <p class="mt-3 max-w-xl text-sm text-crypto-text-muted">
+      L’IA compose une séquence de marché hostile (hack, liquidations, macro, depeg…). À chaque tick : un seul geste.
+      Objectif : survivre, pas « avoir raison ».
+    </p>
+    <button type="button" class="formation-btn-primary mt-6" (click)="start()">Générer une crise</button>
+  </section>
+} @else {
+  @let s = scenario()!;
+  <header class="formation-card mb-6 p-6">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <p class="text-xs text-crypto-yellow">{{ s.kind }} · {{ s.asset }} · levier {{ s.leverage }}x</p>
+        <h1 class="mt-1 text-2xl font-bold text-crypto-text">{{ s.title }}</h1>
+        <p class="mt-2 text-sm text-crypto-text-muted">{{ s.mentorHook }}</p>
+      </div>
+      <button type="button" class="formation-btn-outline" (click)="start()">Nouvelle crise</button>
+    </div>
+    <p class="mt-4 text-sm text-crypto-text">
+      Equity départ {{ s.startingEquity | number: '1.0-0' }} $ · exposition {{ s.positionPct }} %
+    </p>
+  </header>
+
+  <div class="grid grid-cols-1 gap-6 xl:grid-cols-12">
+    <div class="xl:col-span-8">
+      <div class="formation-card p-5">
+        <p class="text-xs text-crypto-text-muted">Tape généré</p>
+        <app-sparkline [values]="liveCandles()" [stroke]="debrief()?.survived === false ? '#F6465D' : '#0ECB81'" />
+        @if (playing()) {
+          <div class="mt-4 rounded-xl border border-crypto-red/30 bg-crypto-red/5 p-4">
+            <p class="text-xs text-crypto-text-muted">
+              Tick {{ tickIndex() + 1 }} / {{ s.ticks.length }} · t+{{ s.ticks[tickIndex()].minute }} min ·
+              {{ s.ticks[tickIndex()].source }}
+            </p>
+            <p class="mt-1 text-base font-medium text-crypto-text">{{ currentHeadline() }}</p>
+            <p class="mt-2 text-sm" [class.text-crypto-red]="s.ticks[tickIndex()].movePct < 0" [class.text-crypto-green]="s.ticks[tickIndex()].movePct >= 0">
+              {{ s.ticks[tickIndex()].movePct }} % · liq. {{ s.ticks[tickIndex()].liquidationsUsd }} · funding
+              {{ s.ticks[tickIndex()].funding }}
+            </p>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+            @for (c of choices; track c.id) {
+              <button type="button" class="rounded-lg border border-crypto-border p-3 text-left hover:border-crypto-green/40" (click)="choose(c.id)">
+                <span class="block text-sm font-semibold text-crypto-text">{{ c.label }}</span>
+                <span class="mt-1 block text-xs text-crypto-text-muted">{{ c.hint }}</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+    <aside class="xl:col-span-4">
+      @if (debrief(); as d) {
+        <div class="formation-card border-crypto-green/30 p-5">
+          <p class="text-xs text-crypto-green">Débrief IA</p>
+          <p class="mt-1 text-3xl font-bold text-crypto-text">Grade {{ d.grade }}</p>
+          <p class="text-sm text-crypto-text-muted">
+            {{ d.finalEquity | number: '1.0-0' }} $ · {{ d.pnlPct }} % · +{{ d.xp }} XP
+          </p>
+          <p class="mt-3 text-sm text-crypto-text">{{ d.headline }}</p>
+          <ul class="mt-3 list-disc space-y-2 ps-4 text-sm text-crypto-text-muted">
+            @for (b of d.bullets; track b) {
+              <li>{{ b }}</li>
+            }
+          </ul>
+          <p class="mt-4 text-sm text-crypto-green">{{ d.nextDrill }}</p>
+          <a routerLink="/learning/lab/biais" class="formation-btn-outline mt-4">Arène des biais</a>
+        </div>
+      } @else {
+        <div class="formation-card p-5">
+          <p class="text-sm text-crypto-text-muted">
+            Journal des gestes : {{ actions().length }} / {{ s.ticks.length }}
+          </p>
+          <ol class="mt-3 space-y-1 text-xs text-crypto-text-muted">
+            @for (a of actions(); track $index) {
+              <li>{{ $index + 1 }}. {{ a }}</li>
+            }
+          </ol>
+        </div>
+      }
+    </aside>
+  </div>
+}

@@ -150,7 +150,7 @@ export interface LearningActivity {
   title: string;
   subtitle: string;
   xpDelta?: number;
-  kind: 'lesson' | 'quiz' | 'module' | 'xp';
+  kind: 'lesson' | 'quiz' | 'module' | 'xp' | 'lab';
 }
 
 export interface LearnerLevel {
@@ -173,4 +173,6 @@ export interface FormationStoredState {
   quizAttempts: QuizAttempt[];
   activityLog: LearningActivity[];
   seeded: boolean;
+  labXp?: number;
+  labRuns?: number;
 }

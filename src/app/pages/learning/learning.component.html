@@ -6,8 +6,8 @@
       <p class="text-sm font-medium text-crypto-green">Formation CryptoTrade</p>
       <h1 class="mt-2 text-2xl font-bold text-crypto-text sm:text-3xl">De débutant à AI Trader</h1>
       <p class="mt-3 text-sm leading-relaxed text-crypto-text-muted sm:text-base">
-        Maîtrisez les marchés crypto à travers des cours interactifs, des quiz et des simulations de
-        trading.
+        Cours et quiz restent là. Le vrai muscle : le Lab IA — crises générées, pièges cognitifs,
+        mentor socratique.
       </p>
       <p class="mt-4 text-sm text-crypto-text">
         <span class="font-semibold text-crypto-green">{{ stats.globalProgressPercent }} %</span>
@@ -23,6 +23,7 @@
           Continuer le cours
         </a>
       }
+      <a routerLink="/learning/lab" class="formation-btn-primary">Ouvrir le Lab IA</a>
       <a routerLink="/learning/progress" class="formation-btn-outline">Voir ma progression</a>
     </div>
   </div>
@@ -61,6 +62,24 @@
     </div>
   </div>
 }
+
+<section class="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+  <a routerLink="/learning/lab/crise" class="formation-card block p-5">
+    <p class="text-xs text-crypto-yellow">Lab IA</p>
+    <h3 class="mt-1 font-semibold text-crypto-text">Théâtre de crise</h3>
+    <p class="mt-2 text-sm text-crypto-text-muted">Krach généré tick par tick. Survivre vaut plus que le QCM.</p>
+  </a>
+  <a routerLink="/learning/lab/biais" class="formation-card block p-5">
+    <p class="text-xs text-crypto-yellow">Lab IA</p>
+    <h3 class="mt-1 font-semibold text-crypto-text">Arène des biais</h3>
+    <p class="mt-2 text-sm text-crypto-text-muted">Fil social toxique synthétisé. Nommez le piège avant le trade.</p>
+  </a>
+  <a routerLink="/learning/lab/mentor" class="formation-card block p-5">
+    <p class="text-xs text-crypto-yellow">Lab IA</p>
+    <h3 class="mt-1 font-semibold text-crypto-text">Mentor socratique</h3>
+    <p class="mt-2 text-sm text-crypto-text-muted">Dialogue libre. L’IA refuse la réponse toute faite.</p>
+  </a>
+</section>
 
 <section class="formation-card mb-8 border-crypto-green/20 bg-crypto-green/5 p-5">
   <h2 class="text-base font-semibold text-crypto-text">Recommandé pour vous</h2>

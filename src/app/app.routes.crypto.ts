@@ -126,6 +126,26 @@ export const routes: Routes = [
 
       // ---------- FORMATION ----------
       {
+        path: 'learning/lab/crise',
+        loadComponent: () => import('./pages/crisis-lab/crisis-lab.component').then(m => m.CrisisLabComponent),
+        title: 'Théâtre de crise | Crypto Simulator',
+      },
+      {
+        path: 'learning/lab/biais',
+        loadComponent: () => import('./pages/bias-lab/bias-lab.component').then(m => m.BiasLabComponent),
+        title: 'Arène des biais | Crypto Simulator',
+      },
+      {
+        path: 'learning/lab/mentor',
+        loadComponent: () => import('./pages/mentor-lab/mentor-lab.component').then(m => m.MentorLabComponent),
+        title: 'Mentor socratique | Crypto Simulator',
+      },
+      {
+        path: 'learning/lab',
+        loadComponent: () => import('./pages/learning-lab/learning-lab.component').then(m => m.LearningLabComponent),
+        title: 'Lab IA | Crypto Simulator',
+      },
+      {
         path: 'learning/course/:courseId/lesson/:lessonId',
         loadComponent: () => import('./pages/learning-course/learning-course.component').then(m => m.LearningCourseComponent),
         title: 'Leçon | Crypto Simulator',

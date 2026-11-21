@@ -18,7 +18,6 @@ public class GameLiveController {
   private static final double LIQUIDITE = 200_000.0;
   private static final double IMPACT_MAX = 60.0;       // plafond |impact| en %
   private static final double DEMI_VIE_MS = 60_000.0;  // l'impact retombe de moitié toutes les 60 s
-
   private final Map<String, LiveRoom> liveRooms = new ConcurrentHashMap<>();
 
   @PostMapping
@@ -134,6 +133,17 @@ public class GameLiveController {
     return room;
   }
 
+  /** Positions ouvertes d'un joueur (envoyées toutes les secondes) : le MJ les voit via GET /{code}. */
+  @PostMapping("/{code}/positions")
+  public void postPositions(@PathVariable String code, @RequestBody PositionsRequest req) {
+    LiveRoom room = trouver(code);
+    synchronized (room) {
+      for (LivePlayer p : room.joueurs) {
+        if (p.pseudo.equals(req.pseudo)) p.positions = req.positions != null ? req.positions : new ArrayList<>();
+      }
+    }
+  }
+
   @PostMapping("/{code}/leave")
   public void leaveRoom(@PathVariable String code, @RequestBody JoinLiveRoomRequest req) {
     LiveRoom room = liveRooms.get(code.toUpperCase());
@@ -192,6 +202,7 @@ public class GameLiveController {
     public double pnl = 0, pnlPct = 0, valeur = 0, drawdown = 0;
     public int nbOrdres = 0, score = 0;
     public boolean stopLoss = false, termine = false, actif = true;
+    public List<PositionDto> positions = new ArrayList<>();
     public LivePlayer(String pseudo) { this.pseudo = pseudo; }
   }
 
@@ -210,5 +221,7 @@ public class GameLiveController {
   public static class ResultRequest {
     public String pseudo; public double pnl, pnlPct, valeur, drawdown; public int nbOrdres, score; public boolean stopLoss;
   }
+  public static class PositionDto { public String symbole; public double quantite, prixMoyenAchat, stopLoss, takeProfit; }
+  public static class PositionsRequest { public String pseudo; public List<PositionDto> positions; }
   public static class LiveMessageRequest { public String pseudo; public String texte; public boolean bot; }
 }

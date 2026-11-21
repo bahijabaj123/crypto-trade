@@ -127,23 +127,26 @@
             }
           </div>
 
-          <!-- 👇 LE FLUX ENRICHI -->
+          <!-- 👇 LE FLUX SANS LES BOTS -->
           @if (roomCode) {
             <div class="h-56 bg-[#0a0e17] rounded-2xl border border-gray-800 p-3 flex flex-col">
               <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 flex justify-between shrink-0">
-                <span>Actions des joueurs & Impact</span>
+                <span>Impact des joueurs sur le marché</span>
                 <span class="text-purple-400 animate-pulse">● LIVE</span>
               </h3>
               <div class="flex-1 min-h-0 overflow-y-auto font-mono text-xs space-y-1 pr-2 custom-scrollbar">
                 @for (ev of evenementsEnrichis; track $index) {
                   <div class="flex flex-col py-0.5 border-b border-gray-800/50 last:border-0">
-                    <div [class]="ev.texte.includes('ACHETÉ') ? 'text-green-400' : ev.texte.includes('VENDU') ? 'text-red-400' : 'text-gray-400'">
-                      <span class="text-purple-500 mr-1">›</span> {{ ev.texte }}
-                    </div>
-                    @if (ev.impact) {
-                      <div class="text-[10px] pl-4" [class]="ev.isPositif ? 'text-green-500' : 'text-red-500'">
-                        Impact : {{ ev.impact }} sur le prix
+                    <!-- On n'affiche l'événement que s'il ne vient pas d'un BOT -->
+                    @if (!ev.texte.includes('BOT')) {
+                      <div [class]="ev.texte.includes('ACHETÉ') ? 'text-green-400' : ev.texte.includes('VENDU') ? 'text-red-400' : 'text-gray-400'">
+                        <span class="text-purple-500 mr-1">›</span> {{ ev.texte }}
                       </div>
+                      @if (ev.impact) {
+                        <div class="text-[10px] pl-4" [class]="ev.isPositif ? 'text-green-500' : 'text-red-500'">
+                          Impact : {{ ev.impact }} sur le prix
+                        </div>
+                      }
                     }
                   </div>
                 } @empty {
@@ -153,33 +156,10 @@
             </div>
           }
 
-          <!-- 💬 CHAT GLOBAL -->
-          @if (roomCode) {
-            <div class="h-[26rem] bg-[#0d121c] rounded-2xl border border-gray-800 p-3 flex flex-col">
-              <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 shrink-0">Chat de la salle</h3>
-              <div class="flex-1 min-h-0 overflow-y-auto space-y-1 text-sm pr-1 flex flex-col-reverse">
-                <div class="space-y-1">
-                  @for (m of messagesChat.slice(-60); track $index) {
-                    <div>
-                      <span class="font-bold" [class]="m.bot ? 'text-purple-400' : m.pseudo === pseudo ? 'text-blue-400' : 'text-amber-300'">{{ m.pseudo }}</span>
-                      @if (m.bot) { <span class="ml-1 px-1 rounded bg-purple-500/20 text-purple-300 text-[9px] font-bold">BOT</span> }
-                      <span class="text-gray-300"> : {{ m.texte }}</span>
-                    </div>
-                  } @empty {
-                    <div class="text-gray-600 italic">Aucun message. Lancez la discussion !</div>
-                  }
-                </div>
-              </div>
-              <div class="flex gap-2 mt-2 shrink-0">
-                <input type="text" [(ngModel)]="messageChat" (keyup.enter)="envoyerMessageChat()" maxlength="200" placeholder="Votre message..."
-                       class="flex-1 bg-[#05080f] border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:border-blue-500 outline-none">
-                <button (click)="envoyerMessageChat()" class="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">Envoyer</button>
-              </div>
-            </div>
-          }
+          <!-- 👇 LE CHAT A ÉTÉ SUPPRIMÉ ICI -->
         </div>
 
-                <!-- DROITE : ORDRE -->
+        <!-- DROITE : ORDRE -->
         @if (!isAdmin) {
           <div class="xl:sticky xl:top-3 flex flex-col gap-3">
             <div class="bg-[#0d121c] p-4 rounded-2xl border border-gray-800">
@@ -256,7 +236,7 @@
           <div class="xl:sticky xl:top-3 flex flex-col gap-3">
             <div class="bg-purple-500/10 p-3 rounded-2xl border border-purple-500/30 text-center">
               <h3 class="text-sm font-bold text-purple-400">Meneur de jeu</h3>
-              <p class="text-[11px] text-gray-400 mt-1">Vous ne tradez pas : vous pilotez le marché et les bots.</p>
+              <p class="text-[11px] text-gray-400 mt-1">Vous ne tradez pas : vous pilotez le marché.</p>
             </div>
 
             <!-- CIBLE -->
@@ -296,10 +276,10 @@
 
             <!-- BOTS -->
             <div class="bg-[#0d121c] rounded-2xl border border-gray-800 p-3">
-              <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Forcer un bot (sur la cible)</h3>
+              <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Forcer un acteur (sur la cible)</h3>
               <div class="grid grid-cols-1 gap-2">
-                <button (click)="forcerBot('paniqueux', 'VENTE')" class="py-2 rounded-lg border border-purple-500/40 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 text-xs font-semibold transition">Le Paniqueux vend tout</button>
-                <button (click)="forcerBot('baleine', 'ACHAT')" class="py-2 rounded-lg border border-purple-500/40 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 text-xs font-semibold transition">La Baleine achète massivement</button>
+                <button (click)="forcerBot('paniqueux', 'VENTE')" class="py-2 rounded-lg border border-purple-500/40 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 text-xs font-semibold transition">Un acteur vend tout</button>
+                <button (click)="forcerBot('baleine', 'ACHAT')" class="py-2 rounded-lg border border-purple-500/40 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 text-xs font-semibold transition">Une institution achète massivement</button>
               </div>
             </div>
 
@@ -319,13 +299,16 @@
         }
       </div>
 
-      <!-- ============ POSITIONS OUVERTES ============ -->
+            <!-- ============ POSITIONS ============ -->
       <div class="bg-[#0d121c] rounded-2xl border border-gray-800">
-        <div class="px-4 py-2.5 border-b border-gray-800 font-bold text-gray-400 text-[11px] uppercase tracking-widest">Mes positions ouvertes</div>
+        <div class="px-4 py-2.5 border-b border-gray-800 font-bold text-gray-400 text-[11px] uppercase tracking-widest">
+          {{ isAdmin ? 'Positions de la salle' : 'Mes positions ouvertes' }}
+        </div>
         <div class="max-h-64 overflow-auto px-2 py-1">
-          <table class="w-full min-w-[760px] text-left text-xs">
+          <table class="w-full min-w-[850px] text-left text-xs">
             <thead class="text-gray-500 uppercase text-[9px] tracking-wider sticky top-0 bg-[#0d121c]">
               <tr>
+                @if (isAdmin) { <th class="px-2 py-1.5">Trader</th> }
                 <th class="px-2 py-1.5">Actif</th>
                 <th class="px-2 py-1.5">Quantité</th>
                 <th class="px-2 py-1.5">Prix moyen</th>
@@ -334,42 +317,75 @@
                 <th class="px-2 py-1.5">P&amp;L</th>
                 <th class="px-2 py-1.5">P&amp;L %</th>
                 <th class="px-2 py-1.5">Stop / Take</th>
-                <th class="px-2 py-1.5"></th>
+                @if (!isAdmin) { <th class="px-2 py-1.5"></th> }
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-800/70">
-              @for (pos of state().positions; track pos.symbole) {
-                <tr class="hover:bg-white/[0.03] transition">
-                  <td class="px-2 py-2 font-bold text-sm">{{ pos.symbole }}</td>
-                  <td class="px-2 py-2 font-mono">{{ pos.quantite }}</td>
-                  <td class="px-2 py-2 font-mono text-gray-400">{{ pos.prixMoyenAchat | number: '1.2-2' }} $</td>
-                  <td class="px-2 py-2 font-mono">
-                    {{ (prixActuel(pos.symbole) * (1 + impactDe(pos.symbole)/100)) | number: '1.2-2' }} $
-                  </td>
-                  <td class="px-2 py-2 font-mono">{{ (prixActuel(pos.symbole) * (1 + impactDe(pos.symbole)/100)) * pos.quantite | number: '1.2-2' }} $</td>
-                  <td class="px-2 py-2 font-mono font-bold" [class]="pnlPosition(pos) >= 0 ? 'text-green-400' : 'text-red-400'">
-                    {{ pnlPosition(pos) >= 0 ? '+' : '' }}{{ pnlPosition(pos) | number: '1.2-2' }} $
-                  </td>
-                  <td class="px-2 py-2">
-                    <span class="px-2 py-0.5 rounded-full text-[11px] font-bold"
-                          [class]="pnlPctPosition(pos) >= 0 ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'">
-                      {{ pnlPctPosition(pos) >= 0 ? '+' : '' }}{{ pnlPctPosition(pos) | number: '1.1-1' }} %
-                    </span>
-                  </td>
-                  <td class="px-2 py-2 font-mono text-[11px]">
-                    <span class="text-red-400">{{ pos.stopLoss ? (pos.stopLoss | number: '1.2-2') : '-' }}</span>
-                    <span class="text-gray-600"> / </span>
-                    <span class="text-green-400">{{ pos.takeProfit ? (pos.takeProfit | number: '1.2-2') : '-' }}</span>
-                  </td>
-                  <td class="px-2 py-2 text-right">
-                    <button (click)="fermerPosition(pos)"
-                            class="px-3 py-1 rounded-lg border border-red-500/60 text-red-400 text-[11px] font-bold hover:bg-red-500/15 transition">
-                      Fermer
-                    </button>
-                  </td>
-                </tr>
-              } @empty {
-                <tr><td colspan="9" class="text-center py-5 text-gray-500 italic">Aucune position ouverte. Achetez un actif pour commencer.</td></tr>
+              @if (isAdmin) {
+                <!-- VUE MJ : Positions de tous les joueurs -->
+                @for (pos of positionsTousJoueurs; track pos.pseudo + pos.symbole) {
+                  <tr class="hover:bg-white/[0.03] transition">
+                    <td class="px-2 py-2 font-bold text-amber-300">{{ pos.pseudo }}</td>
+                    <td class="px-2 py-2 font-bold text-sm">{{ pos.symbole }}</td>
+                    <td class="px-2 py-2 font-mono">{{ pos.quantite }}</td>
+                    <td class="px-2 py-2 font-mono text-gray-400">{{ pos.prixMoyenAchat | number: '1.2-2' }} $</td>
+                    <td class="px-2 py-2 font-mono">
+                      {{ (prixActuel(pos.symbole) * (1 + impactDe(pos.symbole)/100)) | number: '1.2-2' }} $
+                    </td>
+                    <td class="px-2 py-2 font-mono">{{ (prixActuel(pos.symbole) * (1 + impactDe(pos.symbole)/100)) * pos.quantite | number: '1.2-2' }} $</td>
+                    <td class="px-2 py-2 font-mono font-bold" [class]="pos.pnl >= 0 ? 'text-green-400' : 'text-red-400'">
+                      {{ pos.pnl >= 0 ? '+' : '' }}{{ pos.pnl | number: '1.2-2' }} $
+                    </td>
+                    <td class="px-2 py-2">
+                      <span class="px-2 py-0.5 rounded-full text-[11px] font-bold"
+                            [class]="pos.pnlPct >= 0 ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'">
+                        {{ pos.pnlPct >= 0 ? '+' : '' }}{{ pos.pnlPct | number: '1.1-1' }} %
+                      </span>
+                    </td>
+                    <td class="px-2 py-2 font-mono text-[11px]">
+                      <span class="text-red-400">{{ pos.stopLoss ? (pos.stopLoss | number: '1.2-2') : '-' }}</span>
+                      <span class="text-gray-600"> / </span>
+                      <span class="text-green-400">{{ pos.takeProfit ? (pos.takeProfit | number: '1.2-2') : '-' }}</span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="9" class="text-center py-5 text-gray-500 italic">Aucun joueur n'a de position ouverte pour le moment.</td></tr>
+                }
+              } @else {
+                <!-- VUE JOUEUR : Mes positions -->
+                @for (pos of state().positions; track pos.symbole) {
+                  <tr class="hover:bg-white/[0.03] transition">
+                    <td class="px-2 py-2 font-bold text-sm">{{ pos.symbole }}</td>
+                    <td class="px-2 py-2 font-mono">{{ pos.quantite }}</td>
+                    <td class="px-2 py-2 font-mono text-gray-400">{{ pos.prixMoyenAchat | number: '1.2-2' }} $</td>
+                    <td class="px-2 py-2 font-mono">
+                      {{ (prixActuel(pos.symbole) * (1 + impactDe(pos.symbole)/100)) | number: '1.2-2' }} $
+                    </td>
+                    <td class="px-2 py-2 font-mono">{{ (prixActuel(pos.symbole) * (1 + impactDe(pos.symbole)/100)) * pos.quantite | number: '1.2-2' }} $</td>
+                    <td class="px-2 py-2 font-mono font-bold" [class]="pnlPosition(pos) >= 0 ? 'text-green-400' : 'text-red-400'">
+                      {{ pnlPosition(pos) >= 0 ? '+' : '' }}{{ pnlPosition(pos) | number: '1.2-2' }} $
+                    </td>
+                    <td class="px-2 py-2">
+                      <span class="px-2 py-0.5 rounded-full text-[11px] font-bold"
+                            [class]="pnlPctPosition(pos) >= 0 ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'">
+                        {{ pnlPctPosition(pos) >= 0 ? '+' : '' }}{{ pnlPctPosition(pos) | number: '1.1-1' }} %
+                      </span>
+                    </td>
+                    <td class="px-2 py-2 font-mono text-[11px]">
+                      <span class="text-red-400">{{ pos.stopLoss ? (pos.stopLoss | number: '1.2-2') : '-' }}</span>
+                      <span class="text-gray-600"> / </span>
+                      <span class="text-green-400">{{ pos.takeProfit ? (pos.takeProfit | number: '1.2-2') : '-' }}</span>
+                    </td>
+                    <td class="px-2 py-2 text-right">
+                      <button (click)="fermerPosition(pos)"
+                              class="px-3 py-1 rounded-lg border border-red-500/60 text-red-400 text-[11px] font-bold hover:bg-red-500/15 transition">
+                        Fermer
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="9" class="text-center py-5 text-gray-500 italic">Aucune position ouverte. Achetez un actif pour commencer.</td></tr>
+                }
               }
             </tbody>
           </table>
@@ -389,7 +405,6 @@
       }
     </div>
   }
-
   <!-- ============================================================ -->
   <!-- MODALES -->
   <!-- ============================================================ -->
@@ -557,11 +572,10 @@
     </div>
   }
 
-  <!-- 👇 COACH IA -->
+  <!-- 👇 COACH IA (on garde le coach, c'est pro) -->
   @if (!isAdmin) {
   <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
 
-    <!-- Bulle d'alerte proactive -->
     @if (bulleCoach && !chatbotOuvert) {
       <button (click)="toggleChatbot()"
               class="mb-3 max-w-xs text-left text-xs leading-snug rounded-2xl px-4 py-3 shadow-2xl border backdrop-blur"
@@ -609,8 +623,8 @@
             <input type="text" [(ngModel)]="questionChatbot" (keyup.enter)="envoyerQuestionChatbot()"
                    placeholder="Pose une question (ex : c'est quoi un stop-loss ?)"
                    class="flex-1 bg-[#05080f] border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:border-brand-500 outline-none">
-            <button (click)="envoyerQuestionChatbot()"
-                    class="bg-brand-500 hover:bg-brand-600 text-white px-3 py-2 rounded-lg text-xs font-bold transition">
+            <button (click)="envoyerQuestionChatbot()" [disabled]="!questionChatbot.trim() || coachReflechit"
+                    class="px-3 py-2 rounded-lg bg-brand-500 text-white text-xs font-bold disabled:opacity-50 transition">
               Envoyer
             </button>
           </div>
@@ -619,12 +633,12 @@
     }
 
     <button (click)="toggleChatbot()"
-            class="relative bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90 text-white rounded-full p-4 shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-transform hover:scale-105 flex items-center gap-2">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
-      <span class="font-bold">Coach</span>
-      @if (alerteNonLue) { <span class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 border-2 border-[#05080f] animate-pulse"></span> }
+            class="w-14 h-14 rounded-full bg-gradient-to-r from-brand-500 to-purple-600 shadow-[0_0_20px_rgba(59,130,246,0.5)] flex items-center justify-center hover:scale-105 transition-transform relative">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      @if (alerteNonLue) {
+        <span class="absolute top-0 right-0 w-3.5 h-3.5 bg-red-500 border-2 border-[#0d121c] rounded-full animate-pulse"></span>
+      }
     </button>
   </div>
   }
-
 </div>

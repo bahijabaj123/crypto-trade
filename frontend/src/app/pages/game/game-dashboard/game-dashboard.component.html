@@ -79,7 +79,7 @@
       <!-- ============ CORPS PRINCIPAL ============ -->
       <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-3 items-start">
 
-        <!-- GAUCHE : onglets + graphiques + flux -->
+        <!-- GAUCHE : onglets + graphiques -->
         <div class="flex flex-col gap-3 min-w-0">
 
           <!-- Onglets d'actifs -->
@@ -127,25 +127,6 @@
               </div>
             }
           </div>
-
-          <!-- Flux du marché (multijoueur) -->
-          @if (roomCode) {
-            <div class="h-32 bg-[#0a0e17] rounded-2xl border border-gray-800 p-3 flex flex-col">
-              <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 flex justify-between shrink-0">
-                <span>Actions des joueurs</span>
-                <span class="text-purple-400 animate-pulse">● LIVE</span>
-              </h3>
-              <div class="flex-1 min-h-0 overflow-y-auto font-mono text-xs space-y-1 pr-2">
-                @for (ev of evenementsAutres; track $index) {
-                  <div [class]="ev.includes('ACHETÉ') ? 'text-green-400' : ev.includes('VENDU') ? 'text-red-400' : 'text-gray-400'">
-                    <span class="text-purple-500 mr-1">›</span> {{ ev }}
-                  </div>
-                } @empty {
-                  <div class="text-gray-600 italic">En attente d'actions des autres joueurs...</div>
-                }
-              </div>
-            </div>
-          }
         </div>
 
         <!-- DROITE : actualités + passer un ordre (reste visible quand on défile) -->

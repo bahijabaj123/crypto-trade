@@ -373,6 +373,13 @@ export class GameLiveComponent implements OnInit, OnDestroy {
 
   /** Un point par seconde : valeur du portefeuille + marché (acheter et garder le 1er actif). */
   private echantillonner(): void {
+    if (this.roomCode && this.pseudo) {
+  this.liveService.envoyerPositions(this.roomCode, this.pseudo,
+    this.state().positions.map(p => ({
+      symbole: p.symbole, quantite: p.quantite, prixMoyenAchat: p.prixMoyenAchat,
+      stopLoss: p.stopLoss ?? 0, takeProfit: p.takeProfit ?? 0
+    }))).subscribe({ error: () => {} });
+}
     if (!this.scenario || !this.state().jeuEnCours) return;
     const t = this.dureeTotaleSecondes - this.state().tempsRestantSecondes;
     const a0 = this.scenario.actifs[0];
@@ -732,4 +739,39 @@ export class GameLiveComponent implements OnInit, OnDestroy {
       nbOrdres: c.ordres.length
     };
   }
+
+    /** Récupère et calcule les positions de TOUS les joueurs pour le MJ */
+  public get positionsTousJoueurs(): any[] {
+    const room = this.currentRoom();
+    if (!room || !room.joueurs) return [];
+
+    const result: any[] = [];
+    
+    // On parcourt chaque joueur
+    for (const j of room.joueurs) {
+      // Si c'est l'hôte ou s'il n'a pas de positions enregistrées, on passe
+      if (j.pseudo === this.pseudo || !j.positions) continue;
+
+      // On calcule le P&L de chaque position pour ce joueur
+      for (const pos of j.positions) {
+        const prixActuelImpacte = this.prixActuel(pos.symbole) * (1 + this.impactDe(pos.symbole) / 100);
+        const valeur = prixActuelImpacte * pos.quantite;
+        const pnl = (prixActuelImpacte - pos.prixMoyenAchat) * pos.quantite;
+        
+        result.push({
+          pseudo: j.pseudo,
+          symbole: pos.symbole,
+          quantite: pos.quantite,
+          prixMoyenAchat: pos.prixMoyenAchat,
+          stopLoss: pos.stopLoss,
+          takeProfit: pos.takeProfit,
+          valeur: valeur,
+          pnl: pnl,
+          pnlPct: pos.prixMoyenAchat ? (prixActuelImpacte / pos.prixMoyenAchat - 1) * 100 : 0
+        });
+      }
+    }
+    return result;
+  }
+
 }

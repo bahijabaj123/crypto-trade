@@ -14,6 +14,18 @@ export const ADMIN_ROUTES: Routes = [
   },
   { path: 'admin/stats', redirectTo: 'admin', pathMatch: 'full' },
   {
+    path: 'admin/live',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./pages/admin-live/admin-live.component').then(m => m.AdminLiveComponent),
+    title: 'Suivi en direct | Crypto Simulator',
+  },
+    {
+    path: 'admin/live/:code',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./pages/admin-live/admin-spectateur.component').then(m => m.AdminSpectateurComponent),
+    title: 'Spectateur | Crypto Simulator',
+  },
+  {
     path: 'admin/users',
     canActivate: [adminGuard],
     loadComponent: () => import('./pages/admin-users/admin-users.component').then(m => m.AdminUsersComponent),

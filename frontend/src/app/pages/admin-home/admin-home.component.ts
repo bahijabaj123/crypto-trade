@@ -24,6 +24,7 @@ export class AdminHomeComponent implements OnInit {
   readonly erreur = signal('');
 
   readonly raccourcis: Raccourci[] = [
+    { titre: 'Suivi en direct', texte: 'Salles, joueurs, classement, urgence', chemin: '/admin/live' },
     { titre: 'Utilisateurs', texte: 'Comptes, rôles et blocage', chemin: '/admin/users' },
     { titre: 'Scénarios du jeu', texte: 'Ajouter, modifier, masquer', chemin: '/admin/game-scenarios' },
     { titre: 'Journal d’audit', texte: 'Qui a fait quoi, et quand', chemin: '/admin/journal' },

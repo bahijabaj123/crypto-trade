@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import html2canvas from 'html2canvas';
-
+import { SondageFinComponent } from '../components/sondage-fin/sondage-fin.component';
 // Services
 import { GameEngineService, GamePosition } from '../../../core/services/game-engine.service';
 import { GameAnalysisService, PlayerProfile } from '../../../core/services/game-analysis.service';
@@ -68,7 +68,7 @@ const EVENEMENTS: { [scenarioId: string]: { date: string; texte: string }[] } = 
 @Component({
   selector: 'app-game-live',
   standalone: true,
-  imports: [CommonModule, FormsModule, GameLineChartComponent, PortfolioCurveComponent],
+  imports: [CommonModule,SondageFinComponent, FormsModule, GameLineChartComponent, PortfolioCurveComponent],
   templateUrl: './game-live.component.html',
   styleUrls: ['./game-live.component.css']
 })
@@ -104,7 +104,10 @@ export class GameLiveComponent implements OnInit, OnDestroy {
   public evenementsEnrichis: { texte: string, impact: string | null, isPositif: boolean }[] = [];
   public sens: 'ACHAT' | 'VENTE' = 'ACHAT';
   public dureeTotaleSecondes = 0;
-  
+  public annonceAffichee: string | null = null;
+private derniereAnnonceTs = 0;
+private annonceInit = false;
+private sortieAdmin = false;
   public chatBotMessages: { role: 'user' | 'bot', texte: string }[] = [];
   public questionChatbot = '';
   public chatbotOuvert = false;
@@ -158,6 +161,25 @@ export class GameLiveComponent implements OnInit, OnDestroy {
         return { texte: ev, impact: m ? `${v! >= 0 ? '+' : ''}${m[1].replace(/^\+/, '')}%` : null, isPositif: v === null ? true : v >= 0 };
       });
     });
+    effect(() => {
+  const room = this.liveService.currentRoom();
+  if (!room) return;
+  untracked(() => {
+    const moi = (room.joueurs ?? []).find((j: any) => j.pseudo === this.pseudo);
+    if ((room.fermee || moi?.exclu) && !this.sortieAdmin) {
+      this.sortieAdmin = true;
+      alert(room.fermee ? "La salle a été fermée par l'administrateur." : "Vous avez été exclu de la salle.");
+      this.router.navigate(['/game']);
+      return;
+    }
+    if (!this.annonceInit) { this.annonceInit = true; this.derniereAnnonceTs = room.annonceTs ?? 0; return; }
+    if (room.annonce && room.annonceTs !== this.derniereAnnonceTs) {
+      this.derniereAnnonceTs = room.annonceTs;
+      this.annonceAffichee = room.annonce;
+      setTimeout(() => { this.annonceAffichee = null; }, 15000);
+    }
+  });
+});
   }
 
   ngOnInit(): void {
@@ -373,12 +395,21 @@ export class GameLiveComponent implements OnInit, OnDestroy {
 
   /** Un point par seconde : valeur du portefeuille + marché (acheter et garder le 1er actif). */
   private echantillonner(): void {
-    if (this.roomCode && this.pseudo) {
+   if (this.roomCode && this.pseudo) {
+  const v = this.valeurImpactee;
+  let concentration = 0;
+  for (const p of this.state().positions) {
+    const part = v ? (this.prixActuel(p.symbole) * (1 + this.impactDe(p.symbole) / 100) * p.quantite) / v : 0;
+    if (part > concentration) concentration = part;
+  }
   this.liveService.envoyerPositions(this.roomCode, this.pseudo,
     this.state().positions.map(p => ({
-      symbole: p.symbole, quantite: p.quantite, prixMoyenAchat: p.prixMoyenAchat,
-      stopLoss: p.stopLoss ?? 0, takeProfit: p.takeProfit ?? 0
-    }))).subscribe({ error: () => {} });
+  symbole: p.symbole, quantite: p.quantite, prixMoyenAchat: p.prixMoyenAchat,
+  stopLoss: p.stopLoss ?? 0, takeProfit: p.takeProfit ?? 0,
+  prixActuel: this.prixActuel(p.symbole) * (1 + this.impactDe(p.symbole) / 100)     // <- NOUVEAU
+})),
+    { valeur: v, pnl: this.pnlImpacte, pnlPct: this.pnlPct, drawdown: this.drawdownMax(), concentration }
+  ).subscribe({ error: () => {} });
 }
     if (!this.scenario || !this.state().jeuEnCours) return;
     const t = this.dureeTotaleSecondes - this.state().tempsRestantSecondes;
@@ -674,12 +705,7 @@ export class GameLiveComponent implements OnInit, OnDestroy {
     const alertes = this.coach.alertes(this.construireCtxCoach());
     for (const a of alertes) {
       this.chatBotMessages.push({ role: 'bot', texte: (a.niveau === 'danger' ? '⚠️ ' : a.niveau === 'attention' ? '💡 ' : 'ℹ️ ') + a.texte });
-      if (!this.chatbotOuvert) {
-        this.alerteNonLue = true;
-        this.bulleCoach = { texte: a.texte, niveau: a.niveau };
-        if (this.timerBulle) clearTimeout(this.timerBulle);
-        this.timerBulle = setTimeout(() => this.bulleCoach = null, 9000);
-      }
+            if (!this.chatbotOuvert) this.alerteNonLue = true;   // simple point rouge, pas de pop-up
     }
     if (alertes.length) this.defilerCoach();
   }

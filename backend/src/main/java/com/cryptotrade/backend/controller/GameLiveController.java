@@ -1,5 +1,6 @@
 package com.cryptotrade.backend.controller;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,6 +37,8 @@ public class GameLiveController {
       if (!exists) {
         room.joueurs.add(new LivePlayer(req.pseudo));
         room.evenements.add(req.pseudo + " a rejoint la salle.");
+      } else {
+        room.joueurs.stream().filter(j -> j.pseudo.equals(req.pseudo)).forEach(LivePlayer::toucher);
       }
       room.decay();
     }
@@ -54,8 +57,16 @@ public class GameLiveController {
   public LiveRoom logAction(@PathVariable String code, @RequestBody LiveActionRequest req) {
     LiveRoom room = trouver(code);
     synchronized (room) {
-      room.decay();
+      if (room.fermee) return room;
+      LivePlayer joueur = room.joueurs.stream().filter(j -> j.pseudo.equals(req.pseudo)).findFirst().orElse(null);
+      if (joueur != null && joueur.exclu) return room;
       double notionnel = req.quantite * (req.prix > 0 ? req.prix : 0);
+      if (joueur != null && !req.bot) {
+        joueur.nbOrdres++; joueur.toucher(); joueur.profil = profil(joueur);
+        joueur.ordres.add(new OrdreLog(System.currentTimeMillis(), req.action.contains("ACHET") ? 1 : -1, req.symbole, notionnel));
+        while (joueur.ordres.size() > 300) joueur.ordres.remove(0);
+      }
+      room.decay();
       double delta = 100.0 * notionnel / LIQUIDITE * (req.action.contains("ACHET") ? 1 : -1);
       room.ajouterImpact(req.symbole, delta);
       room.evenements.add((req.bot ? "🤖 " : "") + req.pseudo + " a " + req.action + " "
@@ -83,6 +94,8 @@ public class GameLiveController {
       };
       room.ajouterImpact(tous ? null : req.symbole, req.valeur);
       room.evenements.add(message);
+      room.chocs.add(new Choc(System.currentTimeMillis(), req.type, req.valeur, tous ? "TOUS" : req.symbole));
+      while (room.chocs.size() > 100) room.chocs.remove(0);
     }
     return room;
   }
@@ -95,6 +108,7 @@ public class GameLiveController {
     String t = req.texte.length() > 200 ? req.texte.substring(0, 200) : req.texte;
     synchronized (room) {
       room.messages.add(new ChatMsg(req.pseudo, t, req.bot));
+      if (!req.bot) room.joueurs.stream().filter(j -> j.pseudo.equals(req.pseudo)).forEach(LivePlayer::toucher);
       while (room.messages.size() > 200) room.messages.remove(0);
     }
     return room;
@@ -126,7 +140,7 @@ public class GameLiveController {
         if (p.pseudo.equals(req.pseudo)) {
           p.pnl = req.pnl; p.pnlPct = req.pnlPct; p.valeur = req.valeur;
           p.nbOrdres = req.nbOrdres; p.stopLoss = req.stopLoss; p.drawdown = req.drawdown; p.score = req.score;
-          p.termine = true;
+          p.termine = true; p.toucher(); p.profil = profil(p);
         }
       }
     }
@@ -139,10 +153,44 @@ public class GameLiveController {
     LiveRoom room = trouver(code);
     synchronized (room) {
       for (LivePlayer p : room.joueurs) {
-        if (p.pseudo.equals(req.pseudo)) p.positions = req.positions != null ? req.positions : new ArrayList<>();
+        if (!p.pseudo.equals(req.pseudo)) continue;
+        p.positions = req.positions != null ? req.positions : new ArrayList<>();
+        p.toucher();
+        if (!p.termine) {                       // une fois fini, on garde le résultat final
+          if (req.valeur > 0) { p.valeur = req.valeur; p.pnl = req.pnl; p.pnlPct = req.pnlPct; }
+          p.drawdown = Math.max(p.drawdown, req.drawdown);
+          p.concentration = Math.max(p.concentration, req.concentration);
+        }
+        if (p.positions.stream().anyMatch(x -> x.stopLoss > 0 || x.takeProfit > 0)) p.stopLoss = true;
+        p.profil = profil(p);
       }
     }
   }
+
+  // ===================== utilitaires partagés avec AdminLiveController =====================
+
+  /** Profil de trader, calculé à partir du comportement observé. */
+  static String profil(LivePlayer p) {
+    if (p.nbOrdres == 0) return "Observateur";
+    if (p.concentration >= 0.75) return "Concentré";
+    if (p.nbOrdres >= 25 && !p.stopLoss) return "Impulsif";
+    if (p.drawdown >= 15 && !p.stopLoss) return "Risqué";
+    if (p.stopLoss && p.drawdown < 10) return "Prudent";
+    if (p.nbOrdres <= 4) return "Patient";
+    return "Équilibré";
+  }
+
+  static String etat(LiveRoom r) {
+    if (r.fermee) return "FERMEE";
+    if (!r.demarree) return "ATTENTE";
+    long ecoule = (System.currentTimeMillis() - r.debutMs) / 1000;
+    boolean tousFinis = r.joueurs.stream().skip(1).allMatch(j -> j.termine || !j.actif) && r.joueurs.size() > 1;
+    if (ecoule >= r.dureeMinutes * 60L || tousFinis) return "TERMINEE";
+    return "EN_COURS";
+  }
+
+  Collection<LiveRoom> toutesLesSalles() { return liveRooms.values(); }
+  LiveRoom salle(String code) { return trouver(code); }
 
   @PostMapping("/{code}/leave")
   public void leaveRoom(@PathVariable String code, @RequestBody JoinLiveRoomRequest req) {
@@ -176,6 +224,11 @@ public class GameLiveController {
     public List<ChatMsg> messages = new CopyOnWriteArrayList<>();
     public boolean demarree = false;
     public String statut = "EN_COURS";
+    public boolean fermee = false;               // fermée par l'admin
+    public String annonce = null;                // dernier message de l'admin (bandeau chez les joueurs)
+    public long annonceTs = 0;
+    public long creeMs = System.currentTimeMillis();
+    @JsonIgnore public List<Choc> chocs = new CopyOnWriteArrayList<>();   // chocs du MJ (pour l'analyse de sentiment)
     long dernierMajMs = System.currentTimeMillis();   // privé : non sérialisé
 
     public LiveRoom(String code, String scenarioId, String createur, int dureeMinutes) {
@@ -203,6 +256,12 @@ public class GameLiveController {
     public int nbOrdres = 0, score = 0;
     public boolean stopLoss = false, termine = false, actif = true;
     public List<PositionDto> positions = new ArrayList<>();
+    public long derniereActiviteMs = System.currentTimeMillis();
+    public boolean exclu = false;
+    public double concentration = 0;      // part max d'un actif dans le portefeuille (0..1)
+    public String profil = "Observateur";
+    @JsonIgnore public List<OrdreLog> ordres = new CopyOnWriteArrayList<>();   // historique d'ordres (analyse de sentiment)
+    void toucher() { derniereActiviteMs = System.currentTimeMillis(); }
     public LivePlayer(String pseudo) { this.pseudo = pseudo; }
   }
 
@@ -221,7 +280,25 @@ public class GameLiveController {
   public static class ResultRequest {
     public String pseudo; public double pnl, pnlPct, valeur, drawdown; public int nbOrdres, score; public boolean stopLoss;
   }
-  public static class PositionDto { public String symbole; public double quantite, prixMoyenAchat, stopLoss, takeProfit; }
-  public static class PositionsRequest { public String pseudo; public List<PositionDto> positions; }
+  public static class PositionDto { public String symbole; public double quantite, prixMoyenAchat, stopLoss, takeProfit, prixActuel; }
+  public static class Choc {
+    public long ts; public String type; public double valeur; public String symbole;
+    public Choc(long ts, String type, double valeur, String symbole) { this.ts = ts; this.type = type; this.valeur = valeur; this.symbole = symbole; }
+  }
+  public static class OrdreLog {
+    public long ts; public int sens; public String symbole; public double notionnel;   // sens : +1 achat, -1 vente
+    public OrdreLog(long ts, int sens, String symbole, double notionnel) { this.ts = ts; this.sens = sens; this.symbole = symbole; this.notionnel = notionnel; }
+  }
+  public static class PositionsRequest {
+    public String pseudo; public List<PositionDto> positions;
+    public double valeur, pnl, pnlPct, drawdown, concentration;
+  }
   public static class LiveMessageRequest { public String pseudo; public String texte; public boolean bot; }
+
+  /** Salle introuvable : 404 propre au lieu d'un 500. */
+  @ResponseStatus(org.springframework.http.HttpStatus.NOT_FOUND)
+  @ExceptionHandler(RuntimeException.class)
+  public Map<String, String> erreur(RuntimeException e) {
+    return Map.of("erreur", String.valueOf(e.getMessage()));
+  }
 }

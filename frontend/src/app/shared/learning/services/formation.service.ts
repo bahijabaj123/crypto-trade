@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import { inject } from '@angular/core';
+import { SuiviFormationService } from '../../../core/services/suivi-formation.service';
 import {
   FORMATION_COURSES,
   FORMATION_LESSONS,
@@ -35,6 +37,7 @@ export class FormationService {
   private state!: FormationStoredState;
   lastQuizSession: ActiveQuizSession | null = null;
   lastQuizResult: QuizAttempt | null = null;
+  private readonly suivi = inject(SuiviFormationService);
 
   constructor(private readonly storage: FormationStorageService) {
     this.bootstrap();
@@ -196,6 +199,7 @@ export class FormationService {
       return false;
     }
     this.state.completedLessonIds.push(lessonId);
+    this.suivi.leconTerminee(lessonId);
     this.state.activityLog.unshift({
       id: `act-${Date.now()}`,
       dateLabel: "Aujourd'hui",
@@ -400,6 +404,8 @@ export class FormationService {
       durationSeconds,
     };
     this.state.quizAttempts.push(attempt);
+    this.suivi.quiz(quizId, score, total, passed,
+      quiz.questions.filter((q) => answers[q.id] !== q.correctIndex).map((q) => q.id));
     this.state.activityLog.unshift({
       id: `quiz-${Date.now()}`,
       dateLabel: "Aujourd'hui",

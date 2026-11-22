@@ -5,7 +5,12 @@
     <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px]"></div>
     <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px]"></div>
   </div>
-
+@if (annonceAffichee) {
+  <div class="mb-3 rounded-xl border border-indigo-400/40 bg-indigo-500/10 px-4 py-2.5 text-sm text-indigo-100 flex items-center justify-between">
+    <span>📣 {{ annonceAffichee }}</span>
+    <button (click)="annonceAffichee = null" class="text-indigo-300 text-xs">✕</button>
+  </div>
+}
   @if (scenario) {
     <div class="relative z-10 flex flex-col gap-3">
 
@@ -575,15 +580,6 @@
   <!-- 👇 COACH IA (on garde le coach, c'est pro) -->
   @if (!isAdmin) {
   <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-
-    @if (bulleCoach && !chatbotOuvert) {
-      <button (click)="toggleChatbot()"
-              class="mb-3 max-w-xs text-left text-xs leading-snug rounded-2xl px-4 py-3 shadow-2xl border backdrop-blur"
-              [class]="bulleCoach.niveau === 'danger' ? 'bg-red-950/90 border-red-500/50 text-red-100' : bulleCoach.niveau === 'attention' ? 'bg-amber-950/90 border-amber-500/50 text-amber-100' : 'bg-[#0d121c]/95 border-blue-500/40 text-gray-200'">
-        <span class="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">Coach</span>
-        {{ bulleCoach.texte }}
-      </button>
-    }
 
     @if (chatbotOuvert) {
       <div class="mb-3 w-96 bg-[#0d121c] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col" style="height: 520px;">

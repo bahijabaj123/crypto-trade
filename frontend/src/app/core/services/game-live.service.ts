@@ -47,7 +47,7 @@ private readonly apiUrl = `${API_URL}/api/game/live`;
   quitterSalle(code: string, pseudo: string) {
     return this.http.post<any>(`${this.apiUrl}/${code}/leave`, { pseudo });
   }
-  envoyerPositions(code: string, pseudo: string, positions: any[]) {
-  return this.http.post<any>(`${this.apiUrl}/${code}/positions`, { pseudo, positions });
+  envoyerPositions(code: string, pseudo: string, positions: any[], extra: object = {}) {
+  return this.http.post<any>(`${this.apiUrl}/${code}/positions`, { pseudo, positions, ...extra });
 }
 }

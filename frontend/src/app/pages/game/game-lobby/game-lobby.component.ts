@@ -13,9 +13,7 @@ const CLE_PSEUDO = 'cryptotrade.pseudo';
 
 /**
  * Lobby de la Salle de Marché : mode SOLO (on joue seul, sans salle) ou MULTIJOUEUR.
- * Solo : on choisit un scénario + une durée et on démarre directement.
- * Multi : 1) on choisit un pseudo, 2) on crée une salle (scénario + durée) ou on rejoint avec un code,
- * 3) salle d'attente, 4) l'hôte lance la partie et tout le monde démarre en même temps.
+ * ...
  */
 @Component({
   selector: 'app-game-lobby',

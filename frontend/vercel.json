@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/binance-api/:path*", "destination": "https://data-api.binance.vision/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

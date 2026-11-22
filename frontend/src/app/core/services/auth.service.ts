@@ -2,8 +2,9 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, firstValueFrom, tap, timeout } from 'rxjs';
+import { API_URL } from '../../core/api.config';
 
-export const API_BASE = 'http://localhost:8081/api';
+export const API_BASE = `${API_URL}/api`;
 const CLE_SESSION = 'cryptotrade.session';
 
 export type RoleUtilisateur = 'ADMIN' | 'JOUEUR';

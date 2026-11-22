@@ -2,14 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map, timeout } from 'rxjs/operators';
-
+import { API_URL } from '../../core/api.config';
 export interface ReponseCoach { reponse: string | null; source: 'llm' | 'local'; raison?: string | null; }
 
 /** Appelle le backend (qui détient la clé Groq). En cas d'échec : source = 'local' → le front utilise son coach interne. */
 @Injectable({ providedIn: 'root' })
 export class CoachApiService {
   private readonly http = inject(HttpClient);
-  private readonly url = 'http://localhost:8081/api/coach';
+  private readonly url = `${API_URL}/api/coach`;
 
   demander(pseudo: string, question: string, contexte: unknown, faitsLocaux: string,
            historique: { role: 'user' | 'bot'; texte: string }[]): Observable<ReponseCoach> {

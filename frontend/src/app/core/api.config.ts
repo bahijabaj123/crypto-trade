@@ -6,4 +6,4 @@ const EN_LOCAL = typeof location !== 'undefined' && (location.hostname === 'loca
 
 export const API_URL = EN_LOCAL
   ? 'http://localhost:8081'
-  : 'https://REMPLACE-PAR-TON-APP.onrender.com';
+  : 'https://crypto-trade-6efj.onrender.com';

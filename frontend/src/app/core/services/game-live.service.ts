@@ -1,11 +1,12 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { interval, Subscription } from 'rxjs';
+import { API_URL } from '../../core/api.config';
 
 @Injectable({ providedIn: 'root' })
 export class GameLiveService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8081/api/game/live';
+private readonly apiUrl = `${API_URL}/api/game/live`;
 
   public readonly currentRoom = signal<any>(null);
   private pollingSub?: Subscription;
@@ -19,7 +20,7 @@ export class GameLiveService {
 
   demarrerPolling(code: string) {
     this.arreterPolling();
-    this.pollingSub = interval(1000).subscribe(() => {
+    this.pollingSub = interval(2000).subscribe(() => {
       this.http.get<any>(`${this.apiUrl}/${code}`).subscribe({
         next: room => this.currentRoom.set(room),
         error: () => { /* on garde le dernier état */ }

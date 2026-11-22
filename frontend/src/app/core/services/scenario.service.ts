@@ -2,8 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, firstValueFrom, timeout } from 'rxjs';
 import { SCENARIOS_CONFIG, ScenarioConfig } from '../models/scenario-config';
+import { API_URL as BACKEND_URL } from '../../core/api.config';
 
-const API_URL = 'http://localhost:8081/api'; // même port que le backend (GameRoomController)
+const API_URL = `${BACKEND_URL}/api`; // même port que le backend (GameRoomController)
 
 /** Un scénario vu par l'admin : ScenarioConfig + état (actif) et position dans la liste. */
 export interface ScenarioAdmin extends ScenarioConfig {

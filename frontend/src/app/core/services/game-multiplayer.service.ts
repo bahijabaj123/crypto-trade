@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, interval, switchMap } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
-
+import { API_URL as BACKEND_URL } from '../../core/api.config';
 export interface Player {
   pseudo: string;
   pnl: number;
@@ -20,7 +20,7 @@ export interface Room {
   demarree: boolean;            // true quand l'hôte a lancé la partie
 }
 
-const API_URL = 'http://localhost:8081/api/game/rooms'; // 👈 Vérifie le port de ton backend
+const API_URL = `${BACKEND_URL}/api/game/rooms`; // 👈 Vérifie le port de ton backend
 
 @Injectable({
   providedIn: 'root'
